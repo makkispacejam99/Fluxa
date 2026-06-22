@@ -24,7 +24,7 @@
 
 Fluxa nace bajo tres pilares fundamentales: **Simple, Rápido y Útil**. 
 
-En un ecosistema saturado de aplicaciones pesadas que ralentizan los dispositivos y rastrean cada interacción, Fluxa ofrece una alternativa ligera e independiente. No depende de los Servicios de Google Play (`GMS`) ni la API oficial de YouTube. En su lugar, utiliza ingeniería inversa limpia a través del motor de **NewPipe Extractor** para devolverle el control total de la experiencia multimedia al usuario. Con un algoritmo personalizado en base a tus suscripciones, keywords y sistema de puntuación. 
+En un ecosistema saturado de aplicaciones pesadas que ralentizan los dispositivos y rastrean cada interacción, Fluxa ofrece una alternativa ligera e independiente. No depende de los Servicios de Google Play (`GMS`), ni la API oficial de YouTube. En su lugar, utiliza ingeniería inversa limpia a través del motor de **NewPipe Extractor** para devolverle el control total de la experiencia multimedia al usuario. Con un algoritmo personalizado en base a tus suscripciones, keywords y sistema de puntuación. 
 
 ---
 
