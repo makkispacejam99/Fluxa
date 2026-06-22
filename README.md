@@ -1,7 +1,7 @@
 # Fluxa | YouTube Client Open Source 
 
 <p align="center">
-  <img src="art/logo_horizontal.png" alt="Fluxa Logo" width="120" height="120">
+  <img src="art/Fluxa-horizontal.png" alt="Fluxa Logo" width="120" height="120">
 </p>
 
 <p align="center">
