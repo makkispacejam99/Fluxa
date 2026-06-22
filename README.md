@@ -22,7 +22,7 @@
 
 ## Filosofía del Proyecto
 
-Fluxa nace bajo tres pilares fundamentales: **Simple, Rápido y Útil**. 
+Fluxa nace bajo tres pilares fundamentales: **Simplicidad, Rápidez y Útilidad**. 
 
 En un ecosistema saturado de aplicaciones pesadas que ralentizan los dispositivos y rastrean cada interacción, Fluxa ofrece una alternativa ligera e independiente. No depende de los Servicios de Google Play (`GMS`), ni la API oficial de YouTube. En su lugar, utiliza ingeniería inversa limpia a través del motor de **NewPipe Extractor** para devolverle el control total de la experiencia multimedia al usuario. Con un algoritmo personalizado en base a tus suscripciones, keywords y sistema de puntuación. 
 
@@ -34,7 +34,7 @@ En un ecosistema saturado de aplicaciones pesadas que ralentizan los dispositivo
 * **100% Libre de Anuncios:** Una interfaz limpia y enfocada en el contenido, eliminando las interrupciones publicitarias antes, durante y después de los videos.
 * **Reproducción Adaptativa al Máximo (DASH):** Soporte de calidad de video adaptativo hasta **1080p**.
 * **Feed con Algoritmo Personalizado:** Feed totalmente personalizado. Fluxa procesa de forma local un algoritmo inteligente basado estrictamente en los canales a los que estás suscrito, sin manipulación externa de tendencias, utilizando unicamente tus keywords, visualizaciones y contenido relacionado almacenados de forma local en tu base de datos personal.
-* **Traducción Dinámica con IA** ¿Videos en inglés, japonés o portugues? La app traduce los títulos y descripciones de forma totalmente automática e instantánea al idioma configurado en tus ajustes mediante inteligencia artificial local.
+* **Traducción Dinámica con IA:** ¿Videos en inglés, japonés o portugues? La app traduce los títulos y descripciones de forma totalmente automática e instantánea al idioma configurado en tus ajustes mediante inteligencia artificial local.
 * **Copias de Seguridad Locales:** Exporta e importa tus suscripciones, listas de reproducción e historial en cualquier momento mediante un archivo de respaldo local. Tu información se queda contigo.
 * **Subtítulos Avanzados:** Motor de subtítulos nativo integrado que lee, mapea y renderiza perfectamente las pistas multimedia para que no te pierdas ningún detalle.
 * **Ultra Ligero:** Consumo mínimo de memoria RAM y almacenamiento, optimizado especialmente para funcionar de miedo incluso en teléfonos de gama baja.
