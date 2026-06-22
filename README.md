@@ -1,4 +1,4 @@
-# Fluxa | YouTube Open Source Client 
+# Fluxa (YouTube Open Source Client) 
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/makkispacejam99/Fluxa/main/art/logo.png" alt="Fluxa Logo" width="120" height="120">
