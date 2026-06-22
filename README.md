@@ -64,9 +64,11 @@ Para instalar y probar el proyecto en tu dispositivo Android:
 4. ¡Abre Fluxa y disfruta de una experiencia libre!
 
 ---
+
 ## Bugs
 
-Cuentame y enviame el logcat
+Si encuentra algún error, por favor abra un *Issue* en este repositorio detallando el problema y adjuntando el **Logcat** para poder solucionarlo lo antes posible.
+
 ---
 
 ## Apoyanos (Donaciones)
