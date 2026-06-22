@@ -20,28 +20,28 @@
 
 ---
 
-## 🎯 Filosofía del Proyecto
+## Filosofía del Proyecto
 
 Fluxa nace bajo tres pilares fundamentales: **Simple, Rápido y Útil**. 
 
-En un ecosistema saturado de aplicaciones pesadas que ralentizan los dispositivos y rastrean cada interacción, Fluxa ofrece una alternativa ligera e independiente. No dependemos de los Servicios de Google Play (`GMS`) ni de la API oficial de YouTube. En su lugar, utilizamos ingeniería inversa limpia a través del motor de **NewPipe Extractor** para devolverle el control total de la experiencia multimedia al usuario.
+En un ecosistema saturado de aplicaciones pesadas que ralentizan los dispositivos y rastrean cada interacción, Fluxa ofrece una alternativa ligera e independiente. No depende de los Servicios de Google Play (`GMS`) ni de la API oficial de YouTube. En su lugar, utilizamos ingeniería inversa limpia a través del motor de **NewPipe Extractor** para devolverle el control total de la experiencia multimedia al usuario. Con un algoritmo personalizado en base a tus suscripciones, keywords y sistema de puntuación. 
 
 ---
 
-## ✨ Características Principales
+## Características Principales
 
-* **🔒 Privacidad Absoluta (Sin Cuenta de Google):** Disfruta de todo el contenido de YouTube de forma anónima. No necesitas iniciar sesión con un correo electrónico, protegiendo tu historial de rastreos y perfiles comerciales.
-* **🚫 100% Libre de Anuncios:** Una interfaz limpia y enfocada en el contenido, eliminando las interrupciones publicitarias antes, durante y después de los videos.
-* **🎬 Reproducción Adaptativa al Máximo (DASH):** Soporte de calidad de video adaptativo hasta **1080p** utilizando **ExoPlayer**, asegurando una carga eficiente y la selección de la pista óptima según tu conexión.
-* **🧠 Feed con Algoritmo Personalizado:** Tu pantalla de inicio es verdaderamente tuya. Fluxa procesa de forma local un algoritmo inteligente basado estrictamente en los canales a los que estás suscrito, sin manipulación externa de tendencias.
-* **🌐 Traducción Dinámica con IA (Estilo Metrolist):** ¿Videos en inglés, japonés o italiano? La app traduce los títulos y descripciones de forma totalmente automática e instantánea al idioma configurado en tus ajustes mediante inteligencia artificial local, sin usar APIs de pago.
-* **💾 Copias de Seguridad Locales:** Exporta e importa tus suscripciones, listas de reproducción e historial en cualquier momento mediante un archivo de respaldo local. Tu información se queda contigo.
-* **💬 Subtítulos Avanzados:** Motor de subtítulos nativo integrado que lee, mapea y renderiza perfectamente las pistas multimedia para que no te pierdas ningún detalle.
-* **🍃 Ultra Ligero:** Consumo mínimo de memoria RAM y almacenamiento, optimizado especialmente para funcionar de miedo incluso en teléfonos de gama baja.
+* **Privacidad Absoluta (Sin Cuenta de Google):** Disfruta de todo el contenido de YouTube de forma anónima. No necesitas iniciar sesión con un correo electrónico, protegiendo tu historial de rastreos y perfiles comerciales.
+* **100% Libre de Anuncios:** Una interfaz limpia y enfocada en el contenido, eliminando las interrupciones publicitarias antes, durante y después de los videos.
+* **Reproducción Adaptativa al Máximo (DASH):** Soporte de calidad de video adaptativo hasta **1080p**.
+* **Feed con Algoritmo Personalizado:** Feed totalmente personalizado. Fluxa procesa de forma local un algoritmo inteligente basado estrictamente en los canales a los que estás suscrito, sin manipulación externa de tendencias, utilizando unicamente tus keywords, visualizaciones y contenido relacionado almacenados de forma local en tu base de datos personal.
+* **Traducción Dinámica con IA** ¿Videos en inglés, japonés o portugues? La app traduce los títulos y descripciones de forma totalmente automática e instantánea al idioma configurado en tus ajustes mediante inteligencia artificial local.
+* **Copias de Seguridad Locales:** Exporta e importa tus suscripciones, listas de reproducción e historial en cualquier momento mediante un archivo de respaldo local. Tu información se queda contigo.
+* **Subtítulos Avanzados:** Motor de subtítulos nativo integrado que lee, mapea y renderiza perfectamente las pistas multimedia para que no te pierdas ningún detalle.
+* **Ultra Ligero:** Consumo mínimo de memoria RAM y almacenamiento, optimizado especialmente para funcionar de miedo incluso en teléfonos de gama baja.
 
 ---
 
-## 🛠️ Arquitectura y Tecnologías
+## Arquitectura y Tecnologías
 
 Fluxa está construida desde cero utilizando las herramientas más modernas y eficientes para el desarrollo nativo en Android:
 
@@ -54,7 +54,7 @@ Fluxa está construida desde cero utilizando las herramientas más modernas y ef
 
 ---
 
-## 📥 Instalación
+## Instalación
 
 Para instalar y probar el proyecto en tu dispositivo Android:
 
@@ -64,22 +64,22 @@ Para instalar y probar el proyecto en tu dispositivo Android:
 4. ¡Abre Fluxa y disfruta de una experiencia libre!
 
 ---
+## Bugs
 
-## ☕ Apoya el Esfuerzo (Donaciones)
+Cuentame y enviame el logcat
+---
 
-Fluxa es un proyecto desarrollado a puro pulmón por una sola persona en su tiempo libre, con el único objetivo de ofrecer una herramienta útil a la comunidad. No hay muros de pago, ni suscripciones premium falsas, ni anuncios ocultos.
+## Apoyanos (Donaciones)
 
-Si usas la aplicación o alguno de mis futuros proyectos, valoras el esfuerzo invertisimo en optimizarla y quieres apoyarme para que siga creciendo, ¡puedes invitarme a un café! Toda ayuda me motiva muchísimo a continuar refinando el código.
+Fluxa es un proyecto desarrollado con pasión, dedicación, y amor por el software libre, con el único objetivo de ofrecer una herramienta útil a la comunidad. No hay muros de pago, ni suscripciones premium falsas, ni anuncios ocultos. Si usas la aplicación o alguno de mis futuros proyectos, valoras el esfuerzo invertido en optimizarla y quieres apoyarme para que siga creciendo, ¡puedes invitarme a un café! Toda ayuda me motiva muchísimo a continuar refinando el código.
 
 💖 **[Invítame un café en Ko-fi](https://ko-fi.com/makkispacejam)**
 
 ---
 
-## 📄 Licencia
+## Licencia
 
 Este proyecto es software libre y está licenciado bajo la **GNU General Public License v3.0 (GPL-3.0)**. 
 
-Esto garantiza que el código fuente de Fluxa permanecerá siempre abierto, transparente y accesible para todos. Si deseas bifurcar (fork) el proyecto o utilizar parte de su lógica, estás legalmente obligado a compartir tu código bajo los mismos términos de esta licencia abierta.
-
 ---
-Hecho con dedicación, código y diseño por **[MakkiDev (makkispacejam99)](https://github.com/makkispacejam99)**. 🚀
+Hecho con dedicación, código y diseño por **[MakkiDev (makkispacejam99)](https://github.com/makkispacejam99)**. 
