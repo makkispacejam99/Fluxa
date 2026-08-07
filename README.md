@@ -38,7 +38,7 @@ En un ecosistema saturado de aplicaciones pesadas que ralentizan los dispositivo
 * **Traducción Dinámica con IA:** ¿Videos en inglés, japonés o portugues? La app traduce los títulos y descripciones de forma totalmente automática e instantánea al idioma configurado en tus ajustes mediante inteligencia artificial local.
 * **Copias de Seguridad Locales:** Exporta e importa tus suscripciones, listas de reproducción e historial en cualquier momento mediante un archivo de respaldo local. Tu información se queda contigo.
 * **Subtítulos Avanzados:** Motor de subtítulos nativo integrado que lee, mapea y renderiza perfectamente las pistas multimedia para que no te pierdas ningún detalle.
-* * **Reproducción Adaptativa:** Tus listas de reproducción guardan tu progreso, puedes retomarlas en cualquier momento.
+* **Reproducción Adaptativa:** Tus listas de reproducción guardan tu progreso, puedes retomarlas en cualquier momento.
 * **Ultra Ligero:** Consumo mínimo de memoria RAM y almacenamiento, optimizado especialmente para funcionar de miedo incluso en teléfonos de gama baja.
 
 ---
