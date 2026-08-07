@@ -38,6 +38,7 @@ En un ecosistema saturado de aplicaciones pesadas que ralentizan los dispositivo
 * **Traducción Dinámica con IA:** ¿Videos en inglés, japonés o portugues? La app traduce los títulos y descripciones de forma totalmente automática e instantánea al idioma configurado en tus ajustes mediante inteligencia artificial local.
 * **Copias de Seguridad Locales:** Exporta e importa tus suscripciones, listas de reproducción e historial en cualquier momento mediante un archivo de respaldo local. Tu información se queda contigo.
 * **Subtítulos Avanzados:** Motor de subtítulos nativo integrado que lee, mapea y renderiza perfectamente las pistas multimedia para que no te pierdas ningún detalle.
+* * **Reproducción Adaptativa:** Tus listas de reproducción guardan tu progreso, puedes retomarlas en cualquier momento.
 * **Ultra Ligero:** Consumo mínimo de memoria RAM y almacenamiento, optimizado especialmente para funcionar de miedo incluso en teléfonos de gama baja.
 
 ---
@@ -52,6 +53,20 @@ Fluxa está construida desde cero utilizando las herramientas más modernas y ef
 * **Core Extractor:** [NewPipe Extractor](https://github.com/TeamNewPipe/NewPipeExtractor) — El potente motor de scraping open-source que analiza y extrae feeds, metadatos y enlaces de streaming de YouTube de forma silenciosa.
 * **Traductor IA:** [Google ML Kit (On-Device Translation)](https://developers.google.com/ml-kit/language/translation) — Modelos de lenguaje de machine learning que se ejecutan directamente en el procesador del dispositivo, garantizando traducciones gratuitas, rápidas y privadas en modo offline.
 * **Base de Datos:** [Room Database](https://developer.android.com/training/data-storage/room) — Persistencia de datos local robusta con arquitectura reactiva para tus listas y suscripciones.
+
+---
+## Capturas de Pantalla
+
+<p align="center">
+  <img src="art/screenshots/1.jpg" width="200">
+  <img src="art/screenshots/2.jpg" width="200">
+  <img src="art/screenshots/3.jpg" width="200">
+  <img src="art/screenshots/4.jpg" width="200">
+  <img src="art/screenshots/5.jpg" width="200">
+  <img src="art/screenshots/6.jpg" width="200">
+  <img src="art/screenshots/7.jpg" width="200">
+  <img src="art/screenshots/8.jpg" width="200">
+</p>
 
 ---
 
