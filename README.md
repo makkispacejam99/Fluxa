@@ -58,18 +58,21 @@ Fluxa está construida desde cero utilizando las herramientas más modernas y ef
 ## Capturas de Pantalla
 
 <p align="center">
-  <img src="art/screenshots/1.jpg" width="150">
-  <img src="art/screenshots/2.jpg" width="150">
-  <img src="art/screenshots/3.jpg" width="150">
-  <img src="art/screenshots/4.jpg" width="150">
-  <img src="art/screenshots/5.jpg" width="150">
-  <img src="art/screenshots/6.jpg" width="150">
-  <img src="art/screenshots/7.jpg" width="150">
-  <img src="art/screenshots/8.jpg" width="150">
-  <img src="art/screenshots/9.jpg" width="150">
-  <img src="art/screenshots/10.jpg" width="150">
-  <img src="art/screenshots/11.jpg" width="150">
-  <img src="art/screenshots/12.jpg" width="150">
+  <img src="art/screenshots/1.jpg" width="200">
+  <img src="art/screenshots/2.jpg" width="200">
+  <img src="art/screenshots/3.jpg" width="200">
+  <img src="art/screenshots/4.jpg" width="200">
+  <img src="art/screenshots/5.jpg" width="200">
+  <img src="art/screenshots/6.jpg" width="200">
+</p>
+
+<p align="center">
+  <img src="art/screenshots/7.jpg" width="200">
+  <img src="art/screenshots/8.jpg" width="200">
+  <img src="art/screenshots/9.jpg" width="200">
+  <img src="art/screenshots/10.jpg" width="200">
+  <img src="art/screenshots/11.jpg" width="200">
+  <img src="art/screenshots/12.jpg" width="200">
 </p>
 
 ---
