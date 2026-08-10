@@ -1,0 +1,56 @@
+# Built outputs
+build/
+app/build/
+**/build/
+
+# Gradle
+.gradle/
+app/.gradle/
+
+# Kotlin
+.kotlin/
+
+# IDE
+.idea/
+*.iml
+
+# Local config
+local.properties
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Release artifacts
+app/release/
+
+# Generated
+**/generated/
+
+# Signing & secrets
+*.jks
+*.keystore
+*.jks.key
+keystore.properties
+signing.properties
+**/signing.properties
+.env
+.env.*
+google-services.json
+
+# Android Studio
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Logs & dumps
+*.log
+*.hprof
+
+# Artifacts
+*.apk
+*.aab
+
+# JetBrains Fleet
+.fleet/
