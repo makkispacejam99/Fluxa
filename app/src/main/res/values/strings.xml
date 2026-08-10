@@ -1,0 +1,283 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">Fluxa</string>
+    <string name="settings_title">Settings</string>
+    <string name="section_general">General</string>
+    <string name="appearance">Appearance</string>
+    <string name="select_appearance">Select Appearance</string>
+    <string name="language">Language</string>
+    <string name="video_quality">Video Quality</string>
+    <string name="region">Region</string>
+    <string name="select_language">Select Language</string>
+    <string name="select_region">Select Content Region</string>
+    <string name="quality_default">Select default quality</string>
+    <string name="quality_1080p">1080p (FHD)</string>
+    <string name="quality_720p">720p (HD)</string>
+    <string name="quality_480p">480p</string>
+    <string name="quality_360p">360p</string>
+    <string name="quality_data_saving">Data saving</string>
+    <string name="section_account_security">Account &amp; Security</string>
+    <string name="import_youtube_csv">Import Channels from YouTube</string>
+    <string name="import_youtube_csv_desc">Load your subscriptions using a Google Takeout (.csv) file.</string>
+    <string name="import_youtube_csv_dialog">Follow these steps:\n1. Go to Google Takeout.\n2. Deselect all and select only YouTube.\n3. In \"Multiple formats\", ensure subscriptions is set to CSV.\n4. Create export and download.\n5. Select the subscriptions.csv file here.</string>
+    <string name="import_backup">Import Backup</string>
+    <string name="import_backup_desc">Load your subscriptions and lists</string>
+    <string name="export_backup">Export Backup</string>
+    <string name="export_backup_desc">Save your subscriptions and lists</string>
+    <string name="clear_user_data">Clear User Data</string>
+    <string name="clear_user_data_desc">Clear your local data</string>
+    <string name="section_info">Information</string>
+    <string name="support">Support</string>
+    <string name="support_desc">Report on our official channel</string>
+    <string name="donate">Support</string>
+    <string name="donate_desc">Support us with a coffee</string>
+    <string name="about_us">About Us</string>
+    <string name="about_us_desc">Learn more about Fluxa</string>
+    <string name="export_dialog_text">A .json file will be created with your subscriptions and custom lists. Select a location to save it.</string>
+    <string name="import_dialog_text">Your subscriptions and custom lists will be imported from a .json file. This will overwrite existing data. It is recommended to restart the application after importing.</string>
+    <string name="clear_data_dialog_title">Clear all data</string>
+    <string name="clear_data_dialog_text">This action will permanently delete all your subscriptions, playlists, and history. The application will restart.</string>
+    <string name="continue_btn">Continue</string>
+    <string name="cancel_btn">Cancel</string>
+    <string name="confirm_btn">Confirm</string>
+    <string name="support_project">Support the project!</string>
+    <string name="support_project_desc">If you enjoy Fluxa and want to support my work, you can buy me a coffee.</string>
+    <string name="buy_coffee">Buy me a coffee!</string>
+    <string name="our_networks">Our Networks</string>
+    <string name="join_community">Join our community to receive news or report bugs.</string>
+    <string name="close_btn">Close</string>
+    <string name="accept_btn">Accept</string>
+    <string name="lead_developer">Lead Developer</string>
+    <string name="about_dev_text">Hi, I\'m Leonel Rodriguez, though some know me as Makkispacejam, MakkiDev or simply Makki. I created Fluxa with a simple idea. To be a modern, secure and private alternative to YouTube, without ads or distractions. Just you and your favorite content, nothing more.</string>
+    <string name="check_updates">Check for Updates</string>
+    <string name="app_version_info">Fluxa %1$s | by makkispacejam</string>
+    <string name="backup_exported">Backup exported successfully.</string>
+    <string name="backup_export_error">Error exporting backup: %1$s</string>
+    <string name="export_cancelled">Export canceled.</string>
+    <string name="import_success">Data imported successfully. The app will restart to apply the changes.</string>
+    <string name="import_subs_success">Subscriptions imported successfully.</string>
+    <string name="import_error">Error importing data: %1$s</string>
+    <string name="import_cancelled">Import canceled.</string>
+    <string name="invalid_file_format">It seems you have selected the incorrect file format. Please import the corresponding file.</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="amoled_mode">Amoled Dark</string>
+    <string name="amoled_mode_desc">True black for OLED screens</string>
+
+    <string name="lang_english">English</string>
+    <string name="lang_spanish">Spanish</string>
+    <string name="lang_portuguese">Portuguese</string>
+    <string name="lang_french">French</string>
+    <string name="lang_japanese">Japanese</string>
+
+    <string name="content_translation" tools:ignore="MissingTranslation">Content Translation</string>
+    <string name="content_translation_desc" tools:ignore="MissingTranslation">Translate video titles and descriptions</string>
+    <string name="select_translation_lang" tools:ignore="MissingTranslation">Select Translation</string>
+    <string name="none" tools:ignore="MissingTranslation">None</string>
+    <string name="download" tools:ignore="MissingTranslation">Download</string>
+    <string name="delete" tools:ignore="MissingTranslation">Delete</string>
+    <string name="downloading" tools:ignore="MissingTranslation">Downloading…</string>
+
+    <string name="region_hn">Honduras</string>
+    <string name="region_mx">Mexico</string>
+    <string name="region_ar">Argentina</string>
+    <string name="region_co">Colombia</string>
+    <string name="region_es">Spain</string>
+    <string name="region_us">United States</string>
+    <string name="region_br">Brazil</string>
+    <string name="region_cl">Chile</string>
+    <string name="region_pe">Peru</string>
+    <string name="region_gb">United Kingdom</string>
+    <string name="region_jp">Japan</string>
+
+    <string name="nav_home" tools:ignore="MissingTranslation">Home</string>
+    <string name="nav_shorts" tools:ignore="MissingTranslation">Shorts</string>
+    <string name="nav_library" tools:ignore="MissingTranslation">Library</string>
+    <string name="nav_settings" tools:ignore="MissingTranslation">Settings</string>
+
+    <string name="welcome_tagline" tools:ignore="MissingTranslation">Your content, your rules.</string>
+    <string name="welcome_next" tools:ignore="MissingTranslation">Next</string>
+    <string name="intro_no_ads_title" tools:ignore="MissingTranslation">No Interruptions</string>
+    <string name="intro_no_ads_desc" tools:ignore="MissingTranslation">Enjoy your favorite videos without ads.</string>
+    <string name="intro_no_subs_title" tools:ignore="MissingTranslation">No Subscriptions</string>
+    <string name="intro_no_subs_desc" tools:ignore="MissingTranslation">100% Free and Open Source</string>
+    <string name="intro_get_started" tools:ignore="MissingTranslation">Get Started</string>
+
+    <string name="blocked_channels">Blocked channels</string>
+    <string name="your_subscriptions">Your subscriptions</string>
+    <string name="search_blocked">Search blocked</string>
+    <string name="search_subscriptions">Search subscriptions</string>
+    <string name="no_blocked_channels">No blocked channels</string>
+    <string name="no_subscriptions_yet">No subscriptions yet</string>
+    <string name="unsubscribe_title">Unsubscribe</string>
+    <string name="unsubscribe_confirm">Are you sure you want to stop following %1$s?</string>
+    <string name="unblock_title">Unblock channel</string>
+    <string name="unblock_confirm">Do you want to receive recommendations from %1$s again?</string>
+    <string name="btn_unblock">Unblock</string>
+    <string name="btn_unsubscribe">Unsubscribe</string>
+    <string name="status_blocked">Blocked</string>
+    <string name="status_subscribed">Subscribed</string>
+    <string name="no_recommend_video">Don\'t recommend this video</string>
+    <string name="block_channel">Block channel</string>
+    <string name="msg_no_recommend">This video won\'t be recommended</string>
+    <string name="msg_channel_blocked">Creator blocked</string>
+    <string name="options_title">Options</string>
+    <string name="video_quality_short">Video quality</string>
+    <string name="audio_quality_short">Audio track</string>
+    <string name="share_short">Share</string>
+    <string name="link_copied">Link copied!</string>
+    <string name="related_videos_title">You might also like</string>
+    <string name="already_watched">I\'ve already watched this</string>
+    <string name="already_watched_msg">Video marked as watched</string>
+    <string name="search_placeholder">Search videos</string>
+    <string name="filter_all">All</string>
+    <string name="filter_videos">Videos</string>
+    <string name="filter_channels">Channels</string>
+    <string name="filter_playlists">Playlists</string>
+    <string name="filter_live">Live</string>
+    <string name="subscribed">Subscribed</string>
+    <string name="subscribe">Subscribe</string>
+    <string name="no_content_uploaded">This creator has no %1$s uploaded.</string>
+    <string name="live_status">🔴 Live</string>
+    <string name="already_in_playlist">Already in the list</string>
+    <string name="playlist_count_format">%1$d videos • Playlist</string>
+    <string name="edit">Edit</string>
+    <string name="unselect_all">Unselect all</string>
+    <string name="select_all">Select all</string>
+    <string name="delete_count">Delete (%1$d)</string>
+    <string name="delete_from_playlist">Delete from playlist</string>
+    <string name="delete_videos_title">Delete videos</string>
+    <string name="delete_videos_confirm">Are you sure? This action cannot be undone. %1$d video(s) will be removed from this playlist.</string>
+    <string name="play">Play</string>
+    <string name="shuffle">Shuffle</string>
+    <string name="import_playlist">Import</string>
+    <string name="import_playlist_title">Import to %1$s</string>
+    <string name="import_playlist_hint">Paste playlist URL here</string>
+    <string name="import_playlist_instructions">Paste a YouTube or NewPipe playlist link. Only new videos will be added.</string>
+    <string name="import_playlist_note">If the source playlist has new videos, you can paste the link again anytime to update.</string>
+    <string name="import_playlist_loading">Importing videos…</string>
+    <string name="import_playlist_success">Videos imported successfully.</string>
+    <string name="import_playlist_error">Could not load the playlist. Check the URL.</string>
+    <string name="import_playlist_empty">The playlist is empty or unavailable.</string>
+    <string name="import_playlist_no_url">Please enter a valid URL.</string>
+    <string name="import_playlist_result">%1$d added · %2$d already existed</string>
+    <string name="no_videos_playlist">No videos in this playlist</string>
+    <string name="add_videos_first">Go and add some first</string>
+    <string name="views_format_m">%1$.1fM views</string>
+    <string name="views_format_k">%1$.1fk views</string>
+    <string name="views_format">%1$d views</string>
+    <string name="progress_saved">Progress saved</string>
+    <string name="saved_to_later">Saved to Watch Later</string>
+    <string name="saved_to_playlist">Saved to %1$s</string>
+    <string name="watch_later">Watch Later</string>
+    <string name="add_to_playlist">Add to playlist</string>
+    <string name="status_active">Active</string>
+    <string name="error_no_internet">It seems you have no connection.</string>
+    <string name="error_empty_feed">The feed is empty. Try reloading.</string>
+    <string name="error_server">We couldn\'t load the feed. Try again in a few seconds.</string>
+    <string name="msg_importing_data">Importing data…</string>
+    <string name="msg_importing_subs">Importing subscriptions…</string>
+    <string name="video_error_title">Video load error</string>
+    <string name="video_error_desc">Try reloading or choose another video.</string>
+    <string name="retry_btn">Reload</string>
+
+    <string name="tus_canales">Your Channels</string>
+    <string name="ver_todo">View All</string>
+    <string name="historial">History</string>
+    <string name="no_history_yet">You haven\'t watched any videos yet</string>
+    <string name="tus_listas">Your Playlists</string>
+    <string name="agregar">Add</string>
+    <string name="playlist_limit_reached">Wow, it looks like you\'ve reached the playlist limit. Delete some to continue.</string>
+    <string name="videos_guardados">Saved videos</string>
+    <string name="favoritos">Favorites</string>
+    <string name="tus_videos_preferidos">Your preferred videos</string>
+    <string name="lista_personalizada">Custom playlist</string>
+    <string name="nueva_lista_reproducion">New playlist</string>
+    <string name="nombre_de_la_lista">Playlist name</string>
+    <string name="crear">Create</string>
+    <string name="renombrar_lista">Rename playlist</string>
+    <string name="nuevo_nombre">New name</string>
+    <string name="guardar">Save</string>
+    <string name="editar_nombre">Edit name</string>
+    <string name="borrar_lista">Delete playlist</string>
+    <string name="limpiar_historial">Clear history</string>
+
+    <string name="funny_msg_1">Just one more video...</string>
+    <string name="funny_msg_2">Sleeping late thanks to Fluxa</string>
+    <string name="funny_msg_3">Losing track of time</string>
+    <string name="funny_msg_4">Fluxa: My safe place on the internet</string>
+    <string name="funny_msg_5">Loading more fun...</string>
+    <string name="funny_msg_6">Skipping ads like a pro</string>
+    <string name="funny_msg_7">In a serious relationship with my playlists</string>
+    <string name="funny_msg_8">Searching for the forbidden video</string>
+    <string name="funny_msg_9">My history says a lot about me</string>
+    <string name="funny_msg_10">Fluxa Lover since day 1</string>
+
+    <string name="speed_dialog_title">Speed</string>
+    <string name="speed_normal">Normal (1.0x)</string>
+    <string name="subtitles_dialog_title">Subtitles</string>
+    <string name="subtitles_off">Off</string>
+    <string name="audio_tracks_dialog_title">Audio Track</string>
+    <string name="audio_default">Default</string>
+    <string name="unknown_audio">Unknown Audio</string>
+    <string name="comments_title">Comments</string>
+    <string name="comments_disabled_or_unavailable">Comments are disabled or unavailable.</string>
+    <string name="user_placeholder">User</string>
+    <string name="time_recent">recent</string>
+    <string name="time_min_ago">minutes ago</string>
+    <string name="time_hours_ago">%1$dh ago</string>
+    <string name="time_days_ago">%1$dd ago</string>
+    <string name="editing_queue">Editing queue</string>
+    <string name="playback_queue">Playback queue</string>
+    <string name="repeat">Repeat</string>
+    <string name="queue_empty">The queue is empty</string>
+    <string name="reorder">Reorder</string>
+    <string name="me_gusta">Like</string>
+    <string name="no_me_gusta">Dislike</string>
+    <string name="more_options">More</string>
+    <string name="show_more">Show more</string>
+    <string name="show_less">Show less</string>
+    <string name="show_all">Show all</string>
+    <string name="already_in_playlist_msg">This video already exists in the playlist</string>
+    <string name="active">Active</string>
+    <string name="quality_4k">4K (Ultra HD)</string>
+    <string name="quality_2k">2K (QHD)</string>
+    <string name="quality_480p_balanced">480p (Balanced)</string>
+    <string name="quality_360p_saving">360p (Data Saving)</string>
+    <string name="quality_240p_saving">240p (Max Saving)</string>
+    <string name="shorts_cooldown_msg">Creators are uploading new content, come back later</string>
+    <string name="video_age_restricted_title">Age-restricted video</string>
+    <string name="video_age_restricted_desc">This video requires age verification. Open it in your browser to watch it.</string>
+    <string name="video_age_restricted_open">Open in YouTube</string>
+    <string name="error_connecting">Error connecting</string>
+    <string name="loading">Loading...</string>
+    <string name="channel_not_found">Channel not found</string>
+    <string name="error_quality_change">Could not change quality</string>
+    <string name="error_stream_fetch">Could not get the stream</string>
+    <string name="error_connect_server">Could not connect to the server.</string>
+    <string name="error_detail_load">Could not load detailed information.</string>
+    <string name="error_video_load">Could not load the video.</string>
+    <string name="error_info_load">Could not get information.</string>
+    <string name="latest_uploads">Recientes</string>
+    <string name="notifications_empty">No new notifications</string>
+    <string name="recents_no_subscriptions">You\'re not subscribed to any channel. Subscribe to one first.</string>
+    <string name="update_available_title">New update available</string>
+    <string name="update_available_text">A new version of Fluxa is available.\n\nCurrent: %1$s\nNew: %2$s\n\nWould you like to update?</string>
+    <string name="update_check_title">Check for updates</string>
+    <string name="update_check_text">You will be redirected to the official Fluxa GitHub page.\n\n1) Download the latest APK\n2) Install it\n3) Enjoy!\n\nTip: Check the version code on your phone to make sure you have the latest version.</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_no_updates">No updates available</string>
+    <string name="update_downloading">Downloading update…</string>
+    <string name="update_install_prompt">Download complete. Install the update?</string>
+    <string name="update_error">Could not check for updates</string>
+    <string name="watched_badge">Watched</string>
+    <string name="thumbnail_label">Thumbnail</string>
+    <string name="thumbnail_desc">Video Thumbnail</string>
+    <string name="adjust_image">Adjust image</string>
+    <string name="play_pause">Play/Pause</string>
+    <string name="save_btn">Save</string>
+    <string name="save_to_playlist">Save to Playlist</string>
+    <string name="favorites">Favorites</string>
+    <string name="load_more">Load more</string>
+    <string name="resume_playlist">Resume?</string>
+</resources>
