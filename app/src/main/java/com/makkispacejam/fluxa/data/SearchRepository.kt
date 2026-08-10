@@ -41,7 +41,7 @@ object SearchRepository {
 
             val items = mutableListOf<HomeFeedItem>()
             val page1Items = searchExtractor.initialPage.items ?: emptyList()
-            items.addAll(mapInfoItems(page1Items, query, filter))
+            items.addAll(mapInfoItems(page1Items))
 
             val nextPage: Page? = if (searchExtractor.initialPage.hasNextPage()) searchExtractor.initialPage.nextPage else null
 
@@ -77,7 +77,7 @@ object SearchRepository {
             searchExtractor.fetchPage()
 
             val nextPageItems = searchExtractor.getPage(nextPageUrl)
-            val items = mapInfoItems(nextPageItems.items ?: emptyList(), query, filter)
+            val items = mapInfoItems(nextPageItems.items ?: emptyList())
 
             val nextPage: Page? = if (nextPageItems.hasNextPage()) nextPageItems.nextPage else null
 
@@ -88,9 +88,7 @@ object SearchRepository {
     }
 
     private fun mapInfoItems(
-        rawItems: List<org.schabi.newpipe.extractor.InfoItem>,
-        query: String,
-        filter: String
+        rawItems: List<org.schabi.newpipe.extractor.InfoItem>
     ): List<HomeFeedItem> {
         return rawItems.mapNotNull { item ->
             when (item) {
@@ -105,8 +103,6 @@ object SearchRepository {
                     } catch (_: Exception) { false }
                     if (item.contentAvailability != org.schabi.newpipe.extractor.stream.ContentAvailability.AVAILABLE ||
                         !isPlayable || !hasDuration || isAgeRestricted) return@mapNotNull null
-
-                    if (filter == "En Vivo" && !isLiveStream) return@mapNotNull null
 
                     val url = item.url ?: return@mapNotNull null
                     val id = when {
@@ -127,7 +123,7 @@ object SearchRepository {
                         channelAvatarUrl = item.uploaderAvatars.firstOrNull()?.url ?: "",
                         thumbnailUrl = ThumbnailUtils.getBestThumbnailUrl(id, item.thumbnails.firstOrNull()?.url),
                         viewCount = try { item.viewCount } catch (_: Exception) { 0L },
-                        durationSeconds = item.duration,
+                        durationSeconds = if (isLiveStream) 0 else item.duration,
                         publishedTime = item.textualUploadDate ?: "",
                         timestamp = try { item.uploadDate?.instant?.toEpochMilli() ?: 0L } catch(_: Exception) { 0L },
                         itemType = if (isLiveStream) HomeFeedItemType.LIVE else HomeFeedItemType.VIDEO

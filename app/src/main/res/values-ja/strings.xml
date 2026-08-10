@@ -136,6 +136,9 @@
     <string name="subscribe">チャンネル登録</string>
     <string name="no_content_uploaded">このクリエイターは%1$sをアップロードしていません。</string>
     <string name="live_status">🔴 ライブ</string>
+    <string name="live_badge">ライブ</string>
+    <string name="search_no_results">結果が見つかりません</string>
+    <string name="search_no_live">現在ライブ配信はありません。別の検索を試してください。</string>
     <string name="already_in_playlist">すでにリストにあります</string>
     <string name="playlist_count_format">%1$d 本の動画 • プレイリスト</string>
     <string name="edit">編集</string>

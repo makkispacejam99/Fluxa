@@ -44,7 +44,6 @@ import kotlin.collections.getOrNull
 
 /* Control de navegación y
 flujo de la app entre menus */
-
 @OptIn(UnstableApi::class)
 @Composable
 fun AppNavigation() {
@@ -273,8 +272,10 @@ fun AppNavigation() {
                     innerPadding = innerPadding,
                     openedFromCollections = openedPlaylistFromCollections,
                     onPlaylistClick = onPlaylistFromChannel,
-                    onVideoClick = { title, videoId, channelName ->
-                        val matchedThumb = videoViewModel.videoList.find { it.id == videoId }?.imageUrl ?: ""
+                    onVideoClick = { title, videoId, channelName, thumbnailUrl ->
+                        val matchedThumb = thumbnailUrl.ifEmpty {
+                            videoViewModel.videoList.find { it.id == videoId }?.imageUrl ?: ""
+                        }
                         previousDetailView = activeDetailView
                         previousChannelName = detailChannel
                         detailVideoId = videoId

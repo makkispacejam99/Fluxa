@@ -14,7 +14,7 @@ android {
         minSdk = 31
         //noinspection EditedTargetSdkVersion,OldTargetApi
         targetSdk = 38
-        versionCode = 65
+        versionCode = 66
         versionName = "1.0.0-STABLE"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -101,6 +101,7 @@ dependencies {
     implementation("com.github.teamnewpipe:NewPipeExtractor:0.26.4")
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.exoplayer.dash)
+    implementation(libs.androidx.media3.exoplayer.hls)
     implementation(libs.mlkit.translate)
     implementation(libs.mlkit.language.id)
     implementation(libs.kotlinx.coroutines.play.services)

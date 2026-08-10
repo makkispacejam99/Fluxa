@@ -41,7 +41,7 @@ fun ScreenOverlay(
     innerPadding: PaddingValues,
     openedFromCollections: Boolean = false,
     onPlaylistClick: (String, String) -> Unit,
-    onVideoClick: (String, String, String) -> Unit,
+    onVideoClick: (String, String, String, String) -> Unit,
     onPlayPlaylist: (List<FluxaStreamItem>, Int, Boolean, Boolean) -> Unit = { _, _, _, _ -> },
     onChannelClick: (String) -> Unit = {},
     playerViewModel: PlayerViewModel? = null,
@@ -79,8 +79,8 @@ fun ScreenOverlay(
                         DetailView.Channel -> ChannelProfileScreen(
                             channelName = detailChannel,
                             onPlaylistClick = onPlaylistClick,
-                            onVideoClick = { title, videoId, _ ->
-                                onVideoClick(title, videoId, detailChannel)
+                            onVideoClick = { title, videoId, channel, thumb ->
+                                onVideoClick(title, videoId, channel, thumb)
                             },
                             channelViewModel = channelViewModel
                         )

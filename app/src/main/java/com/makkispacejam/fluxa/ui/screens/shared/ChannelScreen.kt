@@ -21,6 +21,7 @@ import com.makkispacejam.fluxa.ui.components.core.*
 import com.makkispacejam.fluxa.ui.components.dialogs.VideoOptionsMenu
 import com.makkispacejam.fluxa.ui.components.player.playlist.PlaylistSelectionDialog
 import com.makkispacejam.fluxa.ui.components.system.NotificationBanner
+import com.makkispacejam.fluxa.utils.ThumbnailUtils
 import com.makkispacejam.fluxa.viewmodels.user.InteractionViewModel
 import com.makkispacejam.fluxa.viewmodels.content.VideoViewModel
 
@@ -29,7 +30,7 @@ import com.makkispacejam.fluxa.viewmodels.content.VideoViewModel
 fun ChannelProfileScreen(
     channelName: String,
     onPlaylistClick: (String, String) -> Unit,
-    onVideoClick: (String, String, String) -> Unit,
+    onVideoClick: (String, String, String, String) -> Unit,
     channelViewModel: ChannelViewModel = viewModel(),
     interactionVM: InteractionViewModel = viewModel(),
     videoVM: VideoViewModel = viewModel()
@@ -99,7 +100,7 @@ fun ChannelProfileScreen(
                                 }
                                 VideoCard(title = video.title, channel = channelName, views = formattedViews, duration = formattedDuration, progress = progress,
                                     publishedTime = video.uploadDate, thumbnailUrl = video.url, uploaderAvatarUrl = channelViewModel.channelAvatarUrl ?: "",
-                                    isWatched = watchedSet.contains(videoId), onChannelClick = { }, onVideoClick = { _, _ -> onVideoClick(video.title, videoId, channelName) },
+                                    isWatched = watchedSet.contains(videoId), onChannelClick = { }, onVideoClick = { _, _ -> onVideoClick(video.title, videoId, channelName, ThumbnailUtils.getHighQualityThumbnail(video.url)) },
                                     onOptionsClick = { selectedVideoForOptions = video })
                             }
                         }
@@ -118,9 +119,14 @@ fun ChannelProfileScreen(
                                     if (interaction == null || live.duration <= 0L) 0f
                                     else (interaction!!.progressMs.toFloat() / (live.duration * 1000f)).let { if (it >= 0.95f) 0f else it.coerceIn(0f, 1f) }
                                 }
-                                VideoCard(title = live.title, channel = channelName, views = stringResource(R.string.live_status), progress = progress, duration = "LIVE",
-                                    publishedTime = live.uploadDate, thumbnailUrl = live.url, uploaderAvatarUrl = channelViewModel.channelAvatarUrl ?: "",
-                                    isWatched = watchedSet.contains(videoId), onChannelClick = { }, onVideoClick = { _, _ -> onVideoClick(live.title, videoId, channelName) },
+                                val formattedViews = when {
+                                    live.views >= 1_000_000 -> stringResource(R.string.views_format_m, live.views / 1_000_000f)
+                                    live.views >= 1_000 -> stringResource(R.string.views_format_k, live.views / 1_000f)
+                                    else -> stringResource(R.string.views_format, live.views)
+                                }
+                                VideoCard(title = live.title, channel = channelName, views = formattedViews, progress = progress, duration = "LIVE",
+                                    publishedTime = "", thumbnailUrl = live.url, uploaderAvatarUrl = channelViewModel.channelAvatarUrl ?: "",
+                                    isWatched = watchedSet.contains(videoId), isLive = true, onChannelClick = { }, onVideoClick = { _, _ -> onVideoClick(live.title, videoId, channelName, ThumbnailUtils.getHighQualityThumbnail(live.url)) },
                                     onOptionsClick = { selectedVideoForOptions = live })
                             }
                         }

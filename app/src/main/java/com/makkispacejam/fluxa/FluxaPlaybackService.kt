@@ -26,6 +26,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.source.SingleSampleMediaSource
+import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
@@ -204,7 +205,7 @@ class FluxaPlaybackService : MediaSessionService() {
                 val currentPos = player.currentPosition
                 val delta = currentBuffered - lastBuffered
 
-                if (player.playbackState == Player.STATE_BUFFERING) {
+                if (player.playbackState == Player.STATE_BUFFERING && !player.isCurrentMediaItemLive) {
                     if (delta <= 0L) {
                         stallCount++
                         if (stallCount >= 4) {
@@ -264,7 +265,12 @@ class FluxaPlaybackService : MediaSessionService() {
             .setMediaMetadata(metadata)
             .setSubtitleConfigurations(subtitles)
 
-        val finalSource = if (videoUrl.contains("|")) {
+        val isHls = videoUrl.contains("manifest/hls") || videoUrl.endsWith(".m3u8")
+
+        val finalSource = if (isHls) {
+            HlsMediaSource.Factory(httpDataSourceFactory)
+                .createMediaSource(mediaItemBuilder.build())
+        } else if (videoUrl.contains("|")) {
             val parts = videoUrl.split("|")
             val videoSource = ProgressiveMediaSource.Factory(chunkedDataSourceFactory)
                 .createMediaSource(MediaItem.Builder().setUri(parts[0]).setMediaMetadata(metadata).build())
@@ -311,6 +317,7 @@ class FluxaPlaybackService : MediaSessionService() {
                 val deadline = System.currentTimeMillis() + 5_000L
                 while (System.currentTimeMillis() < deadline) {
                     if (exoPlayer.bufferedPosition - startPositionMs >= 6_000L) break
+                    if (exoPlayer.isCurrentMediaItemLive) break
                     delay(150)
                 }
                 exoPlayer.playWhenReady = true

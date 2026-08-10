@@ -137,6 +137,9 @@
     <string name="subscribe">Inscrever-se</string>
     <string name="no_content_uploaded">Este criador não tem %1$s enviados.</string>
     <string name="live_status">🔴 Ao vivo</string>
+    <string name="live_badge">AO VIVO</string>
+    <string name="search_no_results">Nenhum resultado encontrado</string>
+    <string name="search_no_live">Sem transmissões ao vivo agora. Tente outra busca.</string>
     <string name="already_in_playlist">Já está na lista</string>
     <string name="playlist_count_format">%1$d vídeos • Playlist</string>
     <string name="edit">Editar</string>

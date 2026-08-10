@@ -28,6 +28,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.exceptions.AgeRestrictedContentException
+import org.schabi.newpipe.extractor.stream.StreamType
 
 @UnstableApi
 @Suppress("DEPRECATION", "OPT_IN_ARGUMENT_IS_NOT_MARKER")
@@ -218,8 +219,10 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 if (url != null) {
                     urlCache[videoId] = url
                     val subs = SubtitleConfigBuilder.buildConfigs(streamInfo.subtitles)
+                    val isLive = streamInfo.streamType == StreamType.LIVE_STREAM ||
+                        streamInfo.streamType == StreamType.AUDIO_LIVE_STREAM
                     val startPos = withContext(Dispatchers.IO) {
-                        if (playbackState.resetProgress || dao.isVideoWatched(videoId)) 0L
+                        if (isLive || playbackState.resetProgress || dao.isVideoWatched(videoId)) 0L
                         else dao.getInteraction(videoId)?.progressMs ?: 0L
                     }
                     withContext(Dispatchers.Main) {

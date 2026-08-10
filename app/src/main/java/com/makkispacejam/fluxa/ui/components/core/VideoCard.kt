@@ -33,7 +33,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.makkispacejam.fluxa.R
@@ -52,6 +55,7 @@ fun VideoCard(
     progress: Float = 0f,
     publishedTime: String = "",
     isWatched: Boolean = false,
+    isLive: Boolean = false,
     onOptionsClick: (() -> Unit)? = null,
     onVideoClick: (String, String) -> Unit,
     onChannelClick: (String) -> Unit = {},
@@ -217,8 +221,23 @@ fun VideoCard(
                     } else base
                 }
 
+                val liveBadge = stringResource(R.string.live_badge)
+                val liveColor = MaterialTheme.colorScheme.error
+                val metaContent = remember(metaText, isLive, liveBadge, liveColor) {
+                    buildAnnotatedString {
+                        append(channel)
+                        if (metaText.isNotEmpty()) append(" • $metaText")
+                        if (isLive) {
+                            append(" • ")
+                            withStyle(SpanStyle(color = liveColor, fontWeight = FontWeight.Bold)) {
+                                append(liveBadge)
+                            }
+                        }
+                    }
+                }
+
                 Text(
-                    text = "$channel${if (metaText.isNotEmpty()) " • $metaText" else ""}",
+                    text = metaContent,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.clickable { onChannelClick(channel) }

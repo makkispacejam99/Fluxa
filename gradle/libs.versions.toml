@@ -15,6 +15,7 @@ media3Session = "1.10.1"
 retrofit = "3.0.0"
 okhttpLogging = "5.4.0"
 media3ExoplayerDash = "1.10.1"
+media3ExoplayerHls = "1.10.1"
 media3Okhttp = "1.10.1"
 appcompat = "1.7.0"
 mlkitTranslate = "17.0.3"
@@ -47,6 +48,7 @@ retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = 
 retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttpLogging" }
 androidx-media3-exoplayer-dash = { group = "androidx.media3", name = "media3-exoplayer-dash", version.ref = "media3ExoplayerDash" }
+androidx-media3-exoplayer-hls = { group = "androidx.media3", name = "media3-exoplayer-hls", version.ref = "media3ExoplayerHls" }
 androidx-media3-datasource-okhttp = { group = "androidx.media3", name = "media3-datasource-okhttp", version.ref = "media3Okhttp" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }

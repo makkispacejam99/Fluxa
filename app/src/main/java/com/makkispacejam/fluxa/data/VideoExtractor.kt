@@ -15,6 +15,7 @@ import org.schabi.newpipe.extractor.exceptions.AgeRestrictedContentException
 import org.schabi.newpipe.extractor.exceptions.ContentNotAvailableException
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
+import org.schabi.newpipe.extractor.stream.StreamType
 
 object VideoExtractor {
 
@@ -58,6 +59,15 @@ object VideoExtractor {
     // Buscar el archivo con mejor calidad
     fun findBestStream(streamInfo: StreamInfo, targetQuality: Int): String? {
         try {
+            if (streamInfo.streamType == StreamType.LIVE_STREAM ||
+                streamInfo.streamType == StreamType.AUDIO_LIVE_STREAM
+            ) {
+                if (!streamInfo.hlsUrl.isNullOrEmpty()) {
+                    Log.d("FluxaExtractor", "Live detectado - reproduccion via HLS")
+                    return streamInfo.hlsUrl
+                }
+            }
+
             val videoOnlyStreams = streamInfo.videoOnlyStreams
                 ?.filter { it.url != null }
                 ?: emptyList()

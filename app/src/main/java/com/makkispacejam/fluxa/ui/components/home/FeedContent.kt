@@ -108,6 +108,19 @@ fun SearchResultsList(
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(3) { VideoCardSkeleton() }
             }
+        } else if (results.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (selectedFilter == "En Vivo") stringResource(R.string.search_no_live)
+                    else stringResource(R.string.search_no_results),
+                    color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            }
         } else {
             LazyColumn {
                 items(
@@ -124,17 +137,19 @@ fun SearchResultsList(
                                 if (interaction == null || item.durationSeconds <= 0L) 0f
                                 else (interaction.progressMs.toFloat() / (item.durationSeconds * 1000f)).let { if (it >= 0.95f) 0f else it.coerceIn(0f, 1f) }
                             }
+                            val isLiveItem = item.itemType == HomeFeedItemType.LIVE
 
                             VideoCard(
                                 title = item.title,
                                 channel = item.channelName,
                                 views = item.formattedViews,
-                                duration = item.formattedDuration,
+                                duration = if (isLiveItem) "LIVE" else item.formattedDuration,
                                 thumbnailUrl = item.thumbnailUrl,
                                 uploaderAvatarUrl = avatar ?: "",
                                 progress = progress,
                                 publishedTime = item.publishedTime,
                                 isWatched = watchedSet.contains(item.videoId),
+                                isLive = isLiveItem,
                                 onChannelClick = { onChannelClick(item.channelName) },
                                 onVideoClick = { _, _ -> onVideoClick(item.title, item.videoId, item.channelName, item.thumbnailUrl) },
                                 onOptionsClick = { onOptionsClick(item) }

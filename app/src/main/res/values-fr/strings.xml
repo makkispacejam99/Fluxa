@@ -137,6 +137,9 @@
     <string name="subscribe">S\'abonner</string>
     <string name="no_content_uploaded">Ce créateur n\'a pas de %1$s mis en ligne.</string>
     <string name="live_status">🔴 En direct</string>
+    <string name="live_badge">EN DIRECT</string>
+    <string name="search_no_results">Aucun résultat trouvé</string>
+    <string name="search_no_live">Aucun direct en ce moment. Essayez une autre recherche.</string>
     <string name="already_in_playlist">Déjà dans la liste</string>
     <string name="playlist_count_format">%1$d vidéos • Playlist</string>
     <string name="edit">Modifier</string>

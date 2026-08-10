@@ -139,6 +139,9 @@
     <string name="subscribe">Subscribe</string>
     <string name="no_content_uploaded">This creator has no %1$s uploaded.</string>
     <string name="live_status">🔴 Live</string>
+    <string name="live_badge">LIVE</string>
+    <string name="search_no_results">No results found</string>
+    <string name="search_no_live">No live streams right now. Try a different search.</string>
     <string name="already_in_playlist">Already in the list</string>
     <string name="playlist_count_format">%1$d videos • Playlist</string>
     <string name="edit">Edit</string>

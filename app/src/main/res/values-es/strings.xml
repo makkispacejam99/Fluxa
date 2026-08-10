@@ -139,6 +139,9 @@
     <string name="subscribe">Suscribirse</string>
     <string name="no_content_uploaded">Este creador no tiene %1$s subidos.</string>
     <string name="live_status">🔴 En vivo</string>
+    <string name="live_badge">EN VIVO</string>
+    <string name="search_no_results">No se encontraron resultados</string>
+    <string name="search_no_live">No hay directos en vivo ahora mismo. Prueba con otra búsqueda.</string>
     <string name="already_in_playlist">Ya existe en la lista</string>
     <string name="playlist_count_format">%1$d videos • Lista de reproducción</string>
     <string name="edit">Editar</string>
