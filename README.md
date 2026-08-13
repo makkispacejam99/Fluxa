@@ -103,4 +103,4 @@ Fluxa es un proyecto desarrollado con pasión, dedicación, y amor por el softwa
 Este proyecto es software libre y está licenciado bajo la **GNU General Public License v3.0 (GPL-3.0)**. 
 
 ---
-Hecho con dedicación, código y diseño por **[MakkiDev (makkispacejam99)](https://github.com/makkispacejam99)**. 
+Hecho con amor y dedicación. Diseñado por **[MakkiDev (makkispacejam99)](https://github.com/makkispacejam99)**. 
