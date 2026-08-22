@@ -36,6 +36,7 @@ import com.makkispacejam.fluxa.ui.components.shorts.overlays.PlayPauseFeedback
 import com.makkispacejam.fluxa.ui.components.shorts.overlays.ShortsInfoBar
 import com.makkispacejam.fluxa.ui.components.shorts.overlays.ShortsSlider
 import com.makkispacejam.fluxa.ui.components.shorts.overlays.SpeedBanner
+import com.makkispacejam.fluxa.ui.components.system.NotificationBanner
 import com.makkispacejam.fluxa.video.shorts.ShortsComments
 import com.makkispacejam.fluxa.video.shorts.VideoPlayer
 import com.makkispacejam.fluxa.data.UserPreferences
@@ -69,7 +70,8 @@ fun ShortItem(
     isFocused: Boolean,
     isLoadingAvatar: Boolean = false,
     interactionVM: InteractionViewModel = viewModel(),
-    videoViewModel: com.makkispacejam.fluxa.viewmodels.content.VideoViewModel = viewModel()
+    videoViewModel: com.makkispacejam.fluxa.viewmodels.content.VideoViewModel = viewModel(),
+    isIncognito: Boolean = false
 ) {
     val commentsViewModel: CommentsViewModel = viewModel()
     val videoInteraction by interactionVM.getInteraction(videoId).collectAsState(initial = null)
@@ -97,6 +99,9 @@ fun ShortItem(
     var showMoreOptions by remember { mutableStateOf(false) }
     var availableAudioTracks by remember { mutableStateOf<List<AudioStream>>(emptyList()) }
     var selectedAudioTrackDisplay by remember { mutableStateOf("") }
+
+    var showGuestBanner by remember { mutableStateOf(false) }
+    var guestBannerText by remember { mutableStateOf("") }
 
     val hasValidAudioTracks = remember(availableAudioTracks) {
         availableAudioTracks.any { it.audioLocale != null || !it.audioTrackName.isNullOrBlank() }
@@ -201,7 +206,7 @@ fun ShortItem(
                         },
                         onLongPress = {},
                         onDoubleTap = {
-                            if (!isLiked) {
+                            if (!isIncognito && !isLiked) {
                                 interactionVM.toggleLike(videoId, title, channelName)
                                 isLiked = true
                                 isDisliked = false
@@ -288,7 +293,12 @@ fun ShortItem(
                     interactionVM.toggleDislike(videoId, title, channelName)
                     onDismissShort(videoId)
                 },
-                onMoreClick = { showMoreOptions = true }
+                onMoreClick = { showMoreOptions = true },
+                isIncognito = isIncognito,
+                onDisabledClick = {
+                    guestBannerText = context.getString(R.string.incognito_action_blocked)
+                    showGuestBanner = true
+                }
             )
         }
 
@@ -355,8 +365,16 @@ fun ShortItem(
                     onBlockChannel(channelId ?: "")
                     Toast.makeText(context, context.getString(R.string.msg_channel_blocked), Toast.LENGTH_SHORT).show()
                 },
-                hasValidAudioTracks = hasValidAudioTracks
+                hasValidAudioTracks = hasValidAudioTracks,
+                isIncognito = isIncognito
             )
         }
+
+        NotificationBanner(
+            visible = showGuestBanner,
+            text = guestBannerText,
+            onDismiss = { showGuestBanner = false },
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
     }
 }

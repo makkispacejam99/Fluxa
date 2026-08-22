@@ -45,6 +45,7 @@ fun VideoOptionsMenu(
     onAddToPlaylist: () -> Unit,
     onShare: () -> Unit,
     showExtraOptions: Boolean = true,
+    isIncognito: Boolean = false,
     onMarkAsWatched: () -> Unit = {},
     onNoRecommend: () -> Unit = {},
     onBlockChannel: () -> Unit = {},
@@ -71,22 +72,24 @@ fun VideoOptionsMenu(
                 skipTranslation = MusicChannelUtils.isMusicContent(channelName, title)
             )
 
-            OptionMenuItem(
-                icon = Icons.Rounded.Schedule,
-                label = stringResource(R.string.watch_later),
-                onClick = {
-                    onSaveLater()
-                    onDismiss()
-                }
-            )
-            OptionMenuItem(
-                icon = Icons.AutoMirrored.Rounded.PlaylistAdd,
-                label = stringResource(R.string.add_to_playlist),
-                onClick = {
-                    onAddToPlaylist()
-                    onDismiss()
-                }
-            )
+            if (!isIncognito) {
+                OptionMenuItem(
+                    icon = Icons.Rounded.Schedule,
+                    label = stringResource(R.string.watch_later),
+                    onClick = {
+                        onSaveLater()
+                        onDismiss()
+                    }
+                )
+                OptionMenuItem(
+                    icon = Icons.AutoMirrored.Rounded.PlaylistAdd,
+                    label = stringResource(R.string.add_to_playlist),
+                    onClick = {
+                        onAddToPlaylist()
+                        onDismiss()
+                    }
+                )
+            }
             OptionMenuItem(
                 icon = Icons.Rounded.Share,
                 label = stringResource(R.string.share_short),
@@ -108,7 +111,7 @@ fun VideoOptionsMenu(
                 )
             }
 
-            if (showExtraOptions) {
+            if (showExtraOptions && !isIncognito) {
                 HorizontalDivider(
                     modifier = Modifier.padding(vertical = 8.dp),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)

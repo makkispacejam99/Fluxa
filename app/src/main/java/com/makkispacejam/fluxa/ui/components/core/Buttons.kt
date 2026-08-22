@@ -23,12 +23,18 @@ fun ActionButton(
     text: String? = null,
     icon: ImageVector,
     isActive: Boolean = false,
-    onClick: () -> Unit = {}
+    enabled: Boolean = true,
+    onClick: () -> Unit = {},
+    onDisabledClick: () -> Unit = {}
 ) {
     Surface(
-        onClick = onClick,
+        onClick = { if (enabled) onClick() else onDisabledClick() },
         shape = RoundedCornerShape(24.dp),
-        color = if (isActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+        color = if (enabled) {
+            if (isActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+        },
         modifier = Modifier.height(40.dp)
     ) {
         Row(
@@ -40,7 +46,11 @@ fun ActionButton(
                 imageVector = icon,
                 contentDescription = text,
                 modifier = Modifier.size(18.dp),
-                tint = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                tint = if (enabled) {
+                    if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                }
             )
 
            if (text != null) {
@@ -48,7 +58,11 @@ fun ActionButton(
                Text(
                    text = text,
                    style = MaterialTheme.typography.labelLarge,
-                   color = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                   color = if (enabled) {
+                       if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                   } else {
+                       MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                   }
                )
            }
         }

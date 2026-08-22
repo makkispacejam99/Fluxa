@@ -1,8 +1,11 @@
 package com.makkispacejam.fluxa.ui.screens.shared
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -42,7 +45,9 @@ fun ChannelInfo(
     avatarUrl: String?,
     isSubscribed: Boolean,
     isLoading: Boolean,
-    onSubscribeClick: () -> Unit
+    onSubscribeClick: () -> Unit,
+    isIncognito: Boolean = false,
+    onDisabledClick: () -> Unit = {}
 ) {
     Column(modifier = Modifier.padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -60,10 +65,14 @@ fun ChannelInfo(
         }
         Spacer(modifier = Modifier.height(16.dp))
         Button(
-            onClick = onSubscribeClick, enabled = !isLoading, modifier = Modifier.fillMaxWidth(),
+            onClick = { if (isIncognito) onDisabledClick() else onSubscribeClick() }, enabled = !isLoading && !isIncognito, modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (isSubscribed) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primary,
-                contentColor = if (isSubscribed) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onPrimary
+                containerColor = if (isIncognito) {
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                } else if (isSubscribed) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primary,
+                contentColor = if (isIncognito) {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                } else if (isSubscribed) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onPrimary
             ), shape = RoundedCornerShape(24.dp)
         ) {
             Text(if (isSubscribed) stringResource(R.string.subscribed) else stringResource(R.string.subscribe))
@@ -80,11 +89,27 @@ fun ChannelFilterChips(
 ) {
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         filters.forEach { filter ->
-            FilterChip(
-                selected = selectedFilter == filter, onClick = { onFilterSelected(filter) },
-                label = { Text(filterLabels[filter] ?: filter) }, shape = RoundedCornerShape(20.dp),
-                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary, selectedLabelColor = MaterialTheme.colorScheme.onPrimary)
-            )
+            val isSelected = selectedFilter == filter
+            Surface(
+                onClick = { onFilterSelected(filter) },
+                modifier = Modifier.defaultMinSize(minWidth = 100.dp),
+                shape = RoundedCornerShape(25.dp),
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                border = if (isSelected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    if (isSelected) {
+                        Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize))
+                        Spacer(Modifier.width(6.dp))
+                    }
+                    Text(filterLabels[filter] ?: filter, style = MaterialTheme.typography.labelLarge)
+                }
+            }
         }
     }
 }

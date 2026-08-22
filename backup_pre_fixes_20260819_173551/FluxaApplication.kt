@@ -68,7 +68,7 @@ class FluxaApplication : Application(), ImageLoaderFactory {
                     val ok = YouTubeDownloader.fetchVisitorData()
                     delay(if (ok) 6 * 60 * 60 * 1000L else 5 * 60 * 1000L)
                 }
-            } catch (e: Throwable) {
+            } catch (e: Exception) {
                 e.printStackTrace()
             }
         }

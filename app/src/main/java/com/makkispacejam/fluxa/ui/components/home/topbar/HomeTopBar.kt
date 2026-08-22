@@ -1,5 +1,6 @@
 package com.makkispacejam.fluxa.ui.components.home.topbar
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -10,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -37,7 +39,8 @@ fun HomeTopBar(
     onCloseResults: () -> Unit,
     onProfileClick: () -> Unit,
     userAvatarPath: String?,
-    userName: String
+    userName: String,
+    isIncognito: Boolean = false
 ) {
 
     // Bloque de búsqueda expandido
@@ -110,15 +113,33 @@ fun HomeTopBar(
                 }
 
                 // Avatar personalizado
-                FluxaAvatar(
-                    avatarUrl = userAvatarPath,
-                    size = 38.dp,
-                    placeholderName = userName,
-                    modifier = Modifier
-                        .padding(horizontal = 2.dp)
-                        .clip(CircleShape)
-                        .clickable { onProfileClick() }
-                )
+                if (isIncognito) {
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.secondaryContainer)
+                            .clickable { onProfileClick() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Rounded.VisibilityOff,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                } else {
+                    FluxaAvatar(
+                        avatarUrl = userAvatarPath,
+                        size = 38.dp,
+                        placeholderName = userName,
+                        modifier = Modifier
+                            .padding(horizontal = 2.dp)
+                            .clip(CircleShape)
+                            .clickable { onProfileClick() }
+                    )
+                }
             }
         }
     }

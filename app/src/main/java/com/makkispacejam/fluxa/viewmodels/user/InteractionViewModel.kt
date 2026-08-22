@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.makkispacejam.fluxa.data.UserPreferences
 import com.makkispacejam.fluxa.data.local.*
 import com.makkispacejam.fluxa.data.newpipe.FluxaStreamItem
 import com.makkispacejam.fluxa.data.VideoExtractor
@@ -32,6 +33,7 @@ class InteractionViewModel(application: Application) : AndroidViewModel(applicat
     fun getBlockedSubscriptions(): Flow<List<SubscriptionEntity>> = dao.getBlockedSubscriptionsFlow()
 
     fun toggleSubscription(channelId: String, channelName: String, avatarUrl: String?, currentStatus: Boolean) {
+        if (UserPreferences.incognitoActive) return
         viewModelScope.launch(Dispatchers.IO) {
             if (currentStatus) {
 
@@ -47,6 +49,7 @@ class InteractionViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun blockChannel(channelId: String, channelName: String, avatarUrl: String?): kotlinx.coroutines.Job {
+        if (UserPreferences.incognitoActive) return viewModelScope.launch { }
         return viewModelScope.launch(Dispatchers.IO) {
             val entity = SubscriptionEntity(channelId, channelName, avatarUrl)
             entity.isBlocked = true
@@ -65,6 +68,7 @@ class InteractionViewModel(application: Application) : AndroidViewModel(applicat
     fun getInteraction(videoId: String): Flow<VideoInteractionEntity?> = dao.getInteractionFlow(videoId)
     fun getHistory(): Flow<List<VideoInteractionEntity>> = dao.getHistory()
     fun toggleLike(videoId: String, title: String?, channelName: String?) {
+        if (UserPreferences.incognitoActive) return
         viewModelScope.launch(Dispatchers.IO) {
             val existing = dao.getInteraction(videoId)
             if (existing != null) {
@@ -92,6 +96,7 @@ class InteractionViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun toggleDislike(videoId: String, title: String?, channelName: String?) {
+        if (UserPreferences.incognitoActive) return
         viewModelScope.launch(Dispatchers.IO) {
             val existing = dao.getInteraction(videoId)
             if (existing != null) {
@@ -119,6 +124,7 @@ class InteractionViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun incrementViewCount(videoId: String, title: String? = null, channelName: String? = null) {
+        if (UserPreferences.incognitoActive) return
         viewModelScope.launch(Dispatchers.IO) {
             val existing = dao.getInteraction(videoId)
             if (existing == null) {
@@ -138,24 +144,28 @@ class InteractionViewModel(application: Application) : AndroidViewModel(applicat
     fun getUserPlaylists(): Flow<List<PlaylistEntity>> = dao.getUserPlaylists()
 
     fun createPlaylist(name: String) {
+        if (UserPreferences.incognitoActive) return
         viewModelScope.launch(Dispatchers.IO) {
             dao.insertPlaylist(PlaylistEntity(name, false))
         }
     }
 
     fun deletePlaylist(playlist: PlaylistEntity) {
+        if (UserPreferences.incognitoActive) return
         viewModelScope.launch(Dispatchers.IO) {
             dao.deletePlaylist(playlist)
         }
     }
 
     fun updatePlaylist(playlist: PlaylistEntity) {
+        if (UserPreferences.incognitoActive) return
         viewModelScope.launch(Dispatchers.IO) {
             dao.updatePlaylist(playlist)
         }
     }
 
     fun removeVideosFromPlaylist(playlistName: String, videoIds: List<String>) {
+        if (UserPreferences.incognitoActive) return
         viewModelScope.launch(Dispatchers.IO) {
             if (playlistName == "Historial") {
                 videoIds.forEach { videoId ->
@@ -230,6 +240,7 @@ class InteractionViewModel(application: Application) : AndroidViewModel(applicat
         durationSec: Long,
         onResult: (Boolean) -> Unit = {}
     ) {
+        if (UserPreferences.incognitoActive) return
         viewModelScope.launch(Dispatchers.IO) {
             var playlistId = -1L
             val userPlaylists = dao.getUserPlaylists().map { list -> 
@@ -265,6 +276,7 @@ class InteractionViewModel(application: Application) : AndroidViewModel(applicat
     val watchedVideos: Flow<List<String>> = dao.allWatchedVideoIdsFlow
 
     fun markAsWatched(videoId: String) {
+        if (UserPreferences.incognitoActive) return
         viewModelScope.launch(Dispatchers.IO) {
             dao.insertWatchedVideo(WatchedVideoEntity(videoId))
         }
@@ -274,6 +286,7 @@ class InteractionViewModel(application: Application) : AndroidViewModel(applicat
         playlistName: String,
         playlistUrl: String
     ): ImportResult = withContext(Dispatchers.IO) {
+        if (UserPreferences.incognitoActive) return@withContext ImportResult.Success(0, 0)
         if (playlistUrl.isBlank()) {
             return@withContext ImportResult.Error(ImportError.NO_URL)
         }

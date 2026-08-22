@@ -21,7 +21,6 @@ appcompat = "1.7.0"
 mlkitTranslate = "17.0.3"
 mlkitLanguageId = "17.0.6"
 kotlinxCoroutinesPlayServices = "1.10.1"
-ksp = "2.3.11"
 animationCore = "1.11.3"
 espressoCore = "3.7.0"
 foundationVersion = "1.11.4"
@@ -66,6 +65,5 @@ androidx-foundation-layout = { group = "androidx.compose.foundation", name = "fo
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "room" }
 

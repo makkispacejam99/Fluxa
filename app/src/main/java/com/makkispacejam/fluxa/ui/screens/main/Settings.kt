@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -26,6 +27,7 @@ import com.makkispacejam.fluxa.data.UserPreferences
 import com.makkispacejam.fluxa.data.local.BackupRestoreManager
 import com.makkispacejam.fluxa.ui.components.dialogs.OptionDialog
 import com.makkispacejam.fluxa.ui.components.settings.dialogs.*
+import com.makkispacejam.fluxa.ui.components.system.NotificationBanner
 import com.makkispacejam.fluxa.viewmodels.user.TranslationViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -40,6 +42,8 @@ fun SettingsScreen(
     onThemeChange: (ThemeMode) -> Unit,
     amoledMode: Boolean,
     onAmoledModeChange: (Boolean) -> Unit,
+    incognitoMode: Boolean,
+    onIncognitoModeChange: (Boolean) -> Unit,
     snackbarHostState: SnackbarHostState,
     showMiniPlayer: Boolean = false
 ) {
@@ -79,6 +83,9 @@ fun SettingsScreen(
     var showDonationDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
     var showUpdateDialog by remember { mutableStateOf(false) }
+
+    var showBanner by remember { mutableStateOf(false) }
+    var bannerText by remember { mutableStateOf("") }
 
     var selectedQuality by remember { mutableStateOf(prefs.videoQuality) }
     var contentLanguage by remember { mutableStateOf(prefs.contentLanguage) }
@@ -140,7 +147,8 @@ fun SettingsScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(mainPadding).padding(horizontal = 16.dp)) {
+    Box(modifier = Modifier.fillMaxSize().padding(mainPadding)) {
+        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
         Spacer(modifier = Modifier.height(16.dp))
         Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(bottom = 20.dp, top = 10.dp))
 
@@ -148,6 +156,11 @@ fun SettingsScreen(
             item {
                 SettingsGeneralSection(
                     themeMode = themeMode, amoledMode = amoledMode, onAmoledModeChange = onAmoledModeChange,
+                    incognitoMode = incognitoMode, onIncognitoModeChange = {
+                        onIncognitoModeChange(it)
+                        bannerText = context.getString(if (it) R.string.incognito_toast_on else R.string.incognito_toast_off)
+                        showBanner = true
+                    },
                     selectedLanguage = selectedLanguage, selectedTranslationLang = selectedTranslationLang,
                     selectedQuality = selectedQuality, selectedRegion = selectedRegion,
                     onThemeClick = { showThemeDialog = true }, onLanguageClick = { showLanguageDialog = true },
@@ -225,5 +238,13 @@ fun SettingsScreen(
         if (showMiniPlayer) {
             Spacer(modifier = Modifier.height(72.dp))
         }
+    }
+
+        NotificationBanner(
+            visible = showBanner,
+            text = bannerText,
+            onDismiss = { showBanner = false },
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
     }
 }

@@ -6,7 +6,6 @@ import android.app.PictureInPictureParams
 import android.content.pm.ActivityInfo
 import android.util.Log
 import android.util.Rational
-import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
@@ -172,16 +171,10 @@ fun VideoPlayerScreen(
             controlsVisible = true
             controller.hide(WindowInsetsCompat.Type.systemBars())
             controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            window.attributes = window.attributes.apply {
-                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            }
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         } else {
             controlsVisible = true
             controller.show(WindowInsetsCompat.Type.systemBars())
-            window.attributes = window.attributes.apply {
-                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
-            }
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             delay(50)
             val isLight = colorScheme.background.luminance() > 0.5f
@@ -322,7 +315,8 @@ fun VideoPlayerScreen(
                                 }
                             },
                             onChannelClick = onChannelClick,
-                            hideRelatedVideos = playerViewModel.playbackState.resetProgress
+                            hideRelatedVideos = playerViewModel.playbackState.resetProgress,
+                            isIncognito = com.makkispacejam.fluxa.data.UserPreferences.incognitoActive
                         )
                     }
                 }

@@ -60,6 +60,12 @@
     <string name="theme_dark">ダーク</string>
     <string name="amoled_mode">Amoled ダーク</string>
     <string name="amoled_mode_desc">OLED画面向けの純黒モード</string>
+    <string name="incognito_mode">ゲストモード</string>
+    <string name="incognito_mode_desc">履歴や進捗を保存せずにブラウズする</string>
+    <string name="incognito_toast_on">ゲストモードが有効になりました</string>
+    <string name="incognito_toast_off">ゲストモードが無効になりました</string>
+    <string name="incognito_collections_blocked">ゲストモードではコレCTIONSを使用できません</string>
+    <string name="incognito_action_blocked">このアクションはゲストモードでは使用できません</string>
 
     <string name="lang_english">英語</string>
     <string name="lang_spanish">スペイン語</string>

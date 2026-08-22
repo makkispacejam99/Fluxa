@@ -5,18 +5,24 @@ import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.ui.res.stringResource
 import com.makkispacejam.fluxa.R
 import com.makkispacejam.fluxa.ui.components.library.dialogs.EditProfileDialog
 import com.makkispacejam.fluxa.ui.components.library.dialogs.ImageCropperDialog
@@ -43,6 +49,7 @@ fun FluxaCollections(
     onShowHistory: () -> Unit,
     onVideoClick: (String, String, String, String) -> Unit,
     onRetry: () -> Unit,
+    isIncognito: Boolean = false,
     interactionViewModel: InteractionViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -123,6 +130,38 @@ fun FluxaCollections(
                             playlist.name = newName
                             interactionViewModel.updatePlaylist(playlist)
                         }
+                    )
+                }
+            }
+        }
+
+        if (isIncognito) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surface)
+                    .clickable(
+                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                        indication = null
+                    ) { },
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.VisibilityOff,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        modifier = Modifier.size(64.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.incognito_collections_blocked),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 32.dp)
                     )
                 }
             }

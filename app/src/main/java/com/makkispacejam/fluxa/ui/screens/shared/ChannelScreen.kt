@@ -1,5 +1,6 @@
 package com.makkispacejam.fluxa.ui.screens.shared
 
+import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -15,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.makkispacejam.fluxa.R
+import com.makkispacejam.fluxa.data.UserPreferences
 import com.makkispacejam.fluxa.data.newpipe.ChannelViewModel
 import com.makkispacejam.fluxa.data.newpipe.FluxaStreamItem
 import com.makkispacejam.fluxa.ui.components.core.*
@@ -25,6 +27,7 @@ import com.makkispacejam.fluxa.utils.ThumbnailUtils
 import com.makkispacejam.fluxa.viewmodels.user.InteractionViewModel
 import com.makkispacejam.fluxa.viewmodels.content.VideoViewModel
 
+@SuppressLint("LocalContextGetResourceValueCall")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChannelProfileScreen(
@@ -64,7 +67,9 @@ fun ChannelProfileScreen(
             item {
                 ChannelInfo(channelName = channelName, subscriberCount = channelViewModel.subscriberCount,
                     avatarUrl = channelViewModel.channelAvatarUrl, isSubscribed = isSubscribed, isLoading = isHeaderLoading,
-                    onSubscribeClick = { channelViewModel.channelId?.let { id -> interactionVM.toggleSubscription(id, channelName, channelViewModel.channelAvatarUrl, isSubscribed) } })
+                    onSubscribeClick = { channelViewModel.channelId?.let { id -> interactionVM.toggleSubscription(id, channelName, channelViewModel.channelAvatarUrl, isSubscribed) } },
+                    isIncognito = UserPreferences.incognitoActive,
+                    onDisabledClick = { videoVM.notificationBannerText = context.getString(R.string.incognito_action_blocked); videoVM.showNotificationBanner = true })
             }
             item { ChannelFilterChips(selectedFilter = selectedFilter, filters = filters, filterLabels = filterLabels, onFilterSelected = { selectedFilter = it }) }
 
@@ -138,6 +143,7 @@ fun ChannelProfileScreen(
         if (selectedVideoForOptions != null) {
             val videoId = selectedVideoForOptions!!.url.substringAfter("v=", "")
             VideoOptionsMenu(title = selectedVideoForOptions!!.title, channelName = selectedVideoForOptions!!.uploaderName, onDismiss = { selectedVideoForOptions = null },
+                isIncognito = UserPreferences.incognitoActive,
                 onSaveLater = {
                     videoVM.saveToPlaylist("Ver más tarde", videoId, selectedVideoForOptions!!.title, channelName, selectedVideoForOptions!!.url, channelViewModel.channelAvatarUrl ?: "", selectedVideoForOptions!!.duration, selectedVideoForOptions!!.channelId) { success ->
                         videoVM.notificationBannerText = if (success) savedToLaterMsg else alreadyInPlaylistMsg; videoVM.showNotificationBanner = true

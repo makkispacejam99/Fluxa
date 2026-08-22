@@ -28,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import com.makkispacejam.fluxa.viewmodels.user.InteractionViewModel
 import com.makkispacejam.fluxa.R
 import androidx.compose.ui.unit.dp
+import com.makkispacejam.fluxa.data.UserPreferences
 import com.makkispacejam.fluxa.data.local.PlaylistPersistenceManager
 import com.makkispacejam.fluxa.data.newpipe.FluxaStreamItem
 import com.makkispacejam.fluxa.data.VideoExtractor
@@ -48,6 +49,7 @@ fun PlaylistScreen(
     playlistVideos: List<FluxaStreamItem>,
     fallbackChannel: String,
     isLoading: Boolean = false,
+    playlistUrl: String = "",
     onPlayPlaylist: (List<FluxaStreamItem>, Int, Boolean, Boolean) -> Unit = { _, _, _, _ -> },
     onChannelClick: (String) -> Unit = {},
     interactionVM: InteractionViewModel = viewModel(),
@@ -170,7 +172,13 @@ fun PlaylistScreen(
                             if (!isEditMode) selectedVideos = emptySet()
                         },
                         onImportClick = { showImportDialog = true },
-                        showEditButton = isLocal
+                        showEditButton = isLocal && !UserPreferences.incognitoActive,
+                        showShareButton = !isLocal && playlistUrl.isNotEmpty(),
+                        onShareClick = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            clipboard.setPrimaryClip(ClipData.newPlainText("Fluxa Playlist", playlistUrl))
+                            Toast.makeText(context, linkCopiedMsg, Toast.LENGTH_SHORT).show()
+                        }
                     )
                     PlaylistActionButtons(
                         playlistVideos = playlistVideos,
@@ -218,10 +226,8 @@ fun PlaylistScreen(
                     val channelName = remember(video.uploaderName, fallbackChannel) {
                         video.uploaderName.ifEmpty { fallbackChannel }
                     }
-                    val resolvedAvatar = remember(video.uploaderAvatar, channelName, subAvatarMap, video.channelId) {
-                        video.uploaderAvatar.ifEmpty {
-                            subAvatarMap[channelName.lowercase()] ?: videoVM.avatarCache[video.channelId.ifEmpty { channelName.lowercase() }] ?: ""
-                        }
+                    val resolvedAvatar = video.uploaderAvatar.ifEmpty {
+                        subAvatarMap[channelName.lowercase()] ?: videoVM.avatarCache[video.channelId.ifEmpty { channelName.lowercase() }] ?: ""
                     }
                     LaunchedEffect(video.channelId, channelName) {
                         if (resolvedAvatar.isEmpty() && channelName.isNotEmpty()) videoVM.getAvatarForChannel(channelName, video.channelId)
@@ -253,6 +259,7 @@ fun PlaylistScreen(
             VideoOptionsMenu(
                 title = selectedVideoForOptions!!.title, channelName = selectedVideoForOptions!!.uploaderName,
                 onDismiss = { selectedVideoForOptions = null },
+                isIncognito = UserPreferences.incognitoActive,
                 onSaveLater = {
                     videoVM.saveToPlaylist("Ver más tarde", vId, selectedVideoForOptions!!.title, selectedVideoForOptions!!.uploaderName, selectedVideoForOptions!!.thumbnail, resolvedAvatar, selectedVideoForOptions!!.duration, selectedVideoForOptions!!.channelId) { success ->
                         videoVM.notificationBannerText = if (success) savedToLaterMsg else alreadyInPlaylistMsg; videoVM.showNotificationBanner = true

@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
+import androidx.compose.foundation.layout.padding
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
 import com.makkispacejam.fluxa.ThemeMode
@@ -45,6 +46,8 @@ fun MainNavigationShell(
     onThemeChange: (ThemeMode) -> Unit,
     amoledMode: Boolean,
     onAmoledModeChange: (Boolean) -> Unit,
+    incognitoMode: Boolean,
+    onIncognitoModeChange: (Boolean) -> Unit,
     snackbarHostState: SnackbarHostState,
     videoViewModel: VideoViewModel,
     onExpandPlayer: () -> Unit,
@@ -108,6 +111,7 @@ fun MainNavigationShell(
                                     onTabSelected(Screen.Library)
                                 }
                             },
+                            isIncognito = incognitoMode,
                             homeViewModel = homeViewModel,
                             playerVM = playerViewModel
                         )
@@ -131,6 +135,7 @@ fun MainNavigationShell(
                             errorMessage = videoViewModel.errorMessageState,
                             onRetry = { videoViewModel.checkHomeConnection() },
                             isLoading = videoViewModel.isLoading,
+                            isIncognito = incognitoMode,
                         )
 
                         // Ajustes
@@ -140,6 +145,8 @@ fun MainNavigationShell(
                             onThemeChange = onThemeChange,
                             amoledMode = amoledMode,
                             onAmoledModeChange = onAmoledModeChange,
+                            incognitoMode = incognitoMode,
+                            onIncognitoModeChange = onIncognitoModeChange,
                             snackbarHostState = snackbarHostState,
                             showMiniPlayer = playbackState.isActive && !playbackState.isFullyExpanded
                         )

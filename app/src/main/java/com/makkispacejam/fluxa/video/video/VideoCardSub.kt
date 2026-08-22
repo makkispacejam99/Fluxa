@@ -36,7 +36,9 @@ fun ChannelSubscriptionCard(
     channelAvatarUrl: String? = null,
     subscriberCount: String = "",
     onSubscribeClick: () -> Unit,
-    onChannelClick: (String) -> Unit = {}
+    onChannelClick: (String) -> Unit = {},
+    isIncognito: Boolean = false,
+    onDisabledClick: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -89,15 +91,20 @@ fun ChannelSubscriptionCard(
 
             // Botón de suscribirse
             Button(
-                onClick = onSubscribeClick,
+                onClick = { if (isIncognito) onDisabledClick() else onSubscribeClick() },
+                enabled = !isIncognito,
                 shape = RoundedCornerShape(24.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isSubscribed) {
+                    containerColor = if (isIncognito) {
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                    } else if (isSubscribed) {
                         MaterialTheme.colorScheme.surfaceVariant
                     } else {
                         MaterialTheme.colorScheme.primary
                     },
-                    contentColor = if (isSubscribed) {
+                    contentColor = if (isIncognito) {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    } else if (isSubscribed) {
                         MaterialTheme.colorScheme.onSurfaceVariant
                     } else {
                         MaterialTheme.colorScheme.onPrimary

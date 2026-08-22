@@ -3,6 +3,7 @@
 package com.makkispacejam.fluxa.data
 
 import android.content.Context
+import android.util.Log
 import com.makkispacejam.fluxa.data.local.FluxaDatabase
 import com.makkispacejam.fluxa.models.VideoModel
 import com.makkispacejam.fluxa.ui.components.system.NewPipeServerException
@@ -83,7 +84,7 @@ class ShortsRepository {
 
             val genericShortsDeferred = async { ShortsSource.getGenericShorts(blockedChannelIds, dislikedChannelNames) }
 
-            val subShorts = try { ShortsSource.getSubscriptionShorts(dao, blockedChannelIds) } catch(_: Exception) { emptyList() }
+            val subShorts = try { ShortsSource.getSubscriptionShorts(dao, blockedChannelIds) } catch(e: Exception) { Log.e("FluxaShorts", "fallo al obtener shorts de las suscripciones", e); emptyList() }
             val dislikedChannelIdsFromSubs = subShorts.filter { it.channelName in dislikedChannelNames }.mapNotNull { it.channelId }.toSet()
             val dislikedChannelIds = dislikedChannelIdsFromCached + dislikedChannelIdsFromSubs
 
@@ -99,14 +100,20 @@ class ShortsRepository {
                 if (allSeeds.isNotEmpty()) ShortsSource.getChannelSimilarShorts(allSeeds, subShorts.mapNotNull { it.channelId }.toSet(), blockedChannelIds, dislikedChannelNames) else emptyList()
             }
 
-            val channelSimilarShorts = try { channelSimilarShortsDeferred.await() } catch(_: Exception) { emptyList() }
-            val genericShorts = try { genericShortsDeferred.await() } catch(_: Exception) { emptyList() }
+            val channelSimilarShorts = try { channelSimilarShortsDeferred.await() } catch(e: Exception) { Log.e("FluxaShorts", "fallo al obtener shorts similares de canales", e); emptyList() }
+            val genericShorts = try { genericShortsDeferred.await() } catch(e: Exception) { Log.e("FluxaShorts", "fallo al obtener shorts genericos", e); emptyList() }
 
             val allDislikedChannelIds = dislikedChannelIds +
                     channelSimilarShorts.filter { it.channelName in dislikedChannelNames }.mapNotNull { it.channelId }.toSet() +
                     genericShorts.filter { it.channelName in dislikedChannelNames }.mapNotNull { it.channelId }.toSet()
 
             val finalMix = interleaveShorts(subShorts, channelSimilarShorts, genericShorts, filterIds, blockedChannelIds, dislikedChannelNames, allDislikedChannelIds)
+
+            if (finalMix.isEmpty()) {
+                val fallback = genericShorts.ifEmpty { ShortsSource.getGenericShorts(blockedChannelIds, dislikedChannelNames) }
+                if (fallback.isEmpty()) throw NewPipeServerException()
+                return@withContext fallback.filter { it.id !in hiddenShorts && it.channelId !in blockedChannelIds }
+            }
 
             if (finalMix.size < 30) {
                 val fillers = (channelSimilarShorts + genericShorts + subShorts).shuffled()
@@ -122,12 +129,6 @@ class ShortsRepository {
             }
 
             ShortsCache.saveToDiskCache(dao, result)
-
-            if (finalMix.isEmpty()) {
-                val fallback = genericShorts.ifEmpty { ShortsSource.getGenericShorts(blockedChannelIds, dislikedChannelNames) }
-                if (fallback.isEmpty()) throw NewPipeServerException()
-                return@withContext fallback.filter { it.id !in hiddenShorts && it.channelId !in blockedChannelIds }
-            }
 
             finalMix.take(60).shuffled()
         }
