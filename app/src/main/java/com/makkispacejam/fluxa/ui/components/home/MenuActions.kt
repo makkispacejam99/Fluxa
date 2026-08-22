@@ -40,6 +40,7 @@ fun HomeActionMenus(
             title = selectedVideoForOptions.title,
             channelName = selectedVideoForOptions.channelName,
             onDismiss = onDismissOptions,
+            isIncognito = com.makkispacejam.fluxa.data.UserPreferences.incognitoActive,
             onSaveLater = {
                 val watchLaterText = messages["watchLater"] ?: "Watch Later"
                 videoVM.saveToPlaylist(

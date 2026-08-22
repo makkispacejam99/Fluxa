@@ -39,7 +39,8 @@ fun ShortsMoreOptionsDialog(
     onShareClick: () -> Unit,
     onMarkAsWatchedClick: () -> Unit,
     onBlockClick: () -> Unit,
-    hasValidAudioTracks: Boolean = true
+    hasValidAudioTracks: Boolean = true,
+    isIncognito: Boolean = false
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -65,8 +66,10 @@ fun ShortsMoreOptionsDialog(
                         ShortsMenuOption(icon = Icons.Rounded.Audiotrack, label = stringResource(R.string.audio_quality_short), onClick = { onAudioClick(); onDismiss() })
                     }
                     ShortsMenuOption(icon = Icons.Rounded.Share, label = stringResource(R.string.share_short), onClick = { onShareClick(); onDismiss() })
-                    ShortsMenuOption(icon = Icons.Rounded.Check, label = stringResource(R.string.already_watched), onClick = { onMarkAsWatchedClick(); onDismiss() })
-                    ShortsMenuOption(icon = Icons.Rounded.Block, label = stringResource(R.string.block_channel), onClick = { onBlockClick(); onDismiss() }, isError = true)
+                    if (!isIncognito) {
+                        ShortsMenuOption(icon = Icons.Rounded.Check, label = stringResource(R.string.already_watched), onClick = { onMarkAsWatchedClick(); onDismiss() })
+                        ShortsMenuOption(icon = Icons.Rounded.Block, label = stringResource(R.string.block_channel), onClick = { onBlockClick(); onDismiss() }, isError = true)
+                    }
                 }
             }
         }

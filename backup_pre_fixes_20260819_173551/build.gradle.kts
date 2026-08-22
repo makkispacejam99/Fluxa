@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.ksp)
     alias(libs.plugins.room)
 }
 
@@ -15,7 +14,7 @@ android {
         minSdk = 31
         //noinspection EditedTargetSdkVersion,OldTargetApi
         targetSdk = 38
-        versionCode = 68
+        versionCode = 67
         versionName = "v1.0.1-STABLE"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -85,7 +84,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
-    ksp(libs.room.compiler)
+    annotationProcessor(libs.room.compiler)
     //noinspection UseTomlInstead,GradleDependency
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
     implementation(libs.google.android.material)

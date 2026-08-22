@@ -80,6 +80,8 @@ fun AppNavigation() {
     var isShowingResults by rememberSaveable { mutableStateOf(false) }
     var themeMode by remember { mutableStateOf(prefs.themeMode) }
     var amoledMode by remember { mutableStateOf(prefs.amoledMode) }
+    var incognitoMode by remember { mutableStateOf(prefs.incognitoMode) }
+    UserPreferences.setIncognito(incognitoMode)
     var openedPlaylistFromCollections by rememberSaveable { mutableStateOf(false) }
 
     // Ciclo de vida del Reproductor
@@ -229,6 +231,12 @@ fun AppNavigation() {
                                         onAmoledModeChange = {
                                             amoledMode = it
                                             prefs.amoledMode = it
+                                        },
+                                        incognitoMode = incognitoMode,
+                                        onIncognitoModeChange = {
+                                            incognitoMode = it
+                                            prefs.incognitoMode = it
+                                            UserPreferences.setIncognito(it)
                                         },
                                         snackbarHostState = snackbarHostState,
                                         onVideoClick = { title, videoId, channelName, thumbnailUrl ->

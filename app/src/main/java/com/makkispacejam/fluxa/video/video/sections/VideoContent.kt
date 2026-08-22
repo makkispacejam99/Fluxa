@@ -1,9 +1,11 @@
 package com.makkispacejam.fluxa.video.video.sections
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.*
@@ -13,12 +15,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AddToPhotos
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.ThumbDown
 import androidx.compose.material.icons.rounded.ThumbDownOffAlt
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -66,7 +71,8 @@ fun LazyListScope.videoContentSection(
     currentVideoId: String,
     onVideoClick: (String, String, String, String) -> Unit = { _, _, _, _ -> },
     onChannelClick: (String) -> Unit = {},
-    hideRelatedVideos: Boolean = false
+    hideRelatedVideos: Boolean = false,
+    isIncognito: Boolean = false
 ) {
 
     val isMetadataLoading = videoTitle.isBlank() && videoVM.videoDescriptionState.isBlank()
@@ -76,12 +82,28 @@ fun LazyListScope.videoContentSection(
         if (isMetadataLoading) {
             SkeletonLine(modifier = Modifier.fillMaxWidth(0.85f), height = 24.dp)
         } else {
-            TranslatedText(
-                text = videoTitle,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                skipTranslation = MusicChannelUtils.isMusicContent(channelName, videoTitle)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth().clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) { onExpand() },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TranslatedText(
+                    text = videoTitle,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    skipTranslation = MusicChannelUtils.isMusicContent(channelName, videoTitle),
+                    modifier = Modifier.weight(1f)
+                )
+                val rotation by animateFloatAsState(if (isExpanded) 180f else 0f, label = "arrow")
+                Icon(
+                    imageVector = Icons.Rounded.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.rotate(rotation).padding(start = 4.dp)
+                )
+            }
         }
     }
 
@@ -114,6 +136,7 @@ fun LazyListScope.videoContentSection(
     item {
         val context = LocalContext.current
         val resolvedChannelName = videoVM.cleanChannelNameState.ifBlank { channelName }
+        val onDisabledAction = { videoVM.notificationBannerText = context.getString(R.string.incognito_action_blocked); videoVM.showNotificationBanner = true }
         Spacer(modifier = Modifier.height(12.dp))
         Row(
             modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -125,20 +148,24 @@ fun LazyListScope.videoContentSection(
                 text = stringResource(R.string.me_gusta),
                 icon = if (isLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                 isActive = isLiked,
-                onClick = onLike
+                enabled = !isIncognito,
+                onClick = onLike,
+                onDisabledClick = onDisabledAction
             )
             //Botón Dislike
             ActionButton(
                 text = null,
                 icon = if (isDisliked) Icons.Rounded.ThumbDown else Icons.Rounded.ThumbDownOffAlt,
                 isActive = isDisliked,
-                onClick = onDislike
+                enabled = !isIncognito,
+                onClick = onDislike,
+                onDisabledClick = onDisabledAction
             )
             //Botón Colecciones
             var showPlaylistDialog by remember { mutableStateOf(false) }
             val userPlaylists by videoVM.getUserPlaylistsFlow().collectAsState(initial = emptyList())
 
-            ActionButton(icon = Icons.Rounded.AddToPhotos, onClick = { showPlaylistDialog = true })
+            ActionButton(icon = Icons.Rounded.AddToPhotos, enabled = !isIncognito, onClick = { showPlaylistDialog = true }, onDisabledClick = onDisabledAction)
 
             if (showPlaylistDialog) {
                 PlaylistSelectionDialog(
@@ -182,6 +209,8 @@ fun LazyListScope.videoContentSection(
     item {
         Spacer(modifier = Modifier.height(20.dp))
         val resolvedChannelName = videoVM.cleanChannelNameState.ifBlank { channelName }
+        val context2 = LocalContext.current
+        val onDisabledAction = { videoVM.notificationBannerText = context2.getString(R.string.incognito_action_blocked); videoVM.showNotificationBanner = true }
 
         if (resolvedChannelName.isBlank() || videoVM.channelAvatarState == null) {
             Row(
@@ -204,7 +233,9 @@ fun LazyListScope.videoContentSection(
                 subscriberCount = videoVM.subscriberCountState,
                 isSubscribed = isSubscribed,
                 onSubscribeClick = onSubscribe,
-                onChannelClick = onChannelClick
+                onChannelClick = onChannelClick,
+                isIncognito = isIncognito,
+                onDisabledClick = onDisabledAction
             )
         }
     }

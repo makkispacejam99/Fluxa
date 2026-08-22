@@ -34,6 +34,7 @@ import com.makkispacejam.fluxa.R
 // Panel lateral de shorts
 @Composable
 fun ShortsControlPanel(
+    modifier: Modifier = Modifier,
     isLiked: Boolean,
     isDisliked: Boolean,
     onShuffleClick: () -> Unit,
@@ -41,7 +42,8 @@ fun ShortsControlPanel(
     onLikeClick: () -> Unit,
     onDislikeClick: () -> Unit,
     onMoreClick: () -> Unit,
-    modifier: Modifier = Modifier
+    isIncognito: Boolean = false,
+    onDisabledClick: () -> Unit = {}
 ) {
     Column(
         modifier = modifier,
@@ -50,8 +52,8 @@ fun ShortsControlPanel(
     ) {
         ShortInteractionButton(icon = Icons.Rounded.Casino, label = stringResource(R.string.shuffle), isActivated = false, activeColor = Color.White, onActivateClick = onShuffleClick)
         ShortInteractionButton(icon = Icons.AutoMirrored.Rounded.Comment, label = stringResource(R.string.comments_title), isActivated = false, activeColor = Color.White, onActivateClick = onCommentsClick)
-        ShortInteractionButton(icon = Icons.Rounded.Favorite, label = stringResource(R.string.me_gusta), isActivated = isLiked, activeColor = MaterialTheme.colorScheme.primaryFixed, onActivateClick = onLikeClick)
-        ShortInteractionButton(icon = Icons.Rounded.ThumbDown, label = stringResource(R.string.no_me_gusta), isActivated = isDisliked, activeColor = MaterialTheme.colorScheme.primaryFixed, onActivateClick = onDislikeClick)
+        ShortInteractionButton(icon = Icons.Rounded.Favorite, label = stringResource(R.string.me_gusta), isActivated = isLiked, activeColor = MaterialTheme.colorScheme.primaryFixed, enabled = !isIncognito, onActivateClick = onLikeClick, onDisabledClick = onDisabledClick)
+        ShortInteractionButton(icon = Icons.Rounded.ThumbDown, label = stringResource(R.string.no_me_gusta), isActivated = isDisliked, activeColor = MaterialTheme.colorScheme.primaryFixed, enabled = !isIncognito, onActivateClick = onDislikeClick, onDisabledClick = onDisabledClick)
         ShortInteractionButton(icon = Icons.Rounded.MoreHoriz, label = stringResource(R.string.more_options), isActivated = false, activeColor = Color.White, onActivateClick = onMoreClick)
     }
 }
@@ -63,7 +65,9 @@ fun ShortInteractionButton(
     label: String,
     isActivated: Boolean,
     activeColor: Color,
-    onActivateClick: () -> Unit
+    enabled: Boolean = true,
+    onActivateClick: () -> Unit,
+    onDisabledClick: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     val rotation = remember { Animatable(0f) }
@@ -74,7 +78,7 @@ fun ShortInteractionButton(
                 .size(46.dp)
                 .graphicsLayer(rotationZ = rotation.value),
             shape = CircleShape,
-            color = Color.Black.copy(alpha = 0.30f)
+            color = if (enabled) Color.Black.copy(alpha = 0.30f) else Color.Black.copy(alpha = 0.15f)
         ) {
             Box(
                 modifier = Modifier
@@ -84,7 +88,9 @@ fun ShortInteractionButton(
                         indication = null,
                         role = Role.Button
                     ) {
-                        if (icon == Icons.Rounded.Casino) {
+                        if (!enabled) {
+                            onDisabledClick()
+                        } else if (icon == Icons.Rounded.Casino) {
                             scope.launch {
                                 rotation.snapTo(0f)
                                 rotation.animateTo(360f, animationSpec = tween(400))
@@ -98,14 +104,16 @@ fun ShortInteractionButton(
                     imageVector = icon,
                     contentDescription = label,
                     modifier = Modifier.size(24.dp),
-                    tint = if (isActivated) activeColor else Color.White
+                    tint = if (!enabled) {
+                        Color.White.copy(alpha = 0.35f)
+                    } else if (isActivated) activeColor else Color.White
                 )
             }
         }
         Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = label,
-            color = Color.White,
+            color = if (enabled) Color.White else Color.White.copy(alpha = 0.35f),
             style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = FontWeight.Bold,
                 shadow = Shadow(

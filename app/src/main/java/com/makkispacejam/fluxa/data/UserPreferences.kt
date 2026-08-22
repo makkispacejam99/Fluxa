@@ -9,6 +9,14 @@ import com.makkispacejam.fluxa.ThemeMode
 class UserPreferences(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("fluxa_prefs", Context.MODE_PRIVATE)
 
+    companion object {
+        @Volatile
+        var incognitoActive = false
+            private set
+
+        fun setIncognito(value: Boolean) { incognitoActive = value }
+    }
+
     var themeMode: ThemeMode
         get() {
             val name = prefs.getString("theme_mode", ThemeMode.System.name)
@@ -58,4 +66,9 @@ class UserPreferences(context: Context) {
         get() = prefs.getBoolean("amoled_mode", false)
         @SuppressLint("UseKtx")
         set(value) = prefs.edit().putBoolean("amoled_mode", value).apply()
+
+    var incognitoMode: Boolean
+        get() = prefs.getBoolean("incognito_mode", false)
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putBoolean("incognito_mode", value).apply()
 }

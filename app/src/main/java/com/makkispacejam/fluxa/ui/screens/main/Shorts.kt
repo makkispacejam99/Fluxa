@@ -158,9 +158,11 @@ fun ShortsScreen(
         videoViewModel.hideVideo(videoId)
         scope.launch {
             try {
-                val dao = FluxaDatabase.getDatabase(context).fluxaDao()
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    dao.insertWatchedVideo(WatchedVideoEntity(videoId))
+                if (!UserPreferences.incognitoActive) {
+                    val dao = FluxaDatabase.getDatabase(context).fluxaDao()
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        dao.insertWatchedVideo(WatchedVideoEntity(videoId))
+                    }
                 }
             } catch (_: Exception) {}
         }
@@ -274,11 +276,14 @@ fun ShortsScreen(
                             com.makkispacejam.fluxa.data.filters.RecentVideosTracker.markAsSeen(listOf(video.id))
                             kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
                                 try {
-                                    val dao = FluxaDatabase.getDatabase(context).fluxaDao()
-                                    dao.insertWatchedVideo(WatchedVideoEntity(video.id))
+                                    if (!UserPreferences.incognitoActive) {
+                                        val dao = FluxaDatabase.getDatabase(context).fluxaDao()
+                                        dao.insertWatchedVideo(WatchedVideoEntity(video.id))
+                                    }
                                 } catch (_: Exception) {}
                             }
-                        }
+                        },
+                        isIncognito = UserPreferences.incognitoActive
                     )
                 }
             }

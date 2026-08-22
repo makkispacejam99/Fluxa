@@ -28,6 +28,7 @@ class ChannelViewModel(application: Application) : AndroidViewModel(application)
     val liveList = mutableStateListOf<FluxaStreamItem>()
     val shortsList = mutableStateListOf<FluxaStreamItem>()
     val selectedPlaylistVideos = mutableStateListOf<FluxaStreamItem>()
+    var currentPlaylistUrl by mutableStateOf("")
 
     // Carga del encabezado del canal
     fun loadChannelHeader(channelName: String) {
@@ -105,6 +106,7 @@ class ChannelViewModel(application: Application) : AndroidViewModel(application)
     // Cargar playlist de videos
     fun loadPlaylistVideos(playlistUrl: String) {
         selectedPlaylistVideos.clear()
+        currentPlaylistUrl = playlistUrl
         isLoadingContent = true
         viewModelScope.launch {
             try {

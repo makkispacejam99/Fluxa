@@ -93,6 +93,7 @@ fun ScreenOverlay(
                                 playlistVideos = if (isLocal) localVideos else channelViewModel.selectedPlaylistVideos,
                                 fallbackChannel = detailChannel,
                                 isLoading = if (!isLocal) channelViewModel.isLoadingContent else false,
+                                playlistUrl = if (!isLocal) channelViewModel.currentPlaylistUrl else "",
                                 onPlayPlaylist = onPlayPlaylist,
                                 onChannelClick = onChannelClick,
                                 currentVideoId = playbackState?.currentVideoId ?: "",

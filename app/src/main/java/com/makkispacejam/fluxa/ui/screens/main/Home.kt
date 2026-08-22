@@ -53,6 +53,7 @@ fun HomeScreen(
     onPlaylistClick: (String, String) -> Unit,
     onCheckConnection: () -> Unit,
     onProfileClick: () -> Unit = {},
+    isIncognito: Boolean = false,
     homeViewModel: HomeViewModel = viewModel(),
     interactionVM: InteractionViewModel = viewModel(),
     videoVM: VideoViewModel = viewModel(),
@@ -112,7 +113,8 @@ fun HomeScreen(
                 onCloseResults = { onResultsStateChange(false); onSearchQueryChange("") },
                 onProfileClick = onProfileClick,
                 userAvatarPath = userAvatarPath.value,
-                userName = userName.value
+                userName = userName.value,
+                isIncognito = isIncognito
             )
         }
 

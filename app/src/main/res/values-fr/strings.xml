@@ -61,6 +61,12 @@
     <string name="theme_dark">Sombre</string>
     <string name="amoled_mode">Noir Pur</string>
     <string name="amoled_mode_desc">Noir pur pour écrans OLED</string>
+    <string name="incognito_mode">Mode Invité</string>
+    <string name="incognito_mode_desc">Naviguer sans enregistrer l\'historique ni la progression</string>
+    <string name="incognito_toast_on">Mode invité activé</string>
+    <string name="incognito_toast_off">Mode invité désactivé</string>
+    <string name="incognito_collections_blocked">Les collections ne sont pas disponibles en mode invité</string>
+    <string name="incognito_action_blocked">Cette action n\'est pas disponible en mode invité</string>
 
     <string name="lang_english">Anglais</string>
     <string name="lang_spanish">Espagnol</string>

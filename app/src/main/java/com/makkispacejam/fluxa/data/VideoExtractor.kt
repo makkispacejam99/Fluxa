@@ -49,7 +49,14 @@ object VideoExtractor {
             }
             null
         } catch (e: Exception) {
-            Log.e("FluxaExtractor", "Error obteniendo StreamInfo para videoId: $videoId", e)
+            Log.e("FluxaExtractor", "Error obteniendo StreamInfo para videoId: $videoId, reintentando con otros clientes", e)
+            for (client in listOf("IOS", "WEB_REMIX")) {
+                try {
+                    YouTubeDownloader.overrideClient.set(client)
+                    val info = StreamInfo.getInfo(service, url)
+                    return@withContext info
+                } catch (_: Exception) { }
+            }
             null
         } finally {
             YouTubeDownloader.overrideClient.remove()

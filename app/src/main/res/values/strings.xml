@@ -63,6 +63,12 @@
     <string name="theme_dark">Dark</string>
     <string name="amoled_mode">Amoled Dark</string>
     <string name="amoled_mode_desc">True black for OLED screens</string>
+    <string name="incognito_mode">Guest Mode</string>
+    <string name="incognito_mode_desc">Browse without saving history or progress</string>
+    <string name="incognito_toast_on">Guest mode activated</string>
+    <string name="incognito_toast_off">Guest mode deactivated</string>
+    <string name="incognito_collections_blocked">Collections are not available while in guest mode</string>
+    <string name="incognito_action_blocked">This action is not available in guest mode</string>
 
     <string name="lang_english">English</string>
     <string name="lang_spanish">Spanish</string>

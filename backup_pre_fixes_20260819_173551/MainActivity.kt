@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.app.ForegroundServiceStartNotAllowedException
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.OptIn
@@ -58,19 +57,11 @@ class MainActivity : AppCompatActivity() {
                 mediaController = controllerFuture.get()
             }, MoreExecutors.directExecutor())
 
-        } catch (e: ForegroundServiceStartNotAllowedException) {
-            e.printStackTrace()
-        } catch (e: SecurityException) {
-            e.printStackTrace()
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
-        try {
-            enableEdgeToEdge()
-        } catch (e: Throwable) {
-            e.printStackTrace()
-        }
+        enableEdgeToEdge()
         setContent {
             FluxaTheme {
                 AppNavigation()

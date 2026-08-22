@@ -3,6 +3,7 @@ package com.makkispacejam.fluxa.viewmodels.player
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import com.makkispacejam.fluxa.FluxaPlaybackService
+import com.makkispacejam.fluxa.data.UserPreferences
 import com.makkispacejam.fluxa.data.local.WatchedVideoEntity
 import com.makkispacejam.fluxa.data.local.VideoInteractionEntity
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +17,7 @@ class PlayerProgressPersistence(
 ) {
     @OptIn(UnstableApi::class)
     fun saveCurrentProgress() {
+        if (UserPreferences.incognitoActive) return
         val state = getState()
         val videoId = state.currentVideoId
         if (videoId.isEmpty()) return
@@ -41,6 +43,7 @@ class PlayerProgressPersistence(
     }
 
     fun markAsWatched(videoId: String) {
+        if (UserPreferences.incognitoActive) return
         scope.launch(Dispatchers.IO) {
             dao.insertWatchedVideo(WatchedVideoEntity(videoId))
         }

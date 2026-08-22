@@ -33,7 +33,9 @@ fun PlaylistHeader(
     isEditMode: Boolean,
     onToggleEditMode: () -> Unit,
     onImportClick: () -> Unit,
-    showEditButton: Boolean = isUserPlaylist
+    showEditButton: Boolean = isUserPlaylist,
+    showShareButton: Boolean = false,
+    onShareClick: () -> Unit = {}
 ) {
     if (playlistTitle.isBlank() && playlistVideos.isEmpty()) {
         SkeletonLine(modifier = Modifier.width(200.dp), height = 28.dp)
@@ -50,8 +52,17 @@ fun PlaylistHeader(
                 Text(text = stringResource(R.string.playlist_count_format, playlistVideos.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
-            if (isUserPlaylist || showEditButton) {
+            if (isUserPlaylist || showEditButton || showShareButton) {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (showShareButton) {
+                        IconButton(onClick = onShareClick) {
+                            Icon(
+                                imageVector = Icons.Rounded.IosShare,
+                                contentDescription = stringResource(R.string.share_short),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                     if (isUserPlaylist) {
                         IconButton(onClick = onImportClick) {
                             Icon(

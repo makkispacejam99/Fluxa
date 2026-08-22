@@ -18,6 +18,8 @@ fun SettingsGeneralSection(
     themeMode: ThemeMode,
     amoledMode: Boolean,
     onAmoledModeChange: (Boolean) -> Unit,
+    incognitoMode: Boolean,
+    onIncognitoModeChange: (Boolean) -> Unit,
     selectedLanguage: String,
     selectedTranslationLang: String,
     selectedQuality: String,
@@ -33,6 +35,7 @@ fun SettingsGeneralSection(
         Column {
             SettingItem(stringResource(R.string.appearance), stringResource(themeMode.titleRes), onClick = onThemeClick)
             SettingItemWithSwitch(title = stringResource(R.string.amoled_mode), subtitle = stringResource(R.string.amoled_mode_desc), checked = amoledMode, onCheckedChange = onAmoledModeChange)
+            SettingItemWithSwitch(title = stringResource(R.string.incognito_mode), subtitle = stringResource(R.string.incognito_mode_desc), checked = incognitoMode, onCheckedChange = onIncognitoModeChange)
             SettingItem(stringResource(R.string.language), selectedLanguage, onClick = onLanguageClick)
             SettingItem(stringResource(R.string.content_translation), selectedTranslationLang, onClick = onTranslationClick)
             SettingItem(stringResource(R.string.video_quality), selectedQuality, onClick = onQualityClick)

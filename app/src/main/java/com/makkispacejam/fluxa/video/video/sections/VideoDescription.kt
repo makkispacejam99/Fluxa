@@ -10,6 +10,11 @@ import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
@@ -23,7 +28,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.makkispacejam.fluxa.viewmodels.user.TranslationViewModel
 import android.app.Application
-import androidx.compose.runtime.*
 import com.makkispacejam.fluxa.utils.stripHtml
 import androidx.compose.ui.res.stringResource
 import com.makkispacejam.fluxa.R
