@@ -18,10 +18,12 @@ fun ShortsQualityDialog(
     val q480 = stringResource(R.string.quality_480p)
     val q360 = stringResource(R.string.quality_360p)
     val qSaving = stringResource(R.string.quality_data_saving)
+    val q4k = stringResource(R.string.quality_4k)
+    val q8k = stringResource(R.string.quality_8k)
 
     OptionDialog(
         title = stringResource(R.string.video_quality),
-        options = listOf(q1080, q720, q480, q360, qSaving),
+        options = listOf(q4k, q8k, q1080, q720, q480, q360, qSaving),
         selectedOption = userPreferences.shortsVideoQuality,
         onOptionSelected = {
             userPreferences.shortsVideoQuality = it

@@ -10,11 +10,11 @@ object ResolutionUtils {
         val resolutions = mutableSetOf<Int>()
         streamInfo.videoStreams?.forEach { stream ->
             val res = parseResolution(stream.resolution)
-            if (res in 1..1080) resolutions.add(res)
+            if (res > 0) resolutions.add(res)
         }
         streamInfo.videoOnlyStreams?.forEach { stream ->
             val res = parseResolution(stream.resolution)
-            if (res in 1..1080) resolutions.add(res)
+            if (res > 0) resolutions.add(res)
         }
         return resolutions.toList().sortedDescending()
     }

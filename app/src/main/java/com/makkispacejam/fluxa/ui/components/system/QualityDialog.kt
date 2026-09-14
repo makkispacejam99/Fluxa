@@ -33,6 +33,7 @@ fun DialogOptions(
     onDismissRequest: () -> Unit
 ) {
     val q4k = stringResource(R.string.quality_4k)
+    val q8k = stringResource(R.string.quality_8k)
     val q2k = stringResource(R.string.quality_2k)
     val q1080 = stringResource(R.string.quality_1080p)
     val q720 = stringResource(R.string.quality_720p)
@@ -43,6 +44,7 @@ fun DialogOptions(
     val baseResoluciones = if (availableResolutions.isNotEmpty()) {
         availableResolutions.map { res ->
             val label = when (res) {
+                4320 -> q8k
                 2160 -> q4k
                 1440 -> q2k
                 1080 -> q1080

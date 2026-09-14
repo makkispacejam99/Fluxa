@@ -23,6 +23,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.makkispacejam.fluxa.R
 import com.makkispacejam.fluxa.ThemeMode
+import com.makkispacejam.fluxa.audio.NormalizeAudio
 import com.makkispacejam.fluxa.data.UserPreferences
 import com.makkispacejam.fluxa.data.local.BackupRestoreManager
 import com.makkispacejam.fluxa.ui.components.dialogs.OptionDialog
@@ -88,6 +89,7 @@ fun SettingsScreen(
     var bannerText by remember { mutableStateOf("") }
 
     var selectedQuality by remember { mutableStateOf(prefs.videoQuality) }
+    var audioNormalizerEnabled by remember { mutableStateOf(prefs.audioNormalizerEnabled) }
     var contentLanguage by remember { mutableStateOf(prefs.contentLanguage) }
     var contentRegion by remember { mutableStateOf(prefs.contentRegion) }
 
@@ -165,7 +167,13 @@ fun SettingsScreen(
                     selectedQuality = selectedQuality, selectedRegion = selectedRegion,
                     onThemeClick = { showThemeDialog = true }, onLanguageClick = { showLanguageDialog = true },
                     onTranslationClick = { showTranslationDialog = true }, onQualityClick = { showQualityDialog = true },
-                    onRegionClick = { showRegionDialog = true }
+                    onRegionClick = { showRegionDialog = true },
+                    audioNormalizerEnabled = audioNormalizerEnabled,
+                    onAudioNormalizerChange = {
+                        audioNormalizerEnabled = it
+                        prefs.audioNormalizerEnabled = it
+                        NormalizeAudio.setEnabled(it)
+                    }
                 )
             }
             item {

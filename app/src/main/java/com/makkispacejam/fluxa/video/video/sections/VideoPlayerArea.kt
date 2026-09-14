@@ -71,6 +71,7 @@ fun VideoPlayerArea(
     onSettings: () -> Unit,
     onResizeMode: () -> Unit,
     onPip: () -> Unit = {},
+    onAudioNormalize: () -> Unit,
     resizeMode: Int,
     onSliderChange: (Float) -> Unit,
     onSliderFinished: () -> Unit,
@@ -243,6 +244,7 @@ fun VideoPlayerArea(
                 onSettingsClick = onSettings,
                 onResizeModeClick = onResizeMode,
                 onPipClick = onPip,
+                onAudioNormalizeClick = onAudioNormalize,
                 queueSize = queueSize,
                 isLoading = isLoading
             )

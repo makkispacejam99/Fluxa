@@ -57,6 +57,7 @@ fun PlayerControls(
     onSettingsClick: () -> Unit,
     onResizeModeClick: () -> Unit,
     onPipClick: () -> Unit = {},
+    onAudioNormalizeClick: () -> Unit,
     queueSize: Int = 0,
     isLoading: Boolean = false
 ) {
@@ -121,6 +122,7 @@ fun PlayerControls(
                 onAudioTracksClick = onAudioTracksClick,
                 onSpeedClick = onSpeedClick,
                 onSettingsClick = onSettingsClick,
+                onAudioNormalizeClick = onAudioNormalizeClick,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(top = 8.dp, start = 8.dp, end = 8.dp)

@@ -20,6 +20,9 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.Renderer
+import androidx.media3.exoplayer.audio.AudioSink
+import androidx.media3.exoplayer.audio.DefaultAudioSink
+import com.makkispacejam.fluxa.audio.NormalizeAudioProcessor
 import androidx.media3.exoplayer.text.TextOutput
 import androidx.media3.exoplayer.text.TextRenderer
 import androidx.media3.exoplayer.ExoPlayer
@@ -96,6 +99,18 @@ class FluxaPlaybackService : MediaSessionService() {
                 @Suppress("DEPRECATION")
                 (out.last() as? TextRenderer)?.experimentalSetLegacyDecodingEnabled(true)
             }
+
+            @OptIn(ExperimentalApi::class)
+            override fun buildAudioSink(
+                context: android.content.Context,
+                enableFloatOutput: Boolean,
+                enableAudioOutputPlaybackParameters: Boolean
+            ): AudioSink =
+                DefaultAudioSink.Builder(context)
+                    .setEnableFloatOutput(enableFloatOutput)
+                    .setEnableAudioOutputPlaybackParameters(enableAudioOutputPlaybackParameters)
+                    .setAudioProcessors(arrayOf(NormalizeAudioProcessor()))
+                    .build()
         }
 
         exoPlayer = ExoPlayer.Builder(this)

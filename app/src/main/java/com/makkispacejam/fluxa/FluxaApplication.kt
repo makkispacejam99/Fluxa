@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.localization.ContentCountry
 import org.schabi.newpipe.extractor.localization.Localization
+import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
 
 class FluxaApplication : Application(), ImageLoaderFactory {
 
@@ -54,6 +55,10 @@ class FluxaApplication : Application(), ImageLoaderFactory {
                 Localization(prefs.contentLanguage),
                 ContentCountry(prefs.contentRegion)
             )
+
+            // Acepta el consentimiento de cookies de YouTube (UE/EEE) para que las peticiones
+            // lleven SOCS=CAISAiAD en vez de CAE= y no nos devuelva la pared de consentimiento.
+            YoutubeParsingHelper.setConsentAccepted(true)
         } catch (e: Exception) {
             e.printStackTrace()
         }
