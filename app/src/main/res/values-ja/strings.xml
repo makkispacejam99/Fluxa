@@ -248,6 +248,11 @@
     <string name="active">有効</string>
     <string name="quality_4k">4K (Ultra HD)</string>
     <string name="quality_2k">2K (QHD)</string>
+    <string name="quality_8k">8K (Ultra HD)</string>
+    <string name="normalize_audio">オーディオ正規化</string>
+    <string name="normalize_audio_desc">どの動画も同じ音量に</string>
+    <string name="normalize_audio_on">オン</string>
+    <string name="normalize_audio_off">オフ</string>
     <string name="quality_480p_balanced">480p (バランス)</string>
     <string name="quality_360p_saving">360p (データ節約)</string>
     <string name="quality_240p_saving">240p (最大限の節約)</string>

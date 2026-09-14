@@ -13,6 +13,7 @@ import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -39,6 +40,7 @@ fun ShortsMoreOptionsDialog(
     onShareClick: () -> Unit,
     onMarkAsWatchedClick: () -> Unit,
     onBlockClick: () -> Unit,
+    onAudioNormalizeClick: () -> Unit,
     hasValidAudioTracks: Boolean = true,
     isIncognito: Boolean = false
 ) {
@@ -61,6 +63,7 @@ fun ShortsMoreOptionsDialog(
                 )
                 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ShortsMenuOption(icon = Icons.Rounded.VolumeUp, label = stringResource(R.string.normalize_audio), onClick = { onAudioNormalizeClick(); onDismiss() })
                     ShortsMenuOption(icon = Icons.Rounded.Settings, label = stringResource(R.string.video_quality_short), onClick = { onQualityClick(); onDismiss() })
                     if (hasValidAudioTracks) {
                         ShortsMenuOption(icon = Icons.Rounded.Audiotrack, label = stringResource(R.string.audio_quality_short), onClick = { onAudioClick(); onDismiss() })

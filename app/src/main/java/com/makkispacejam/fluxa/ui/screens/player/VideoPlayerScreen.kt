@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.makkispacejam.fluxa.audio.NormalizeAudio
 import com.makkispacejam.fluxa.viewmodels.user.InteractionViewModel
 import androidx.media3.common.util.UnstableApi
 import com.makkispacejam.fluxa.viewmodels.content.CommentsViewModel
@@ -34,6 +35,7 @@ import com.makkispacejam.fluxa.viewmodels.player.PlayerViewModel
 import com.makkispacejam.fluxa.MainActivity
 import com.makkispacejam.fluxa.ui.components.player.notifications.PlayerNotificationBanner
 import com.makkispacejam.fluxa.ui.components.player.queue.QueueFloatingButton
+import com.makkispacejam.fluxa.ui.components.system.AudioNormalizerDialog
 import com.makkispacejam.fluxa.video.video.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -90,7 +92,14 @@ fun VideoPlayerScreen(
     var showSpeedDialog by remember { mutableStateOf(false) }
     var showSubtitlesDialog by remember { mutableStateOf(false) }
     var showAudioTracksDialog by remember { mutableStateOf(false) }
+    var showAudioNormalizerDialog by remember { mutableStateOf(false) }
     var selectedQuality by remember { mutableStateOf(prefs.videoQuality) }
+
+    var audioNormalized by remember { mutableStateOf(prefs.audioNormalizerEnabled) }
+
+    LaunchedEffect(Unit) {
+        NormalizeAudio.setEnabled(prefs.audioNormalizerEnabled)
+    }
     
     val defaultSpeed = stringResource(R.string.speed_normal)
     val defaultSubtitles = stringResource(R.string.subtitles_off)
@@ -158,6 +167,7 @@ fun VideoPlayerScreen(
             showSpeedDialog = false
             showSubtitlesDialog = false
             showAudioTracksDialog = false
+            showAudioNormalizerDialog = false
             controlsVisible = false
         } else {
             controlsVisible = true
@@ -256,6 +266,7 @@ fun VideoPlayerScreen(
                                     .build()
                             )
                         },
+                        onAudioNormalize = { showAudioNormalizerDialog = true },
                         resizeMode = playerViewModel.resizeMode,
                         onSliderChange = { newValue ->
                             isUserDraggingSlider = true
@@ -394,4 +405,16 @@ fun VideoPlayerScreen(
         onDismissSubtitles = { showSubtitlesDialog = false },
         onDismissAudioTracks = { showAudioTracksDialog = false }
     )
+
+    if (showAudioNormalizerDialog) {
+        AudioNormalizerDialog(
+            isEnabled = audioNormalized,
+            onToggle = { on ->
+                audioNormalized = on
+                prefs.audioNormalizerEnabled = on
+                NormalizeAudio.setEnabled(on)
+            },
+            onDismissRequest = { showAudioNormalizerDialog = false }
+        )
+    }
 }

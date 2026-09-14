@@ -47,6 +47,11 @@ class UserPreferences(context: Context) {
         @SuppressLint("UseKtx")
         set(value) = prefs.edit().putString("shorts_video_quality", value).apply()
 
+    var audioNormalizerEnabled: Boolean
+        get() = prefs.getBoolean("audio_normalizer_enabled", false)
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putBoolean("audio_normalizer_enabled", value).apply()
+
     var translationLanguage: String?
         get() = prefs.getString("translation_language", null)
         @SuppressLint("UseKtx")

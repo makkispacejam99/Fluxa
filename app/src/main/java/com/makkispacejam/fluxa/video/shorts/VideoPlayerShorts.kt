@@ -35,6 +35,7 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.makkispacejam.fluxa.audio.NormalizeAudio
 import com.makkispacejam.fluxa.video.source.ChunkedReconnectDataSource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -58,6 +59,8 @@ fun VideoPlayer(
     val trackSelector = remember {
         val targetQuality = com.makkispacejam.fluxa.utils.NetworkUtils.getTargetVideoQuality(appContext)
         val (maxWidth, maxHeight) = when {
+            targetQuality >= 4320 -> 7680 to 4320
+            targetQuality >= 2160 -> 3840 to 2160
             targetQuality >= 1080 -> 1920 to 1080
             targetQuality >= 720 -> 1280 to 720
             targetQuality >= 480 -> 854 to 480
@@ -108,6 +111,7 @@ fun VideoPlayer(
 
     val exoPlayer = remember {
         ExoPlayer.Builder(appContext)
+            .setRenderersFactory(NormalizeAudio.renderersFactory(appContext))
             .setTrackSelector(trackSelector)
             .setLoadControl(loadControl)
             .setHandleAudioBecomingNoisy(true)

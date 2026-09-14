@@ -28,6 +28,8 @@ object NetworkUtils {
                 "480p" -> 480
                 "360p" -> 360
                 "Ahorro de datos" -> 240
+                "4K (Ultra HD)" -> 2160
+                "8K (Ultra HD)" -> 4320
                 else -> preferredQuality.replace(Regex("[^0-9]"), "").toIntOrNull() ?: 480
             }
         }
@@ -46,7 +48,7 @@ object NetworkUtils {
                 mobileQuality(kbps)
 
             capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) ->
-                1080
+                2160
             else -> 480
         }
 
@@ -55,6 +57,7 @@ object NetworkUtils {
     }
 
     private fun wifiQuality(kbps: Int): Int = when {
+        kbps > 20000 -> 2160
         kbps > 5000 -> 1080
         kbps > 2000 -> 720
         kbps > 800 -> 480

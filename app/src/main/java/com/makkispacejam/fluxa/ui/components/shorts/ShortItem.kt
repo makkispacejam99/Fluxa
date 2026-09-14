@@ -28,10 +28,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.makkispacejam.fluxa.R
+import com.makkispacejam.fluxa.audio.NormalizeAudio
 import com.makkispacejam.fluxa.ui.components.dialogs.ShortsMoreOptionsDialog
 import com.makkispacejam.fluxa.ui.components.player.shorts.LikeHeartOverlay
 import com.makkispacejam.fluxa.ui.components.shorts.dialogs.ShortsAudioDialog
 import com.makkispacejam.fluxa.ui.components.shorts.dialogs.ShortsQualityDialog
+import com.makkispacejam.fluxa.ui.components.system.AudioNormalizerDialog
 import com.makkispacejam.fluxa.ui.components.shorts.overlays.PlayPauseFeedback
 import com.makkispacejam.fluxa.ui.components.shorts.overlays.ShortsInfoBar
 import com.makkispacejam.fluxa.ui.components.shorts.overlays.ShortsSlider
@@ -92,11 +94,14 @@ fun ShortItem(
     }
 
     val context = LocalContext.current
+    val prefs = remember { UserPreferences(context) }
+    var audioNormalized by remember { mutableStateOf(prefs.audioNormalizerEnabled) }
     var showHeartAnimation by remember { mutableStateOf(false) }
     var showCommentsSheet by remember { mutableStateOf(false) }
     var showQualityDialog by remember { mutableStateOf(false) }
     var showAudioDialog by remember { mutableStateOf(false) }
     var showMoreOptions by remember { mutableStateOf(false) }
+    var showAudioNormalizerDialog by remember { mutableStateOf(false) }
     var availableAudioTracks by remember { mutableStateOf<List<AudioStream>>(emptyList()) }
     var selectedAudioTrackDisplay by remember { mutableStateOf("") }
 
@@ -366,7 +371,20 @@ fun ShortItem(
                     Toast.makeText(context, context.getString(R.string.msg_channel_blocked), Toast.LENGTH_SHORT).show()
                 },
                 hasValidAudioTracks = hasValidAudioTracks,
+                onAudioNormalizeClick = { showAudioNormalizerDialog = true },
                 isIncognito = isIncognito
+            )
+        }
+
+        if (showAudioNormalizerDialog) {
+            AudioNormalizerDialog(
+                isEnabled = audioNormalized,
+                onToggle = { on ->
+                    audioNormalized = on
+                    prefs.audioNormalizerEnabled = on
+                    NormalizeAudio.setEnabled(on)
+                },
+                onDismissRequest = { showAudioNormalizerDialog = false }
             )
         }
 

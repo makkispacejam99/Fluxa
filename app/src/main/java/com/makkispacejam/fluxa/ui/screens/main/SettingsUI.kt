@@ -28,7 +28,9 @@ fun SettingsGeneralSection(
     onLanguageClick: () -> Unit,
     onTranslationClick: () -> Unit,
     onQualityClick: () -> Unit,
-    onRegionClick: () -> Unit
+    onRegionClick: () -> Unit,
+    audioNormalizerEnabled: Boolean,
+    onAudioNormalizerChange: (Boolean) -> Unit
 ) {
     Text(stringResource(R.string.section_general), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp))
     Surface(color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), shape = RoundedCornerShape(24.dp)) {
@@ -36,6 +38,7 @@ fun SettingsGeneralSection(
             SettingItem(stringResource(R.string.appearance), stringResource(themeMode.titleRes), onClick = onThemeClick)
             SettingItemWithSwitch(title = stringResource(R.string.amoled_mode), subtitle = stringResource(R.string.amoled_mode_desc), checked = amoledMode, onCheckedChange = onAmoledModeChange)
             SettingItemWithSwitch(title = stringResource(R.string.incognito_mode), subtitle = stringResource(R.string.incognito_mode_desc), checked = incognitoMode, onCheckedChange = onIncognitoModeChange)
+            SettingItemWithSwitch(title = stringResource(R.string.normalize_audio), subtitle = stringResource(R.string.normalize_audio_desc), checked = audioNormalizerEnabled, onCheckedChange = onAudioNormalizerChange)
             SettingItem(stringResource(R.string.language), selectedLanguage, onClick = onLanguageClick)
             SettingItem(stringResource(R.string.content_translation), selectedTranslationLang, onClick = onTranslationClick)
             SettingItem(stringResource(R.string.video_quality), selectedQuality, onClick = onQualityClick)

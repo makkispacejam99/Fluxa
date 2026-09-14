@@ -16,6 +16,7 @@ import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Speed
+import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -39,6 +40,7 @@ fun PlayerTopButtons(
     onAudioTracksClick: () -> Unit,
     onSpeedClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    onAudioNormalizeClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -111,6 +113,18 @@ fun PlayerTopButtons(
                 interactionSource = remember { MutableInteractionSource() }
             ) {
                 Icon(Icons.Rounded.Speed, null, tint = Color.White, modifier = Modifier.size(22.dp))
+            }
+            IconButton(
+                onClick = onAudioNormalizeClick,
+                modifier = Modifier.size(40.dp),
+                interactionSource = remember { MutableInteractionSource() }
+            ) {
+                Icon(
+                    Icons.Rounded.VolumeUp,
+                    null,
+                    tint = Color.White,
+                    modifier = Modifier.size(22.dp)
+                )
             }
             IconButton(
                 onClick = onSettingsClick,

@@ -259,6 +259,11 @@
     <string name="active">Activo</string>
     <string name="quality_4k">4K (Ultra HD)</string>
     <string name="quality_2k">2K (QHD)</string>
+    <string name="quality_8k">8K (Ultra HD)</string>
+    <string name="normalize_audio">Normalizador de audio</string>
+    <string name="normalize_audio_desc">Mismo volumen en todos los videos</string>
+    <string name="normalize_audio_on">Encendido</string>
+    <string name="normalize_audio_off">Apagado</string>
     <string name="quality_480p_balanced">480p (Equilibrado)</string>
     <string name="quality_360p_saving">360p (Ahorro de Datos)</string>
     <string name="quality_240p_saving">240p (Ahorro Máximo)</string>

@@ -15,8 +15,8 @@ android {
         minSdk = 31
         //noinspection EditedTargetSdkVersion,OldTargetApi
         targetSdk = 38
-        versionCode = 68
-        versionName = "v1.0.1-STABLE"
+        versionCode = 70
+        versionName = "v1.1.0-STABLE"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -99,7 +99,7 @@ dependencies {
     //noinspection UseTomlInstead
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.36.0")
     //noinspection UseTomlInstead
-    implementation("com.github.teamnewpipe:NewPipeExtractor:0.26.4")
+    implementation("com.github.teamnewpipe:NewPipeExtractor:0.26.5")
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.exoplayer.dash)
     implementation(libs.androidx.media3.exoplayer.hls)
