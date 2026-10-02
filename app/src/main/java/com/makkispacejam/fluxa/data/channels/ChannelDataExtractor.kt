@@ -6,6 +6,7 @@ import android.util.Log
 import com.makkispacejam.fluxa.data.VideoExtractor
 import com.makkispacejam.fluxa.data.newpipe.FluxaChannelContainer
 import com.makkispacejam.fluxa.data.newpipe.FluxaStreamItem
+import com.makkispacejam.fluxa.data.shorts.ShortsClassifier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.ServiceList
@@ -94,7 +95,8 @@ object ChannelDataExtractor {
                     streams = videos,
                     playlists = playlists,
                     lives = lives,
-                    shorts = shorts
+                    shorts = shorts,
+                    description = channelExtractor.description ?: ""
                 )
 
             } catch (e: Exception) {
@@ -136,12 +138,12 @@ object ChannelDataExtractor {
                 channelUrl.substringAfterLast("/channel/").substringBefore("/").substringBefore("?")
             }
 
+            val cleanName = channelName.ifBlank { channelUrl.substringAfterLast("/").substringBefore("?") }
             try {
                 val channelExtractor = service.getChannelExtractor(channelUrl)
                 channelExtractor.fetchPage()
 
                 val cleanAvatar = channelAvatar.ifBlank { channelExtractor.avatars.firstOrNull()?.url ?: "" }
-                val cleanName = channelName.ifBlank { channelExtractor.name }
                 val extractorId = channelId.ifBlank { channelExtractor.id }
 
                 val shortsTab = channelExtractor.tabs.firstOrNull { it.url?.contains("/shorts", ignoreCase = true) == true }
@@ -149,25 +151,13 @@ object ChannelDataExtractor {
                     val tabExtractor = service.getChannelTabExtractor(shortsTab)
                     tabExtractor.fetchPage()
 
-                    val skipPages = (0..3).random()
-                    var currentItems = tabExtractor.initialPage.items ?: emptyList()
+                    val allItems = mutableListOf<org.schabi.newpipe.extractor.InfoItem>()
+                    allItems.addAll(tabExtractor.initialPage.items ?: emptyList())
+
                     var nextUrl = if (tabExtractor.initialPage.hasNextPage()) tabExtractor.initialPage.nextPage else null
 
-                    var skipped = 0
-                    while (skipped < skipPages && nextUrl != null) {
-                        try {
-                            val skipPage = tabExtractor.getPage(nextUrl)
-                            currentItems = skipPage.items ?: emptyList()
-                            nextUrl = if (skipPage.hasNextPage()) skipPage.nextPage else null
-                            skipped++
-                        } catch (_: Exception) { break }
-                    }
-
-                    val allItems = mutableListOf<org.schabi.newpipe.extractor.InfoItem>()
-                    allItems.addAll(currentItems)
-
                     var pageAttempts = 0
-                    while (allItems.size < 15 && pageAttempts < 2 && nextUrl != null) {
+                    while (allItems.size < 60 && pageAttempts < 2 && nextUrl != null) {
                         try {
                             val nextPage = tabExtractor.getPage(nextUrl)
                             nextPage.items?.let { allItems.addAll(it) }
@@ -176,26 +166,38 @@ object ChannelDataExtractor {
                         } catch (_: Exception) { break }
                     }
 
-                    val shorts = allItems.filterIsInstance<StreamInfoItem>()
-                        .filter { it.contentAvailability == org.schabi.newpipe.extractor.stream.ContentAvailability.AVAILABLE }
-                        .map { item ->
-                            val vidId = VideoExtractor.cleanVideoId(item.url ?: "")
-                            FluxaStreamItem(
-                                channelId = extractorId,
-                                url = vidId,
-                                title = item.name ?: "",
-                                thumbnail = item.thumbnails.firstOrNull()?.url ?: "",
-                                uploaderName = cleanName,
-                                views = try { item.viewCount } catch (_: Exception) { 0L },
-                                duration = try { item.duration } catch (_: Exception) { 0L },
-                                isLiveStream = false,
-                                uploaderAvatar = cleanAvatar,
-                                uploadDate = item.textualUploadDate ?: "",
-                                timestamp = try { item.uploadDate?.instant?.toEpochMilli() ?: 0L } catch (_: Exception) { 0L }
-                            )
+                    val rawStreams = allItems.filterIsInstance<StreamInfoItem>()
+
+                    val shorts = rawStreams.mapNotNull { item ->
+                        val title = item.name ?: ""
+                        val rawUrl = item.url ?: ""
+                        if (title.isBlank() || rawUrl.isBlank()) return@mapNotNull null
+
+                        val streamType = item.streamType?.name ?: ""
+                        if (streamType == "NONE" || streamType.contains("UPCOMING")) {
+                            return@mapNotNull null
                         }
-                        .filter { it.url.isNotBlank() }
-                        .shuffled()
+
+                        val duration = (try { item.duration } catch (_: Exception) { 0L })
+                            .let { if (it < 0L) 0L else it }
+
+                        if (!ShortsClassifier.isShortLenient(title, duration)) return@mapNotNull null
+
+                        FluxaStreamItem(
+                            channelId = extractorId,
+                            url = VideoExtractor.cleanVideoId(rawUrl),
+                            title = title,
+                            thumbnail = item.thumbnails.firstOrNull()?.url ?: "",
+                            uploaderName = cleanName,
+                            views = try { item.viewCount } catch (_: Exception) { 0L },
+                            duration = duration,
+                            isLiveStream = false,
+                            uploaderAvatar = cleanAvatar,
+                            uploadDate = item.textualUploadDate ?: "",
+                            timestamp = try { item.uploadDate?.instant?.toEpochMilli() ?: 0L } catch (_: Exception) { 0L }
+                        )
+                    }.filter { it.url.isNotBlank() }.shuffled()
+
                     if (shorts.isNotEmpty()) return@withContext shorts
                 }
 
@@ -208,9 +210,14 @@ object ChannelDataExtractor {
                     cleanAvatar,
                     extractorId
                 )
-                val shortVideos = videos.filter { it.duration in 1..100 }
+                val shortVideos = videos.filter {
+                    ShortsClassifier.isShortLenient(it.title, it.duration)
+                }
+                Log.d("FluxaExtractor", "$cleanName /videos total=${videos.size} -> shorts=${shortVideos.size}")
                 if (shortVideos.isNotEmpty()) return@withContext shortVideos
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Log.w("FluxaExtractor", "$cleanName fallo pestanas: ${e.javaClass.simpleName}: ${e.message}")
+            }
 
             val nameForSearch = channelName.ifBlank {
                 channelUrl.substringAfterLast("/").substringBefore("?").replace("channel/", "")
@@ -223,7 +230,11 @@ object ChannelDataExtractor {
                     val searchItems = searchExtractor.initialPage.items ?: emptyList()
                     val allResults = searchItems.filterIsInstance<StreamInfoItem>()
                         .filter { it.contentAvailability == org.schabi.newpipe.extractor.stream.ContentAvailability.AVAILABLE }
-                        .filter { try { it.duration in 1..100 } catch (_: Exception) { false } }
+                        .filter { item ->
+                            val title = item.name ?: ""
+                            val duration = try { item.duration } catch (_: Exception) { 0L }
+                            ShortsClassifier.isShort(title, duration, item.url)
+                        }
 
                     val queryNorm = nameForSearch.trim().lowercase()
 

@@ -8,16 +8,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Audiotrack
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Share
-import androidx.compose.material.icons.rounded.VolumeUp
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,10 +29,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.makkispacejam.fluxa.R
 
-// Diálogo de mas opciones de shorts
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShortsMoreOptionsDialog(
     onDismiss: () -> Unit,
@@ -44,53 +44,87 @@ fun ShortsMoreOptionsDialog(
     hasValidAudioTracks: Boolean = true,
     isIncognito: Boolean = false
 ) {
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            shape = RoundedCornerShape(26.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        dragHandle = { BottomSheetDefaults.DragHandle() },
+        containerColor = MaterialTheme.colorScheme.surface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 28.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(22.dp).fillMaxWidth(),
-                horizontalAlignment = Alignment.Start
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = stringResource(R.string.options_title), 
-                    style = MaterialTheme.typography.titleMedium, 
-                    fontWeight = FontWeight.ExtraBold, 
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, 
-                    modifier = Modifier.padding(bottom = 20.dp, start = 4.dp)
+                    text = stringResource(R.string.more_options_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-                
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ShortsMenuOption(icon = Icons.Rounded.VolumeUp, label = stringResource(R.string.normalize_audio), onClick = { onAudioNormalizeClick(); onDismiss() })
-                    ShortsMenuOption(icon = Icons.Rounded.Settings, label = stringResource(R.string.video_quality_short), onClick = { onQualityClick(); onDismiss() })
-                    if (hasValidAudioTracks) {
-                        ShortsMenuOption(icon = Icons.Rounded.Audiotrack, label = stringResource(R.string.audio_quality_short), onClick = { onAudioClick(); onDismiss() })
-                    }
-                    ShortsMenuOption(icon = Icons.Rounded.Share, label = stringResource(R.string.share_short), onClick = { onShareClick(); onDismiss() })
-                    if (!isIncognito) {
-                        ShortsMenuOption(icon = Icons.Rounded.Check, label = stringResource(R.string.already_watched), onClick = { onMarkAsWatchedClick(); onDismiss() })
-                        ShortsMenuOption(icon = Icons.Rounded.Block, label = stringResource(R.string.block_channel), onClick = { onBlockClick(); onDismiss() }, isError = true)
-                    }
+            }
+
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                ShortsMenuOption(
+                    icon = Icons.AutoMirrored.Rounded.VolumeUp,
+                    label = stringResource(R.string.normalize_audio),
+                    onClick = { onAudioNormalizeClick(); onDismiss() }
+                )
+                ShortsMenuOption(
+                    icon = Icons.Rounded.Settings,
+                    label = stringResource(R.string.video_quality_short),
+                    onClick = { onQualityClick(); onDismiss() }
+                )
+                if (hasValidAudioTracks) {
+                    ShortsMenuOption(
+                        icon = Icons.Rounded.Audiotrack,
+                        label = stringResource(R.string.audio_quality_short),
+                        onClick = { onAudioClick(); onDismiss() }
+                    )
+                }
+                ShortsMenuOption(
+                    icon = Icons.Rounded.Share,
+                    label = stringResource(R.string.share_short),
+                    onClick = { onShareClick(); onDismiss() }
+                )
+                if (!isIncognito) {
+                    ShortsMenuOption(
+                        icon = Icons.Rounded.Check,
+                        label = stringResource(R.string.already_watched),
+                        onClick = { onMarkAsWatchedClick(); onDismiss() }
+                    )
+                    ShortsMenuOption(
+                        icon = Icons.Rounded.Block,
+                        label = stringResource(R.string.block_channel),
+                        onClick = { onBlockClick(); onDismiss() },
+                        isError = true
+                    )
                 }
             }
         }
     }
 }
 
-// Opciones individuales
 @Composable
 private fun ShortsMenuOption(
     icon: ImageVector,
-    label: String, 
-    onClick: () -> Unit, 
+    label: String,
+    onClick: () -> Unit,
     isError: Boolean = false
 ) {
     Surface(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         color = Color.Transparent
     ) {
         Row(
@@ -99,14 +133,14 @@ private fun ShortsMenuOption(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Icon(
-                imageVector = icon, 
-                contentDescription = null, 
+                imageVector = icon,
+                contentDescription = null,
                 tint = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(22.dp)
             )
             Text(
-                text = label, 
-                style = MaterialTheme.typography.bodyMedium, 
+                text = label,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
             )

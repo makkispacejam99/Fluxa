@@ -1,36 +1,38 @@
-@file:Suppress("USELESS_ELVIS_LEFT_IS_NULL")
-
 package com.makkispacejam.fluxa.data
 
 import android.content.Context
 import android.util.Log
+import com.makkispacejam.fluxa.data.local.FluxaDao
 import com.makkispacejam.fluxa.data.local.FluxaDatabase
+import com.makkispacejam.fluxa.data.shorts.ShortSource
+import com.makkispacejam.fluxa.data.shorts.ShortsCache
+import com.makkispacejam.fluxa.data.shorts.ShortsCacheManager
+import com.makkispacejam.fluxa.data.shorts.ShortsClassifier
+import com.makkispacejam.fluxa.data.shorts.ShortsGraph
+import com.makkispacejam.fluxa.data.shorts.ShortsRanker
+import com.makkispacejam.fluxa.data.shorts.ShortsSeenRegistry
+import com.makkispacejam.fluxa.data.shorts.ShortsSource
+import com.makkispacejam.fluxa.data.shorts.ScoredShort
 import com.makkispacejam.fluxa.models.VideoModel
 import com.makkispacejam.fluxa.ui.components.system.NewPipeServerException
-import com.makkispacejam.fluxa.data.shorts.ShortsCacheManager
-import com.makkispacejam.fluxa.data.shorts.ShortsCache
-import com.makkispacejam.fluxa.data.shorts.ShortsSource
-import com.makkispacejam.fluxa.data.filters.RecentVideosTracker
-import kotlinx.coroutines.*
-import java.util.Collections
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 
 class ShortsRepository {
 
-    companion object {
-        private var shortsCache: List<VideoModel>? = null
-        private var shortsCacheTime: Long = 0L
-        private val hiddenShorts = Collections.synchronizedSet(mutableSetOf<String>())
-        private const val CACHE_TTL = 10 * 60 * 1000L
-        private const val MAX_PER_CHANNEL = 5
+    private companion object {
+        const val TAG = "FluxaShorts"
+        const val SUBS_PER_CHANNEL_LOAD_MORE = 16
+        const val SUBS_PER_CHANNEL_SHUFFLE = 20
     }
 
-    // Ocultar shorts
     fun hideShort(videoId: String) {
-        hiddenShorts.add(videoId)
-        shortsCache = shortsCache?.filter { it.id != videoId }
+        ShortsSessionState.hide(videoId)
     }
 
-    // Obtener shorts de diferentes fuentes
     suspend fun getShorts(
         context: Context,
         forceLoadMore: Boolean = false,
@@ -38,184 +40,400 @@ class ShortsRepository {
         onProgress: ((List<VideoModel>) -> Unit)? = null
     ): List<VideoModel> = withContext(Dispatchers.IO) {
 
-            if (forceRefresh) {
-                shortsCache = null
-                shortsCacheTime = 0L
-                ShortsCacheManager.clearCache()
-                RecentVideosTracker.clearAll()
-            } else if (!forceLoadMore) {
-                shortsCache?.let {
-                    if (System.currentTimeMillis() - shortsCacheTime < CACHE_TTL) {
-                        val dao = FluxaDatabase.getDatabase(context).fluxaDao()
-                        val blockedIds = dao.getBlockedChannelIds().toSet()
-                        return@withContext it.filter { v -> v.id !in hiddenShorts && v.channelId !in blockedIds }
+        ShortsSeenRegistry.attach(context)
+        val dao = FluxaDatabase.getDatabase(context).fluxaDao()
+        val seed = ShortsSessionState.beginSession()
+
+        if (forceRefresh) {
+            ShortsSessionState.invalidateCache()
+            ShortsCacheManager.clearCache()
+            ShortsSessionState.clearPool()
+        }
+
+        if (!forceRefresh && !forceLoadMore) {
+            ShortsSessionState.freshCache()?.let { cached ->
+                val blocked = dao.getBlockedChannelIds().toSet()
+                val page = cached
+                    .filter { it.id !in ShortsSessionState.hiddenShorts && it.channelId !in blocked }
+                    .let { ShortsSessionState.shuffleWithSession(it, seed) }
+                    .take(ShortsSessionState.PAGE_SIZE)
+                if (page.isNotEmpty()) return@withContext page
+            }
+        }
+
+        if (forceLoadMore) {
+            val ready = ShortsSessionState.drain(ShortsSessionState.PAGE_SIZE)
+            if (ready.size >= ShortsSessionState.PAGE_SIZE / 2) return@withContext ready
+        }
+
+        val signals = readSignals(dao)
+        val session = FeedSession(dao, signals, onProgress)
+
+        session.add(session.instantCache())
+
+        val subsJob = async(Dispatchers.IO) {
+            runCatching {
+                ShortsSource.getSubscriptionShorts(
+                    dao = dao,
+                    blockedChannelIds = signals.blockedChannelIds,
+                    onBatch = { batch ->
+                        batch.forEach { item ->
+                            ShortsClassifier.keywordTokens(item.video.title).forEach { token ->
+                                signals.subscriptionVocabulary.add(token)
+                            }
+                        }
+                        session.add(batch)
+                    }
+                )
+            }.getOrElse {
+                Log.d(TAG, "shorts de suscripciones fallo: ${it.message}")
+                emptyList()
+            }
+        }
+
+        val relatedJob = async(Dispatchers.IO) {
+            runCatching {
+                ShortsGraph.expand(
+                    seeds = signals.seeds,
+                    maxLevel2PerSeed = 3,
+                    maxLevel2Total = 10,
+                    maxConcurrent = 6,
+                    onLevel1 = { level1 -> session.add(level1) },
+                    accept = { item -> session.acceptsRelated(item) }
+                )
+            }.getOrElse {
+                Log.d(TAG, "expansion de related fallo: ${it.message}")
+                emptyList()
+            }
+        }
+
+        val topicsJob = async(Dispatchers.IO) {
+            runCatching {
+                ShortsSource.getTopicShorts(
+                    queries = buildQueries(signals),
+                    blockedChannelIds = signals.blockedChannelIds,
+                    dislikedChannelNames = signals.dislikedChannelNames
+                )
+            }.getOrElse {
+                Log.d(TAG, "busquedas por tema fallaron: ${it.message}")
+                emptyList()
+            }
+        }
+
+        awaitAll(subsJob, relatedJob, topicsJob)
+
+        if (session.size() < ShortsSessionState.PAGE_SIZE && !signals.hasSubscriptions) {
+            runCatching {
+                ShortsSource.getDiscoveryShorts(
+                    blockedChannelIds = signals.blockedChannelIds,
+                    dislikedChannelNames = signals.dislikedChannelNames
+                )
+            }.getOrElse { emptyList() }.let { session.add(it) }
+        }
+
+        finalize(dao, session, signals, forceLoadMore)
+    }
+
+    suspend fun loadMore(
+        context: Context,
+        exclude: Set<String> = emptySet(),
+        size: Int = ShortsSessionState.PAGE_SIZE
+    ): List<VideoModel> = withContext(Dispatchers.IO) {
+        ShortsSeenRegistry.attach(context)
+        ShortsSessionState.beginSession()
+
+        val ready = ShortsSessionState.drain(size + exclude.size).filterNot { it.id in exclude }
+        if (ready.size >= size / 2) {
+            val page = ready.take(size)
+            ShortsSessionState.refill(ready.drop(size))
+            return@withContext page
+        }
+
+        val dao = FluxaDatabase.getDatabase(context).fluxaDao()
+        val signals = readSignals(dao)
+        val session = FeedSession(dao, signals, null)
+        session.addUnchecked(ready.map { ScoredShort(it, 0.0, ShortSource.SESSION_POOL) })
+
+        val subs = signals.subscribedChannelIds
+
+        coroutineScope {
+            val jobs = mutableListOf<kotlinx.coroutines.Deferred<List<ScoredShort>>>()
+
+            if (signals.hasSubscriptions) {
+                jobs += async(Dispatchers.IO) {
+                    runCatching {
+                        ShortsSource.getSubscriptionShorts(
+                            dao = dao,
+                            blockedChannelIds = signals.blockedChannelIds,
+                            perChannel = SUBS_PER_CHANNEL_LOAD_MORE,
+                            minTotal = size * 2,
+                            onBatch = { batch ->
+                                batch.forEach { item ->
+                                    ShortsClassifier.keywordTokens(item.video.title).forEach { token ->
+                                        signals.subscriptionVocabulary.add(token)
+                                    }
+                                }
+                                session.add(batch)
+                            }
+                        )
+                    }.getOrElse {
+                        Log.d(TAG, "shorts de suscripciones fallo: ${it.message}")
+                        emptyList()
                     }
                 }
+            }
+
+            jobs += async(Dispatchers.IO) {
+                runCatching {
+                    ShortsGraph.expand(
+                        seeds = signals.seeds,
+                        maxLevel2PerSeed = 3,
+                        maxLevel2Total = 10,
+                        maxConcurrent = 6,
+                        accept = { item ->
+                            val id = VideoExtractor.cleanVideoId(item.url ?: "")
+                            ShortsGraph.isUsableRelated(item) &&
+                                id !in exclude &&
+                                id !in ShortsSessionState.hiddenShorts &&
+                                !ShortsSeenRegistry.isServedWithin(
+                                    id, ShortsSeenRegistry.WINDOW_SHADOW
+                                )
+                        }
+                    )
+                }.getOrElse { emptyList() }.also { session.addUnchecked(it) }
+            }
+
+            jobs += async(Dispatchers.IO) {
+                runCatching {
+                    ShortsSource.getTopicShorts(
+                        queries = buildQueries(signals),
+                        blockedChannelIds = signals.blockedChannelIds,
+                        dislikedChannelNames = signals.dislikedChannelNames
+                    )
+                }.getOrElse { emptyList() }.also { session.addUnchecked(it) }
+            }
+
+            awaitAll(*jobs.toTypedArray())
+        }
+
+        val ranked = ShortsRanker.rank(
+            session.poolSnapshot(),
+            signals.taste,
+            sessionSeed = ShortsSessionState.sessionSeed
+        )
+        var batch = ShortsRanker
+            .select(
+                ranked,
+                size,
+                subscribedChannelIds = subs,
+                sessionSeed = ShortsSessionState.sessionSeed
+            )
+            .map { it.video }
+        if (batch.isEmpty()) {
+            batch = cacheFallback(dao, signals, size, exclude)
+        }
+        if (batch.isNotEmpty()) {
+            val batchIds = batch.mapTo(HashSet()) { it.id }
+            ShortsSessionState.refill(
+                ShortsRanker
+                    .select(
+                        ranked,
+                        ShortsSessionState.POOL_TARGET,
+                        subscribedChannelIds = subs,
+                        sessionSeed = ShortsSessionState.sessionSeed
+                    )
+                    .map { it.video }
+                    .filterNot { it.id in batchIds }
+            )
+            ShortsSeenRegistry.markServed(batch)
+            ShortsCacheManager.markAsSeen(batch)
+            ShortsCache.saveToDiskCache(dao, batch)
+        }
+        batch
+    }
+
+    suspend fun shuffleShorts(context: Context, size: Int = ShortsSessionState.PAGE_SIZE): List<VideoModel> =
+        withContext(Dispatchers.IO) {
+            ShortsSeenRegistry.attach(context)
+            ShortsSessionState.beginSession()
+            ShortsSessionState.invalidateCache()
+
+            val ready = ShortsSessionState.drain(size * 2)
+            if (ready.size >= size) {
+                val page = ready.take(size)
+                ShortsSessionState.refill(ready.drop(size))
+                return@withContext page
             }
 
             val dao = FluxaDatabase.getDatabase(context).fluxaDao()
+            val signals = readSignals(dao)
+            val session = FeedSession(dao, signals, null)
+            session.add(ready.map { video ->
+                ScoredShort(
+                    video = video,
+                    score = 0.0,
+                    source = ShortSource.SESSION_POOL,
+                    originChannelId = video.channelId.orEmpty(),
+                    originTitle = video.title
+                )
+            })
 
-            val blockedChannelIdsDeferred = async { dao.getBlockedChannelIds().toSet() }
-            val interactionsDeferred = async { dao.getRecentInteractions(500) }
-            val watchedVideoIdsDeferred = async { dao.getAllWatchedVideoIds().toSet() }
+            val jobs = mutableListOf<kotlinx.coroutines.Deferred<List<ScoredShort>>>()
+            jobs.add(async(Dispatchers.IO) {
+                runCatching {
+                    ShortsSource.getSubscriptionShorts(
+                        dao = dao,
+                        blockedChannelIds = signals.blockedChannelIds,
+                        maxChannels = 30,
+                        perChannel = SUBS_PER_CHANNEL_SHUFFLE,
+                        timeoutMs = 5000,
+                        overallTimeoutMs = 9_000,
+                        minTotal = size * 2
+                    )
+                }.getOrElse { emptyList() }.also { session.addUnchecked(it) }
+            })
+            jobs.add(async(Dispatchers.IO) {
+                runCatching {
+                    ShortsSource.getTopicShorts(
+                        queries = buildQueries(signals).take(3),
+                        blockedChannelIds = signals.blockedChannelIds,
+                        dislikedChannelNames = signals.dislikedChannelNames,
+                        timeoutMs = 3500
+                    )
+                }.getOrElse { emptyList() }.also { session.addUnchecked(it) }
+            })
 
-            val cachedShortsDeferred = async {
-                val cached = dao.getRecentCachedVideos(80)
-                if (cached.isNotEmpty()) {
-                    cached.map { ShortsCache.toVideoModel(it) }.filter { it.id !in hiddenShorts }
-                } else emptyList()
+            kotlinx.coroutines.withTimeoutOrNull(10_000L) {
+                jobs.awaitAll()
             }
 
-            val blockedChannelIds = blockedChannelIdsDeferred.await()
-            val interactions = interactionsDeferred.await()
-            val watchedVideoIds = watchedVideoIdsDeferred.await()
-            val filterIds = interactions.filter { it.isDisliked }.map { it.videoId }.toSet() +
-                    watchedVideoIds + ShortsCacheManager.getSeenIds() + hiddenShorts
-            val dislikedChannelNames = interactions.filter { it.isDisliked }.mapNotNull { it.channelName }.toSet()
-
-            val cachedShorts = cachedShortsDeferred.await()
-            val dislikedChannelIdsFromCached = cachedShorts.filter { it.channelName in dislikedChannelNames }.mapNotNull { it.channelId }.toSet()
-            if (cachedShorts.isNotEmpty()) {
-                val filteredCached = cachedShorts.filter { it.id !in filterIds && it.channelId !in blockedChannelIds }
-                if (filteredCached.isNotEmpty()) {
-                    onProgress?.invoke(filteredCached.shuffled())
-                }
+            val subs = signals.subscribedChannelIds
+            val seed = ShortsSessionState.sessionSeed
+            val ranked = ShortsRanker.rank(session.poolSnapshot(), signals.taste, sessionSeed = seed)
+            var page = ShortsRanker
+                .select(ranked, size, subscribedChannelIds = subs, sessionSeed = seed)
+                .map { it.video }
+            if (page.isEmpty()) {
+                val relaxed = ShortsRanker.rankRelaxed(session.poolSnapshot(), signals.taste, seed)
+                page = ShortsRanker
+                    .select(relaxed, size, subscribedChannelIds = subs, sessionSeed = seed)
+                    .map { it.video }
             }
-
-            val genericShortsDeferred = async { ShortsSource.getGenericShorts(blockedChannelIds, dislikedChannelNames) }
-
-            val subShorts = try { ShortsSource.getSubscriptionShorts(dao, blockedChannelIds) } catch(e: Exception) { Log.e("FluxaShorts", "fallo al obtener shorts de las suscripciones", e); emptyList() }
-            val dislikedChannelIdsFromSubs = subShorts.filter { it.channelName in dislikedChannelNames }.mapNotNull { it.channelId }.toSet()
-            val dislikedChannelIds = dislikedChannelIdsFromCached + dislikedChannelIdsFromSubs
-
-            val initialShorts = subShorts.filter { it.id !in filterIds && it.channelId !in blockedChannelIds && it.channelId !in dislikedChannelIds }
-            if (initialShorts.isNotEmpty()) {
-                onProgress?.invoke(initialShorts.shuffled())
+            if (page.isEmpty()) {
+                page = ready.drop((ready.size - size).coerceAtLeast(0))
             }
-
-            val seedVideoIds = subShorts.distinctBy { it.channelId }.shuffled().take(8).map { it.id }
-            val likedSeedIds = interactions.filter { it.isLiked }.map { it.videoId }.takeLast(10).distinct()
-            val allSeeds = (seedVideoIds + likedSeedIds).shuffled().take(8)
-            val channelSimilarShortsDeferred = async {
-                if (allSeeds.isNotEmpty()) ShortsSource.getChannelSimilarShorts(allSeeds, subShorts.mapNotNull { it.channelId }.toSet(), blockedChannelIds, dislikedChannelNames) else emptyList()
+            if (page.isEmpty()) {
+                page = cacheFallback(dao, signals, size, emptySet())
             }
+            if (page.isEmpty()) return@withContext emptyList()
 
-            val channelSimilarShorts = try { channelSimilarShortsDeferred.await() } catch(e: Exception) { Log.e("FluxaShorts", "fallo al obtener shorts similares de canales", e); emptyList() }
-            val genericShorts = try { genericShortsDeferred.await() } catch(e: Exception) { Log.e("FluxaShorts", "fallo al obtener shorts genericos", e); emptyList() }
-
-            val allDislikedChannelIds = dislikedChannelIds +
-                    channelSimilarShorts.filter { it.channelName in dislikedChannelNames }.mapNotNull { it.channelId }.toSet() +
-                    genericShorts.filter { it.channelName in dislikedChannelNames }.mapNotNull { it.channelId }.toSet()
-
-            val finalMix = interleaveShorts(subShorts, channelSimilarShorts, genericShorts, filterIds, blockedChannelIds, dislikedChannelNames, allDislikedChannelIds)
-
-            if (finalMix.isEmpty()) {
-                val fallback = genericShorts.ifEmpty { ShortsSource.getGenericShorts(blockedChannelIds, dislikedChannelNames) }
-                if (fallback.isEmpty()) throw NewPipeServerException()
-                return@withContext fallback.filter { it.id !in hiddenShorts && it.channelId !in blockedChannelIds }
-            }
-
-            if (finalMix.size < 30) {
-                val fillers = (channelSimilarShorts + genericShorts + subShorts).shuffled()
-                    .filter { it.id !in (finalMix.map { m -> m.id }.toSet() + filterIds) && it.channelId !in blockedChannelIds && it.channelId !in allDislikedChannelIds && it.channelName !in dislikedChannelNames }
-                    .distinctBy { it.id }
-                return@withContext (finalMix + fillers).take(60).shuffled()
-            }
-
-            val result = finalMix.take(80).shuffled()
-            if (!forceLoadMore) {
-                shortsCache = result
-                shortsCacheTime = System.currentTimeMillis()
-            }
-
-            ShortsCache.saveToDiskCache(dao, result)
-
-            finalMix.take(60).shuffled()
+            val pageIds = page.mapTo(HashSet()) { it.id }
+            ShortsSessionState.refill(
+                ShortsRanker
+                    .select(ranked, size * 4, subscribedChannelIds = subs, sessionSeed = seed)
+                    .map { it.video }
+                    .filterNot { it.id in pageIds }
+            )
+            ShortsSeenRegistry.markServed(page)
+            ShortsCacheManager.markAsSeen(page)
+            ShortsCache.saveToDiskCache(dao, page)
+            page
         }
 
-    // Mezcla de fuentes
-    private fun interleaveShorts(
-        subShorts: List<VideoModel>,
-        similarShorts: List<VideoModel>,
-        genericShorts: List<VideoModel>,
-        filterIds: Set<String>,
-        blockedChannelIds: Set<String>,
-        dislikedChannelNames: Set<String> = emptySet(),
-        dislikedChannelIds: Set<String> = emptySet()
+    private suspend fun finalize(
+        dao: FluxaDao,
+        session: FeedSession,
+        signals: Signals,
+        forceLoadMore: Boolean
     ): List<VideoModel> {
-        val subQueue = ArrayDeque(
-            subShorts.filter { it.id !in filterIds && it.channelId !in blockedChannelIds && it.channelId !in dislikedChannelIds && it.channelName !in dislikedChannelNames && !RecentVideosTracker.isRecentlySeen(it.id) }
-        )
-        val similarQueue = ArrayDeque(
-            similarShorts.filter { it.id !in filterIds && it.channelId !in blockedChannelIds && it.channelId !in dislikedChannelIds && it.channelName !in dislikedChannelNames && !RecentVideosTracker.isRecentlySeen(it.id) }
-        )
-        val genericQueue = ArrayDeque(
-            genericShorts.filter { it.id !in filterIds && it.channelId !in blockedChannelIds && it.channelId !in dislikedChannelIds && it.channelName !in dislikedChannelNames && !RecentVideosTracker.isRecentlySeen(it.id) }
-        )
+        val subs = signals.subscribedChannelIds
+        val seed = ShortsSessionState.sessionSeed
+        Log.d(TAG, "finalize: ${session.summary()} subs=${subs.size} pagina=${ShortsSessionState.PAGE_SIZE}")
+        val ranked = ShortsRanker.rank(session.poolSnapshot(), signals.taste, sessionSeed = seed)
+        var page = ShortsRanker
+            .select(
+                ranked,
+                ShortsSessionState.PAGE_SIZE,
+                subscribedChannelIds = subs,
+                sessionSeed = seed
+            )
+            .map { it.video }
 
-        val result = mutableListOf<VideoModel>()
-        val seenIds = mutableSetOf<String>()
-        val channelCount = mutableMapOf<String, Int>()
-
-        fun tryAdd(video: VideoModel): Boolean {
-            if (video.id in seenIds) return false
-            val chCount = channelCount[video.channelId ?: ""] ?: 0
-            if (chCount >= MAX_PER_CHANNEL) return false
-            result.add(video)
-            seenIds.add(video.id)
-            channelCount[video.channelId ?: ""] = chCount + 1
-            return true
+        if (page.isEmpty()) {
+            val relaxed = ShortsRanker.rankRelaxed(session.poolSnapshot(), signals.taste, seed)
+            page = ShortsRanker
+                .select(
+                    relaxed,
+                    ShortsSessionState.PAGE_SIZE,
+                    subscribedChannelIds = subs,
+                    sessionSeed = seed
+                )
+                .map { it.video }
+        }
+        if (page.isEmpty()) {
+            page = session.poolSnapshot().shuffled().take(ShortsSessionState.PAGE_SIZE).map { it.video }
+        }
+        if (page.isEmpty()) {
+            page = cacheFallback(dao, signals, ShortsSessionState.PAGE_SIZE, emptySet())
+        }
+        if (page.isEmpty()) {
+            Log.w(TAG, "finalize: sin resultados, subs=${subs.size} poolVacio=${session.size() == 0}")
+            throw NewPipeServerException()
         }
 
-        val queues = listOf(
-            ArrayDeque(subQueue.shuffled()),
-            ArrayDeque(similarQueue.shuffled()),
-            ArrayDeque(genericQueue.shuffled())
+        val pageIds = page.mapTo(HashSet()) { it.id }
+        val rest = ShortsRanker
+            .select(
+                ranked,
+                ShortsSessionState.POOL_TARGET,
+                subscribedChannelIds = subs,
+                sessionSeed = seed
+            )
+            .map { it.video }
+            .filterNot { it.id in pageIds }
+
+        ShortsSessionState.refill(rest)
+        ShortsSeenRegistry.markServed(page)
+        ShortsCacheManager.markAsSeen(page)
+
+        if (!forceLoadMore) {
+            ShortsSessionState.storeCache(page + rest)
+        }
+        ShortsCache.saveToDiskCache(dao, page + rest)
+        return page
+    }
+
+    private fun cacheFallback(
+        dao: FluxaDao,
+        signals: Signals,
+        size: Int,
+        exclude: Set<String>
+    ): List<VideoModel> {
+        val cached = runCatching { dao.getRecentCachedVideos(120) }.getOrElse { emptyList() }
+        if (cached.isEmpty()) return emptyList()
+        val windows = longArrayOf(
+            ShortsSeenRegistry.WINDOW_SHADOW,
+            ShortsSeenRegistry.WINDOW_3_DAYS,
+            ShortsSeenRegistry.WINDOW_HARD
         )
-
-        val pattern = (0 until 60).map { it % 3 }.shuffled()
-        var subDone = 0
-        val maxSubInRow = 1
-
-        for (source in pattern) {
-            if (queues.all { it.isEmpty() }) break
-            if (result.size >= 60) break
-
-            if (queues[source].isNotEmpty()) {
-                if (source == 0) {
-                    if (subDone < maxSubInRow) {
-                        if (tryAdd(queues[source].removeFirst())) subDone++
-                    } else {
-                        val fallback = queues.indices.firstOrNull { it != 0 && queues[it].isNotEmpty() }
-                        if (fallback != null) {
-                            tryAdd(queues[fallback].removeFirst())
-                        } else if (queues[source].isNotEmpty()) {
-                            tryAdd(queues[source].removeFirst())
-                        }
-                        subDone = 0
-                    }
-                } else {
-                    if (tryAdd(queues[source].removeFirst())) subDone = 0
+        for (window in windows) {
+            val page = cached
+                .filter { entity ->
+                    val id = entity.videoId
+                    val channelId = ShortsClassifier.normalizeChannelId(entity.channelId)
+                    id.isNotBlank() &&
+                        id !in exclude &&
+                        id !in signals.excludedIds &&
+                        id !in ShortsSessionState.hiddenShorts &&
+                        (channelId.isEmpty() || channelId !in signals.blockedChannelIds) &&
+                        entity.channelName?.trim()?.lowercase() !in signals.dislikedNames &&
+                        !ShortsSeenRegistry.isServedWithin(id, window)
                 }
-            } else {
-                for (i in queues.indices) {
-                    if (queues[i].isNotEmpty()) {
-                        tryAdd(queues[i].removeFirst())
-                        break
-                    }
-                }
-            }
+                .shuffled()
+                .take(size)
+                .map { entity -> ShortsCache.toVideoModel(entity) }
+            if (page.isNotEmpty()) return page
         }
-
-        while (result.size < 60 && queues.any { it.isNotEmpty() }) {
-            for (q in queues) {
-                if (q.isNotEmpty() && result.size >= 60) break
-                while (q.isNotEmpty() && result.size < 60) {
-                    tryAdd(q.removeFirst())
-                }
-            }
-        }
-
-        return result
+        return emptyList()
     }
 }

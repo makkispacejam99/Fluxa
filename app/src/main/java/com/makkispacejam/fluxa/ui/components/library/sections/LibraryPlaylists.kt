@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.makkispacejam.fluxa.ui.components.library.sections
 
 import androidx.compose.foundation.clickable
@@ -16,6 +18,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.makkispacejam.fluxa.data.local.PlaylistEntity
 import com.makkispacejam.fluxa.ui.components.core.TranslatedText
+import com.makkispacejam.fluxa.ui.components.settings.components.SettingItemPosition
+import com.makkispacejam.fluxa.ui.components.settings.components.getSettingItemShape
 
 import androidx.compose.ui.res.stringResource
 import com.makkispacejam.fluxa.R
@@ -52,7 +56,7 @@ fun LocalPlaylistsSection(
             
             Row(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .clickable { 
                         if (userPlaylists.size < 10) showCreateDialog.value = true 
                     }
@@ -85,26 +89,34 @@ fun LocalPlaylistsSection(
 
         Surface(
             modifier = Modifier.padding(top = 12.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-            shape = RoundedCornerShape(24.dp)
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            shape = RoundedCornerShape(20.dp)
         ) {
-            Column(modifier = Modifier.padding(vertical = 8.dp)) {
+            Column {
                 // Playlists del sistema
                 LocalPlaylistItem(
                     title = stringResource(R.string.watch_later),
                     subtitle = stringResource(R.string.videos_guardados),
                     isSystem = true,
-                    onClick = { onPlaylistClick("Ver más tarde") }
+                    onClick = { onPlaylistClick("Ver más tarde") },
+                    position = SettingItemPosition.First
+                )
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
                 )
                 LocalPlaylistItem(
                     title = stringResource(R.string.favoritos),
                     subtitle = stringResource(R.string.tus_videos_preferidos),
                     isSystem = true,
-                    onClick = { onPlaylistClick("Favoritos") }
+                    onClick = { onPlaylistClick("Favoritos") },
+                    position = if (userPlaylists.isEmpty()) SettingItemPosition.Last else SettingItemPosition.Middle
                 )
-                
+
                 // Playlists del usuario
-                userPlaylists.forEach { playlist ->
+                userPlaylists.forEachIndexed { index, playlist ->
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                    )
                     LocalPlaylistItem(
                         title = playlist.name,
                         subtitle = stringResource(R.string.lista_personalizada),
@@ -113,7 +125,8 @@ fun LocalPlaylistsSection(
                         onOptionsClick = {
                             playlistToManage.value = playlist
                             showOptionsSheet.value = true
-                        }
+                        },
+                        position = if (index == userPlaylists.lastIndex) SettingItemPosition.Last else SettingItemPosition.Middle
                     )
                 }
             }
@@ -133,7 +146,7 @@ fun LocalPlaylistsSection(
                     onValueChange = { newName.value = it },
                     label = { Text(stringResource(R.string.nombre_de_la_lista)) },
                     singleLine = true,
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(16.dp)
                 )
             },
             confirmButton = {
@@ -167,7 +180,7 @@ fun LocalPlaylistsSection(
                     onValueChange = { newName.value = it },
                     label = { Text(stringResource(R.string.nuevo_nombre)) },
                     singleLine = true,
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(16.dp)
                 )
             },
             confirmButton = {
@@ -232,27 +245,37 @@ fun LocalPlaylistItem(
     subtitle: String,
     isSystem: Boolean,
     onClick: () -> Unit,
-    onOptionsClick: (() -> Unit)? = null
+    onOptionsClick: (() -> Unit)? = null,
+    position: SettingItemPosition = SettingItemPosition.Single
 ) {
-    Row(
+    val shape = getSettingItemShape(position)
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(vertical = 10.dp, horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .clip(shape)
+            .clickable { onClick() },
+        shape = shape,
+        color = Color.Transparent
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            TranslatedText(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
-        }
-        
-        if (!isSystem && onOptionsClick != null) {
-            IconButton(onClick = onOptionsClick) {
-                Icon(
-                    Icons.Rounded.MoreVert,
-                    contentDescription = stringResource(R.string.options_title),
-                    tint = MaterialTheme.colorScheme.secondary
-                )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                TranslatedText(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            if (!isSystem && onOptionsClick != null) {
+                IconButton(onClick = onOptionsClick) {
+                    Icon(
+                        Icons.Rounded.MoreVert,
+                        contentDescription = stringResource(R.string.options_title),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }

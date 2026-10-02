@@ -32,5 +32,6 @@ data class FluxaChannelContainer(
     val streams: List<FluxaStreamItem>,
     val playlists: List<FluxaPlaylistItem> = emptyList(),
     val lives: List<FluxaStreamItem> = emptyList(),
-    val shorts: List<FluxaStreamItem> = emptyList()
+    val shorts: List<FluxaStreamItem> = emptyList(),
+    val description: String = ""
 )

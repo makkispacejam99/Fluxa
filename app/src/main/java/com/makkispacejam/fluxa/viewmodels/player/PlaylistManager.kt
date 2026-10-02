@@ -31,7 +31,7 @@ class PlaylistManager(
                 finalIndex = startIndex
             }
         }
-        updateState(getState().copy(playlistQueue = finalQueue, currentIndex = finalIndex, isShuffled = shuffle, resetProgress = resetProgress))
+        updateState(getState().copy(playlistQueue = finalQueue, preShuffleQueue = if (shuffle) queue else emptyList(), currentIndex = finalIndex, isShuffled = shuffle, resetProgress = resetProgress))
         val selected = finalQueue[finalIndex]
         scope.launch { onPlayVideo(selected.videoId, selected.title, selected.channel, selected.thumbnailUrl, true) }
     }
@@ -65,16 +65,18 @@ class PlaylistManager(
         val currentQueue = s.playlistQueue.toMutableList()
         if (index !in currentQueue.indices) return
         val isPlayingRemoved = index == s.currentIndex
+        val removedVideoId = currentQueue[index].videoId
         currentQueue.removeAt(index)
+        val syncedPreShuffle = if (s.isShuffled) s.preShuffleQueue.filter { it.videoId != removedVideoId } else s.preShuffleQueue
         var newIndex = s.currentIndex
         if (isPlayingRemoved) {
             if (currentQueue.isEmpty()) { onClosePlayer(); return }
             newIndex = if (index < currentQueue.size) index else 0
-            updateState(s.copy(playlistQueue = currentQueue, currentIndex = newIndex))
+            updateState(s.copy(playlistQueue = currentQueue, preShuffleQueue = syncedPreShuffle, currentIndex = newIndex))
             playFromQueue(newIndex)
         } else {
             if (index < s.currentIndex) newIndex--
-            updateState(s.copy(playlistQueue = currentQueue, currentIndex = newIndex))
+            updateState(s.copy(playlistQueue = currentQueue, preShuffleQueue = syncedPreShuffle, currentIndex = newIndex))
         }
     }
 
@@ -88,18 +90,33 @@ class PlaylistManager(
         if (fromIndex == s.currentIndex) newIndex = toIndex
         else if (s.currentIndex in (fromIndex + 1)..toIndex) newIndex--
         else if (s.currentIndex in toIndex..<fromIndex) newIndex++
-        updateState(s.copy(playlistQueue = currentQueue, currentIndex = newIndex))
+        updateState(s.copy(playlistQueue = currentQueue, preShuffleQueue = if (s.isShuffled) emptyList() else s.preShuffleQueue, currentIndex = newIndex))
     }
 
     fun toggleShuffle() {
         val s = getState()
         if (s.playlistQueue.isEmpty()) return
         val isNowShuffled = !s.isShuffled
-        val newQueue = if (isNowShuffled) {
+        if (isNowShuffled) {
             val current = s.playlistQueue.find { it.videoId == s.currentVideoId } ?: s.playlistQueue[s.currentIndex]
-            listOf(current) + s.playlistQueue.filter { it.videoId != s.currentVideoId }.shuffled()
-        } else s.playlistQueue.shuffled()
-        updateState(s.copy(playlistQueue = newQueue, currentIndex = 0, isShuffled = isNowShuffled))
+            val shuffled = listOf(current) + s.playlistQueue.filter { it.videoId != current.videoId }.shuffled()
+            updateState(s.copy(
+                playlistQueue = shuffled,
+                preShuffleQueue = s.playlistQueue,
+                currentIndex = 0,
+                isShuffled = true
+            ))
+        } else {
+            val restored = if (s.preShuffleQueue.isNotEmpty()) s.preShuffleQueue else s.playlistQueue
+            val restoredIndex = restored.indexOfFirst { it.videoId == s.currentVideoId }
+            val newIndex = if (restoredIndex >= 0) restoredIndex else s.currentIndex.coerceIn(0, restored.lastIndex)
+            updateState(s.copy(
+                playlistQueue = restored,
+                preShuffleQueue = emptyList(),
+                currentIndex = newIndex,
+                isShuffled = false
+            ))
+        }
     }
 
     fun toggleRepeatMode() {

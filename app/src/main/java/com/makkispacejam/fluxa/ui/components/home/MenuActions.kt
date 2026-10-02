@@ -11,6 +11,7 @@ import com.makkispacejam.fluxa.data.local.PlaylistEntity
 import com.makkispacejam.fluxa.models.home.HomeFeedItem
 import com.makkispacejam.fluxa.ui.components.dialogs.VideoOptionsMenu
 import com.makkispacejam.fluxa.ui.components.player.playlist.PlaylistSelectionDialog
+import com.makkispacejam.fluxa.utils.localizedPlaylistName
 import com.makkispacejam.fluxa.viewmodels.content.HomeViewModel
 import com.makkispacejam.fluxa.viewmodels.user.InteractionViewModel
 import com.makkispacejam.fluxa.viewmodels.content.VideoViewModel
@@ -42,9 +43,8 @@ fun HomeActionMenus(
             onDismiss = onDismissOptions,
             isIncognito = com.makkispacejam.fluxa.data.UserPreferences.incognitoActive,
             onSaveLater = {
-                val watchLaterText = messages["watchLater"] ?: "Watch Later"
                 videoVM.saveToPlaylist(
-                    watchLaterText,
+                    "Ver más tarde",
                     selectedVideoForOptions.videoId,
                     selectedVideoForOptions.title,
                     selectedVideoForOptions.channelName,
@@ -119,7 +119,7 @@ fun HomeActionMenus(
                     videoForPlaylist.channelId
                 ) { success ->
                     videoVM.notificationBannerText = if (success) {
-                        (messages["savedToPlaylist"] ?: "").format(playlistName)
+                        (messages["savedToPlaylist"] ?: "").format(context.localizedPlaylistName(playlistName))
                     } else {
                         messages["alreadyInPlaylist"] ?: ""
                     }
@@ -140,7 +140,6 @@ fun homeMessages(): Map<String, String> {
         "linkCopied" to stringResource(R.string.link_copied),
         "noRecommend" to stringResource(R.string.msg_no_recommend),
         "channelBlocked" to stringResource(R.string.msg_channel_blocked),
-        "savedToPlaylist" to stringResource(R.string.saved_to_playlist),
-        "watchLater" to stringResource(R.string.watch_later)
+        "savedToPlaylist" to stringResource(R.string.saved_to_playlist)
     )
 }

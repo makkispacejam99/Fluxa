@@ -17,6 +17,7 @@ public class CachedVideoEntity {
     public String videoUrl;
     public long timestamp;
     public long viewCount;
+    public long duration;
     public long cachedAt;
 
     public CachedVideoEntity(@NonNull String videoId) {

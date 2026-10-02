@@ -5,12 +5,13 @@ package com.makkispacejam.fluxa.video.shorts
 import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -30,14 +32,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import com.makkispacejam.fluxa.R
 import com.makkispacejam.fluxa.models.CommentSnippet
 import com.makkispacejam.fluxa.models.CommentThread
+import com.makkispacejam.fluxa.utils.stripHtml
+
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
-import androidx.compose.ui.res.stringResource
-import com.makkispacejam.fluxa.R
-import com.makkispacejam.fluxa.utils.stripHtml
-import com.makkispacejam.fluxa.video.video.sections.extractUrls
 
 object TimeUtils {
     fun getTimeAgo(
@@ -80,38 +81,70 @@ fun ShortsComments(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        tonalElevation = 14.dp,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 6.dp,
+        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        dragHandle = {
+            BottomSheetDefaults.DragHandle(
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.64f)
-                .padding(horizontal = 14.dp)
+                .fillMaxHeight(0.68f)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = stringResource(R.string.comments_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.comments_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    if (comments.isNotEmpty()) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ) {
+                            Text(
+                                text = comments.size.toString(),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+                            )
+                        }
+                    }
+                }
+                FilledTonalIconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.size(36.dp),
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    )
+                ) {
                     Icon(
                         Icons.Rounded.Close,
                         contentDescription = stringResource(R.string.close_btn),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
 
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -121,39 +154,75 @@ fun ShortsComments(
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
                         text = stringResource(R.string.comments_disabled_or_unavailable),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
             } else {
-                LazyColumn(
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
-                        .drawWithContent {
-                            drawContent()
-                            drawRect(
-                                brush = Brush.verticalGradient(
-                                    0.9f to Color.Black,
-                                    1f to Color.Transparent
-                                ),
-                                blendMode = BlendMode.DstIn
-                            )
-                        },
-                    contentPadding = PaddingValues(vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
-                    items(comments) { thread ->
-                        val mainComment = thread.snippet?.topLevelComment?.snippet
-                        if (mainComment != null) {
-                            CommentRow(comment = mainComment, getAvatar = getAvatar, ownerChannelId = ownerChannelId, ownerAvatarUrl = ownerAvatarUrl)
-                        }
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        shape = RoundedCornerShape(20.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh
+                    ) {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+                                .drawWithContent {
+                                    drawContent()
+                                    drawRect(
+                                        brush = Brush.verticalGradient(
+                                            0.94f to Color.Black,
+                                            1f to Color.Transparent
+                                        ),
+                                        blendMode = BlendMode.DstIn
+                                    )
+                                },
+                            contentPadding = PaddingValues(vertical = 12.dp)
+                        ) {
+                            itemsIndexed(comments) { index, thread ->
+                                val mainComment = thread.snippet?.topLevelComment?.snippet
+                                if (mainComment != null) {
+                                    if (index > 0) {
+                                        HorizontalDivider(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 12.dp),
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                                        )
+                                    }
+                                    CommentRow(
+                                        comment = mainComment,
+                                        getAvatar = getAvatar,
+                                        ownerChannelId = ownerChannelId,
+                                        ownerAvatarUrl = ownerAvatarUrl,
+                                        modifier = Modifier.padding(horizontal = 16.dp)
+                                    )
 
-                        thread.replies?.comments?.forEach { replyItem ->
-                            val replySnippet = replyItem.snippet
-                            if (replySnippet != null) {
-                                Row(modifier = Modifier.padding(start = 44.dp, top = 8.dp)) {
-                                    CommentRow(comment = replySnippet, isReply = true, getAvatar = getAvatar, ownerChannelId = ownerChannelId, ownerAvatarUrl = ownerAvatarUrl)
+                                    thread.replies?.comments?.forEach { replyItem ->
+                                        val replySnippet = replyItem.snippet
+                                        if (replySnippet != null) {
+                                            HorizontalDivider(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 10.dp),
+                                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                                            )
+                                            CommentRow(
+                                                comment = replySnippet,
+                                                isReply = true,
+                                                getAvatar = getAvatar,
+                                                ownerChannelId = ownerChannelId,
+                                                ownerAvatarUrl = ownerAvatarUrl,
+                                                modifier = Modifier.padding(start = 36.dp, end = 16.dp)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -165,9 +234,16 @@ fun ShortsComments(
 }
 
 @Composable
-fun CommentRow(comment: CommentSnippet, isReply: Boolean = false, getAvatar: (String, String?) -> String?, ownerChannelId: String = "", ownerAvatarUrl: String? = null) {
+fun CommentRow(
+    comment: CommentSnippet,
+    modifier: Modifier = Modifier,
+    isReply: Boolean = false,
+    getAvatar: (String, String?) -> String?,
+    ownerChannelId: String = "",
+    ownerAvatarUrl: String? = null
+) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.Top
     ) {
@@ -175,7 +251,7 @@ fun CommentRow(comment: CommentSnippet, isReply: Boolean = false, getAvatar: (St
         val avatar = getAvatar(comment.authorChannelId, comment.authorProfileImageUrl)
             ?.ifEmpty { if (isOwner) ownerAvatarUrl ?: "" else "" }
             ?: if (isOwner) ownerAvatarUrl ?: "" else ""
-        
+
         com.makkispacejam.fluxa.ui.components.core.FluxaAvatar(
             avatarUrl = avatar,
             size = if (isReply) 28.dp else 36.dp,
@@ -186,47 +262,50 @@ fun CommentRow(comment: CommentSnippet, isReply: Boolean = false, getAvatar: (St
         Column(modifier = Modifier.weight(1f)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                    val displayName = comment.authorDisplayName.replace("@", "").trim()
-                    Text(
-                        text = displayName.ifEmpty { stringResource(R.string.user_placeholder) },
-                        style = if (isReply) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    
-                    val timeAgo = TimeUtils.getTimeAgo(
-                        comment.publishedAt,
-                        recentText = stringResource(R.string.time_recent),
-                        minAgoText = stringResource(R.string.time_min_ago),
-                        hoursAgoText = stringResource(R.string.time_hours_ago),
-                        daysAgoText = stringResource(R.string.time_days_ago)
-                    )
-                    
-                    Text(
-                        text = "• $timeAgo",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                val displayName = comment.authorDisplayName.replace("@", "").trim()
+                Text(
+                    text = displayName.ifEmpty { stringResource(R.string.user_placeholder) },
+                    style = if (isReply) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                val timeAgo = TimeUtils.getTimeAgo(
+                    comment.publishedAt,
+                    recentText = stringResource(R.string.time_recent),
+                    minAgoText = stringResource(R.string.time_min_ago),
+                    hoursAgoText = stringResource(R.string.time_hours_ago),
+                    daysAgoText = stringResource(R.string.time_days_ago)
+                )
+
+                Text(
+                    text = "• $timeAgo",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
             }
 
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(3.dp))
 
             val commentText = comment.textDisplay.ifEmpty { "" }.stripHtml()
-            val urls = extractUrls(commentText)
-            if (urls.isNotEmpty()) {
+            val urlMatches = Regex("https?://\\S+").findAll(commentText).toList()
+            if (urlMatches.isNotEmpty()) {
                 val context = LocalContext.current
+                val primaryColor = MaterialTheme.colorScheme.primary
                 val annotatedString = buildAnnotatedString {
                     var lastIndex = 0
-                    urls.forEach { range ->
-                        append(commentText.substring(lastIndex, range.first))
-                        pushStringAnnotation(tag = "URL", annotation = commentText.substring(range.first, range.second))
-                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
-                            append(commentText.substring(range.first, range.second))
+                    urlMatches.forEach { match ->
+                        val start = match.range.first
+                        val end = match.range.last + 1
+                        append(commentText.substring(lastIndex, start))
+                        pushStringAnnotation(tag = "URL", annotation = commentText.substring(start, end))
+                        withStyle(SpanStyle(color = primaryColor, textDecoration = TextDecoration.Underline)) {
+                            append(commentText.substring(start, end))
                         }
                         pop()
-                        lastIndex = range.second
+                        lastIndex = end
                     }
                     append(commentText.substring(lastIndex))
                 }
@@ -252,16 +331,29 @@ fun CommentRow(comment: CommentSnippet, isReply: Boolean = false, getAvatar: (St
             }
 
             if (comment.likeCount > 0) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Rounded.FavoriteBorder,
-                        contentDescription = null,
-                        modifier = Modifier.size(12.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = comment.likeCount.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.height(6.dp))
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.Favorite,
+                            contentDescription = null,
+                            modifier = Modifier.size(12.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            text = comment.likeCount.toString(),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

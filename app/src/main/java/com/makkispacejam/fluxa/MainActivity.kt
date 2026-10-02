@@ -24,6 +24,8 @@ import com.makkispacejam.fluxa.ui.screens.navigation.AppNavigation
 import com.makkispacejam.fluxa.ui.theme.FluxaTheme
 
 val pendingOpenPlayer = mutableStateOf(false)
+val pendingOpenVideoId = mutableStateOf("")
+val pendingOpenPlaylistUrl = mutableStateOf("")
 
 class MainActivity : AppCompatActivity() {
 
@@ -88,8 +90,10 @@ class MainActivity : AppCompatActivity() {
         handleIntent(intent)
     }
 
+    @OptIn(UnstableApi::class)
     override fun onResume() {
         super.onResume()
+        FluxaPlaybackService.instance?.hidePopupOverlay()
         intent?.let { handleIntent(it) }
     }
 
@@ -104,6 +108,26 @@ class MainActivity : AppCompatActivity() {
     private fun handleIntent(intent: Intent) {
         if (intent.getBooleanExtra("open_player", false)) {
             pendingOpenPlayer.value = true
+        }
+        if (intent.action == Intent.ACTION_VIEW) {
+            val data = intent.data ?: return
+            val listId = data.getQueryParameter("list")
+            if (!listId.isNullOrBlank()) {
+                pendingOpenPlaylistUrl.value = data.toString()
+                intent.data = null
+                return
+            }
+            val videoId = when {
+                data.host.equals("youtu.be", ignoreCase = true) ->
+                    data.path?.substringAfterLast("/")?.substringBefore("?") ?: ""
+                data.host?.contains("youtube.com", ignoreCase = true) == true ->
+                    data.getQueryParameter("v") ?: ""
+                else -> ""
+            }
+            if (videoId.isNotBlank() && videoId.length in 4..20) {
+                pendingOpenVideoId.value = videoId
+                intent.data = null
+            }
         }
     }
 }

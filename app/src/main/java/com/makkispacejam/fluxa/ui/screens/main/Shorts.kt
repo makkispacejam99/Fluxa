@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -22,7 +23,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,23 +38,29 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
 import com.makkispacejam.fluxa.FluxaPlaybackService
+import com.makkispacejam.fluxa.ThemeMode
 import com.makkispacejam.fluxa.data.UserPreferences
+import com.makkispacejam.fluxa.ui.components.core.ExpressivePullToRefreshBox
 import com.makkispacejam.fluxa.ui.components.shorts.ShortItem
 import com.makkispacejam.fluxa.ui.components.shorts.ShortSkeleton
+import com.makkispacejam.fluxa.ui.components.shorts.ShortsGesturesHint
 import com.makkispacejam.fluxa.ui.components.system.ErrorScreen
+import com.makkispacejam.fluxa.ui.components.system.SystemAppearanceEffect
 import com.makkispacejam.fluxa.viewmodels.content.VideoViewModel
 import com.makkispacejam.fluxa.data.shorts.ShortsCacheManager
+import com.makkispacejam.fluxa.data.filters.WatchedArchive
+import com.makkispacejam.fluxa.data.shorts.ShortsSeenRegistry
 import com.makkispacejam.fluxa.data.local.FluxaDatabase
 import com.makkispacejam.fluxa.data.local.WatchedVideoEntity
 import com.makkispacejam.fluxa.utils.NetworkUtils
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 import androidx.compose.ui.res.stringResource
 import com.makkispacejam.fluxa.R
 import kotlin.math.abs
 
-// Pantalla de shorts
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,7 +74,43 @@ fun ShortsScreen(
     val context = LocalContext.current
     val view = LocalView.current
     val prefs = remember { UserPreferences(context) }
+    val isIncognito = UserPreferences.incognitoActive
+    val bottomBarPadding = innerPadding.calculateBottomPadding()
     var shortsQuality by remember { mutableStateOf(prefs.shortsVideoQuality) }
+
+    val gesturesRepeatInterval = 30L * 24L * 60L * 60L * 1000L
+    val forceGesturesTutorial = false
+    var gesturesHintVisible by remember { mutableStateOf(false) }
+    var gesturesHintAskFollowUp by remember { mutableStateOf(false) }
+
+    fun markGesturesHintShown() {
+        val now = System.currentTimeMillis()
+        prefs.shortsGesturesHintShownAt = now
+    }
+
+    LaunchedEffect(isActiveTab) {
+        if (!isActiveTab) return@LaunchedEffect
+        if (!prefs.shortsGesturesTutorialEnabled && !forceGesturesTutorial) return@LaunchedEffect
+        val last = prefs.shortsGesturesHintShownAt
+        val firstEver = last == 0L
+        val dueAgain = prefs.shortsGesturesTutorialEnabled &&
+            System.currentTimeMillis() - last > gesturesRepeatInterval
+        if (forceGesturesTutorial || firstEver || dueAgain) {
+            gesturesHintAskFollowUp = firstEver
+            gesturesHintVisible = true
+        }
+    }
+
+    val isDarkSystem = isSystemInDarkTheme()
+    val isDark = when (prefs.themeMode) {
+        ThemeMode.Light -> false
+        ThemeMode.Dark -> true
+        ThemeMode.System -> isDarkSystem
+    }
+
+    if (isActiveTab) {
+        SystemAppearanceEffect(isDark, prefs.amoledMode && isDark)
+    }
 
     val videoViewModel: VideoViewModel = viewModel(
         factory = ViewModelProvider.AndroidViewModelFactory.getInstance(
@@ -90,7 +132,6 @@ fun ShortsScreen(
         videoViewModel.currentPageIndex = pagerState.currentPage
     }
 
-    // Ciclo de vida de shorts
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -101,6 +142,7 @@ fun ShortsScreen(
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
+        ShortsSeenRegistry.attach(context)
 
         if (shortsList.isEmpty()) {
             videoViewModel.fetchYoutubeShorts()
@@ -113,19 +155,29 @@ fun ShortsScreen(
         }
     }
 
-    // Scroll Infinito
-    LaunchedEffect(pagerState.currentPage, shortsList.size) {
-        if (shortsList.isNotEmpty() &&
-            pagerState.currentPage >= (shortsList.size - 5).coerceAtLeast(0) &&
-            !videoViewModel.isLoading
-        ) {
-            if (NetworkUtils.isInternetAvailable(context)) {
-                videoViewModel.loadMoreShorts()
+    LaunchedEffect(pagerState.currentPage, shortsList.size, videoViewModel.shortsExhausted) {
+        if (shortsList.isEmpty()) return@LaunchedEffect
+        if (videoViewModel.shortsExhausted) return@LaunchedEffect
+        if (pagerState.currentPage < (shortsList.size - 5).coerceAtLeast(0)) return@LaunchedEffect
+
+        var attempts = 0
+        while (attempts < 4 && isActive) {
+            if (videoViewModel.shortsExhausted) return@LaunchedEffect
+            if (videoViewModel.isLoading) {
+                delay(600)
+                continue
             }
+            if (!NetworkUtils.isInternetAvailable(context)) {
+                delay(2000)
+                attempts++
+                continue
+            }
+            videoViewModel.loadMoreShorts()
+            delay(2500)
+            attempts++
         }
     }
 
-    // Gestion de chunks
     LaunchedEffect(videoViewModel.shouldUpdatePagerIndex) {
         if (videoViewModel.shouldUpdatePagerIndex) {
             pagerState.scrollToPage(videoViewModel.currentPageIndex)
@@ -133,21 +185,31 @@ fun ShortsScreen(
         }
     }
 
-    // Refresh y shuffle
     val onRefreshFeed: () -> Unit = {
         if (!isRefreshing) {
             scope.launch {
                 isRefreshing = true
-                ShortsCacheManager.clearCache()
                 playbackStates.clear()
-                
                 videoViewModel.fetchYoutubeShorts(forceRefresh = true)
-                
-                while (videoViewModel.isLoading) { 
-                    delay(50) 
+                while (videoViewModel.isLoading) {
+                    delay(50)
                 }
-                
                 videoViewModel.currentPageIndex = 0
+                pagerState.scrollToPage(0)
+                isRefreshing = false
+            }
+        }
+    }
+
+    val onShuffleFeed: () -> Unit = {
+        if (!isRefreshing) {
+            scope.launch {
+                isRefreshing = true
+                playbackStates.clear()
+                videoViewModel.shuffleShorts()
+                while (videoViewModel.isLoading) {
+                    delay(50)
+                }
                 pagerState.scrollToPage(0)
                 isRefreshing = false
             }
@@ -161,7 +223,8 @@ fun ShortsScreen(
                 if (!UserPreferences.incognitoActive) {
                     val dao = FluxaDatabase.getDatabase(context).fluxaDao()
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                        dao.insertWatchedVideo(WatchedVideoEntity(videoId))
+                        dao.insertWatchedVideoAndPrune(WatchedVideoEntity(videoId))
+                        WatchedArchive.markWatched(videoId)
                     }
                 }
             } catch (_: Exception) {}
@@ -182,6 +245,14 @@ fun ShortsScreen(
         } else null
     }
 
+    val focusedShort = remember(currentFocusedVideoId, shortsList) {
+        shortsList.firstOrNull { it.id == currentFocusedVideoId }
+    }
+
+    LaunchedEffect(focusedShort?.id) {
+        focusedShort?.let { ShortsSeenRegistry.markServed(listOf(it)) }
+    }
+
     val isCurrentVideoPlaying = currentFocusedVideoId?.let { playbackStates[it] } ?: false
 
     LaunchedEffect(isCurrentVideoPlaying, isAppInForeground) {
@@ -190,7 +261,7 @@ fun ShortsScreen(
 
     Box(modifier = Modifier.fillMaxSize().clipToBounds()) {
 
-        PullToRefreshBox(
+        ExpressivePullToRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh = onRefreshFeed,
             modifier = Modifier
@@ -206,7 +277,7 @@ fun ShortsScreen(
                     onRetry = { videoViewModel.fetchYoutubeShorts(forceRefresh = true) }
                 )
             } else if (shortsList.isEmpty() && videoViewModel.isLoading) {
-                ShortSkeleton(bottomNavPadding = innerPadding.calculateBottomPadding())
+                ShortSkeleton(bottomNavPadding = bottomBarPadding)
             } else {
                 VerticalPager(
                     state = pagerState,
@@ -259,11 +330,11 @@ fun ShortsScreen(
                         imageUrl = video.imageUrl,
                         videoUrl = if (localStreamingUrl == "ERROR") "" else localStreamingUrl,
                         videoId = video.id,
-                        bottomNavPadding = innerPadding.calculateBottomPadding(),
+                        bottomNavPadding = bottomBarPadding,
                         onChannelClick = onChannelClick,
                         isFocused = isFocused && isAppInForeground && localStreamingUrl.isNotEmpty() && localStreamingUrl != "ERROR" && isActiveTab,
                         isLoadingAvatar = isLoadingAvatar,
-                        onShuffleClick = onRefreshFeed,
+                        onShuffleClick = onShuffleFeed,
                         onQualityChanged = { shortsQuality = it },
                         onAudioTrackChanged = { newUrl -> localStreamingUrl = newUrl },
                         onDismissShort = onDismissShort,
@@ -272,22 +343,36 @@ fun ShortsScreen(
                             playbackStates[video.id] = playing
                         },
                         onVideoCompleted = {
-                            ShortsCacheManager.markAsSeen(listOf(video))
                             com.makkispacejam.fluxa.data.filters.RecentVideosTracker.markAsSeen(listOf(video.id))
                             kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
                                 try {
                                     if (!UserPreferences.incognitoActive) {
                                         val dao = FluxaDatabase.getDatabase(context).fluxaDao()
-                                        dao.insertWatchedVideo(WatchedVideoEntity(video.id))
+                                        dao.insertWatchedVideoAndPrune(WatchedVideoEntity(video.id))
+                                        WatchedArchive.markWatched(video.id)
                                     }
                                 } catch (_: Exception) {}
                             }
                         },
-                        isIncognito = UserPreferences.incognitoActive
+                        isIncognito = isIncognito
                     )
                 }
             }
         }
+
+        ShortsGesturesHint(
+            visible = gesturesHintVisible,
+            askFollowUp = gesturesHintAskFollowUp,
+            onClose = {
+                gesturesHintVisible = false
+                markGesturesHintShown()
+            },
+            onAnswer = { repeatLater ->
+                gesturesHintVisible = false
+                markGesturesHintShown()
+                prefs.shortsGesturesTutorialEnabled = repeatLater
+            }
+        )
 
         AnimatedVisibility(
             visible = videoViewModel.showCooldownBanner,
@@ -319,7 +404,7 @@ fun ShortsScreen(
                         text = stringResource(R.string.shorts_cooldown_msg),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Bold,
                         modifier = Modifier.weight(1f)
                     )
                 }

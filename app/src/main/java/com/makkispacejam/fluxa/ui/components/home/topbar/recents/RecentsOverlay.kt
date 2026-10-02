@@ -6,9 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.makkispacejam.fluxa.R
 import com.makkispacejam.fluxa.ui.animations.FluxaAnimations
+import com.makkispacejam.fluxa.ui.components.core.ExpressivePullToRefreshBox
 import com.makkispacejam.fluxa.ui.components.core.FluxaAvatar
 import com.makkispacejam.fluxa.ui.components.core.TranslatedText
 import com.makkispacejam.fluxa.utils.MusicChannelUtils
@@ -70,7 +71,7 @@ fun RecentItem(
         Box(
             modifier = Modifier
                 .size(width = 120.dp, height = 68.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(16.dp))
                 .background(MaterialTheme.colorScheme.outlineVariant),
             contentAlignment = Alignment.Center
         ) {
@@ -83,7 +84,7 @@ fun RecentItem(
             if (video.durationSeconds > 0 && !video.formattedDuration.startsWith("0:00")) {
                 Surface(
                     color = Color.Black.copy(alpha = 0.8f),
-                    shape = RoundedCornerShape(4.dp),
+                    shape = CircleShape,
                     modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp)
                 ) {
                     Text(
@@ -199,7 +200,7 @@ fun RecentsOverlay(
                         )
                     }
                 } else {
-                    PullToRefreshBox(
+                    ExpressivePullToRefreshBox(
                         isRefreshing = isRefreshing,
                         onRefresh = onRefresh,
                         modifier = Modifier.fillMaxSize()

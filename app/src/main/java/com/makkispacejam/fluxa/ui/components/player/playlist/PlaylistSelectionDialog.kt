@@ -67,13 +67,13 @@ fun PlaylistSelectionDialog(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     item {
-                        PlaylistOptionItem("Ver más tarde") {
+                        PlaylistOptionItem(stringResource(R.string.watch_later)) {
                             onPlaylistSelected("Ver más tarde")
                             onDismiss()
                         }
                     }
                     item {
-                        PlaylistOptionItem("Favoritos") {
+                        PlaylistOptionItem(stringResource(R.string.favoritos)) {
                             onPlaylistSelected("Favoritos")
                             onDismiss()
                         }

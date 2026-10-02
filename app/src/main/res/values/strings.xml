@@ -19,6 +19,11 @@
     <string name="import_youtube_csv">Import Channels from YouTube</string>
     <string name="import_youtube_csv_desc">Load your subscriptions using a Google Takeout (.csv) file.</string>
     <string name="import_youtube_csv_dialog">Follow these steps:\n1. Go to Google Takeout.\n2. Deselect all and select only YouTube.\n3. In \"Multiple formats\", ensure subscriptions is set to CSV.\n4. Create export and download.\n5. Select the subscriptions.csv file here.</string>
+    <string name="open_links">Open Links in the App</string>
+    <string name="open_links_desc">Open YouTube links directly in Fluxa</string>
+    <string name="open_links_dialog_title">Open YouTube Links in Fluxa</string>
+    <string name="open_links_dialog_text">Set Fluxa as the app that opens YouTube links.\n\n1. Tap "Go to settings" to open the Fluxa page in system settings.\n2. Activate "Open supported links".\n3. Open any YouTube link and choose "Fluxa" with "Always".</string>
+    <string name="open_links_go_settings">Go to settings</string>
     <string name="import_backup">Import Backup</string>
     <string name="import_backup_desc">Load your subscriptions and lists</string>
     <string name="export_backup">Export Backup</string>
@@ -143,6 +148,7 @@
     <string name="filter_live">Live</string>
     <string name="subscribed">Subscribed</string>
     <string name="subscribe">Subscribe</string>
+    <string name="subscribers">subscribers</string>
     <string name="no_content_uploaded">This creator has no %1$s uploaded.</string>
     <string name="live_status">🔴 Live</string>
     <string name="live_badge">LIVE</string>
@@ -172,6 +178,7 @@
     <string name="import_playlist_result">%1$d added · %2$d already existed</string>
     <string name="no_videos_playlist">No videos in this playlist</string>
     <string name="add_videos_first">Go and add some first</string>
+    <string name="views">views</string>
     <string name="views_format_m">%1$.1fM views</string>
     <string name="views_format_k">%1$.1fk views</string>
     <string name="views_format">%1$d views</string>
@@ -224,6 +231,7 @@
 
     <string name="speed_dialog_title">Speed</string>
     <string name="speed_normal">Normal (1.0x)</string>
+    <string name="playback_speed">Playback speed</string>
     <string name="subtitles_dialog_title">Subtitles</string>
     <string name="subtitles_off">Off</string>
     <string name="audio_tracks_dialog_title">Audio Track</string>
@@ -239,11 +247,14 @@
     <string name="editing_queue">Editing queue</string>
     <string name="playback_queue">Playback queue</string>
     <string name="repeat">Repeat</string>
+    <string name="repeat_all">Repeat all</string>
+    <string name="repeat_one">Repeat one</string>
     <string name="queue_empty">The queue is empty</string>
     <string name="reorder">Reorder</string>
     <string name="me_gusta">Like</string>
     <string name="no_me_gusta">Dislike</string>
     <string name="more_options">More</string>
+    <string name="more_options_title">More options</string>
     <string name="show_more">Show more</string>
     <string name="show_less">Show less</string>
     <string name="show_all">Show all</string>
@@ -253,6 +264,9 @@
     <string name="quality_2k">2K (QHD)</string>
     <string name="quality_8k">8K (Ultra HD)</string>
     <string name="normalize_audio">Audio normalizer</string>
+    <string name="timeline">Timeline</string>
+    <string name="popup_no_audio">No video is playing.</string>
+    <string name="popup_overlay_needed">Enable \"Display over other apps\" to use the floating player.</string>
     <string name="normalize_audio_desc">Same loudness in every video</string>
     <string name="normalize_audio_on">On</string>
     <string name="normalize_audio_off">Off</string>
@@ -294,4 +308,19 @@
     <string name="favorites">Favorites</string>
     <string name="load_more">Load more</string>
     <string name="resume_playlist">Resume?</string>
+    <string name="reload_feed">Reload</string>
+    <string name="shorts_gestures_title">Shorts gestures</string>
+    <string name="shorts_gesture_tap">Tap to pause or resume</string>
+    <string name="shorts_gesture_swipe">Swipe up or down for the next one</string>
+    <string name="shorts_gesture_hold">Press and hold for 2× speed</string>
+    <string name="shorts_gesture_double_tap">Double tap to like</string>
+    <string name="shorts_gesture_controls">Tap the bottom to show or hide the controls</string>
+    <string name="shorts_gestures_got_it">Got it</string>
+    <string name="section_assistance">Assistance</string>
+    <string name="shorts_assistance">Shorts gestures</string>
+    <string name="gestures_tutorial_desc">Shows the gesture tutorial frequently</string>
+    <string name="gestures_hint_question">Did that make sense?</string>
+    <string name="gestures_hint_question_desc">We can show it again in 30 days.</string>
+    <string name="gestures_hint_repeat">No, remind me</string>
+    <string name="gestures_hint_got_it">Yes, it is clear</string>
 </resources>

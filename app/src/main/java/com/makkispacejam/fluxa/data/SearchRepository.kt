@@ -23,7 +23,8 @@ object SearchRepository {
     suspend fun searchVideos(
         query: String,
         retryCount: Int = 0,
-        filter: String = "Todo"
+        filter: String = "Todo",
+        subscriberWord: String = "subscribers"
     ): SearchPageResult = withContext(Dispatchers.IO) {
         try {
             val service = ServiceList.YouTube
@@ -41,7 +42,7 @@ object SearchRepository {
 
             val items = mutableListOf<HomeFeedItem>()
             val page1Items = searchExtractor.initialPage.items ?: emptyList()
-            items.addAll(mapInfoItems(page1Items))
+            items.addAll(mapInfoItems(page1Items, subscriberWord))
 
             val nextPage: Page? = if (searchExtractor.initialPage.hasNextPage()) searchExtractor.initialPage.nextPage else null
 
@@ -49,7 +50,7 @@ object SearchRepository {
         } catch (_: IOException) {
             if (retryCount < 2) {
                 delay(2000)
-                return@withContext searchVideos(query, retryCount + 1)
+                return@withContext searchVideos(query, retryCount + 1, subscriberWord = subscriberWord)
             }
             SearchPageResult(emptyList(), null)
         } catch (_: Exception) {
@@ -57,10 +58,21 @@ object SearchRepository {
         }
     }
 
+    suspend fun getSuggestions(query: String): List<String> = withContext(Dispatchers.IO) {
+        if (query.isBlank()) return@withContext emptyList()
+        try {
+            val service = ServiceList.YouTube
+            service.suggestionExtractor?.suggestionList(query) ?: emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
     suspend fun loadMoreSearch(
         query: String,
         nextPageUrl: Page,
-        filter: String = "Todo"
+        filter: String = "Todo",
+        subscriberWord: String = "subscribers"
     ): SearchPageResult = withContext(Dispatchers.IO) {
         try {
             val service = ServiceList.YouTube
@@ -77,7 +89,7 @@ object SearchRepository {
             searchExtractor.fetchPage()
 
             val nextPageItems = searchExtractor.getPage(nextPageUrl)
-            val items = mapInfoItems(nextPageItems.items ?: emptyList())
+            val items = mapInfoItems(nextPageItems.items ?: emptyList(), subscriberWord)
 
             val nextPage: Page? = if (nextPageItems.hasNextPage()) nextPageItems.nextPage else null
 
@@ -88,7 +100,8 @@ object SearchRepository {
     }
 
     private fun mapInfoItems(
-        rawItems: List<org.schabi.newpipe.extractor.InfoItem>
+        rawItems: List<org.schabi.newpipe.extractor.InfoItem>,
+        subscriberWord: String
     ): List<HomeFeedItem> {
         return rawItems.mapNotNull { item ->
             when (item) {
@@ -140,7 +153,7 @@ object SearchRepository {
                         channelAvatarUrl = item.thumbnails.firstOrNull()?.url ?: "",
                         thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
                         itemType = HomeFeedItemType.CHANNEL,
-                        subscriberCount = "$formattedSubs suscriptores",
+                        subscriberCount = "$formattedSubs $subscriberWord",
                         playlistVideoCount = if (item.streamCount > 0) item.streamCount.toString() else ""
                     )
                 }

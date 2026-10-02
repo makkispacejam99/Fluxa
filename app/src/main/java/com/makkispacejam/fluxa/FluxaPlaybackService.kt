@@ -8,10 +8,26 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.util.Log
 import android.os.Looper
+import android.graphics.PixelFormat
+import android.net.Uri
+import android.provider.Settings
+import android.view.Gravity
+import android.view.WindowManager
+import android.widget.Toast
+import androidx.compose.ui.platform.ComposeView
 import androidx.core.net.toUri
 import androidx.annotation.OptIn
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.savedstate.SavedStateRegistry
+import androidx.savedstate.SavedStateRegistryController
+import androidx.savedstate.SavedStateRegistryOwner
+import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -49,7 +65,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @UnstableApi
-class FluxaPlaybackService : MediaSessionService() {
+class FluxaPlaybackService : MediaSessionService(), LifecycleOwner, SavedStateRegistryOwner {
+
+    private val lifecycleRegistry = LifecycleRegistry(this)
+    override val lifecycle: Lifecycle get() = lifecycleRegistry
+
+    private val savedStateRegistryController = SavedStateRegistryController.create(this)
+    override val savedStateRegistry: SavedStateRegistry
+        get() = savedStateRegistryController.savedStateRegistry
 
     private var mediaSession: MediaSession? = null
     private lateinit var exoPlayer: ExoPlayer
@@ -57,6 +80,9 @@ class FluxaPlaybackService : MediaSessionService() {
     private var pendingPlaybackJob: Job? = null
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val timeout = 30 * 60 * 1000L
+    private var popupView: ComposeView? = null
+    private var popupParams: WindowManager.LayoutParams? = null
+    private var surfaceRequiresRebind = false
 
     private val httpDataSourceFactory by lazy { PlayerDataSources.buildHttpDataSourceFactory() }
     private val subtitleDataSourceFactory by lazy { PlayerDataSources.buildSubtitleDataSourceFactory() }
@@ -73,8 +99,32 @@ class FluxaPlaybackService : MediaSessionService() {
 
     var onSkipNext: (() -> Unit)? = null
     var onSkipPrevious: (() -> Unit)? = null
+    var onStallRefresh: (() -> Unit)? = null
+
+    private class QueueAwarePlayer(player: Player, private val skipNext: () -> Unit, private val skipPrevious: () -> Unit) :
+        ForwardingPlayer(player) {
+
+        override fun getAvailableCommands(): Player.Commands =
+            Player.Commands.Builder()
+                .addAll(super.getAvailableCommands())
+                .add(Player.COMMAND_SEEK_TO_NEXT)
+                .add(Player.COMMAND_SEEK_TO_PREVIOUS)
+                .add(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+                .add(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+                .build()
+
+        override fun seekToNext() = skipNext()
+
+        override fun seekToNextMediaItem() = skipNext()
+
+        override fun seekToPrevious() = skipPrevious()
+
+        override fun seekToPreviousMediaItem() = skipPrevious()
+    }
 
     override fun onCreate() {
+        savedStateRegistryController.performRestore(null)
+        lifecycleRegistry.currentState = Lifecycle.State.RESUMED
         instance = this
         super.onCreate()
         createNotificationChannel()
@@ -129,7 +179,9 @@ class FluxaPlaybackService : MediaSessionService() {
         }
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
-        mediaSession = MediaSession.Builder(this, exoPlayer)
+        val sessionPlayer = QueueAwarePlayer(exoPlayer, { onSkipNext?.invoke() }, { onSkipPrevious?.invoke() })
+
+        mediaSession = MediaSession.Builder(this, sessionPlayer)
             .setSessionActivity(pendingIntent)
             .setCallback(object : MediaSession.Callback {
                 override fun onConnect(
@@ -227,7 +279,11 @@ class FluxaPlaybackService : MediaSessionService() {
                         if (stallCount >= 4) {
                             Log.w("FluxaBuffering", "[WATCHDOG] Stall crítico en ${currentPos}ms - Forzando reinicio de red")
                             val posToRestore = player.currentPosition
-                            player.stop(); player.prepare(); player.seekTo(posToRestore); player.play()
+                            if (onStallRefresh != null) {
+                                onStallRefresh?.invoke()
+                            } else {
+                                player.stop(); player.prepare(); player.seekTo(posToRestore); player.play()
+                            }
                             stallCount = 0
                         }
                     } else { stallCount = 0 }
@@ -304,25 +360,8 @@ class FluxaPlaybackService : MediaSessionService() {
 
         exoPlayer.stop()
         exoPlayer.clearMediaItems()
-        
-        if (queueSize > 1) {
-            val sources = mutableListOf<androidx.media3.exoplayer.source.MediaSource>()
-            repeat(queueSize) { i ->
-                if (i == currentIndex) {
-                    sources.add(finalSource)
-                } else {
-                    val placeholderItem = MediaItem.Builder()
-                        .setMediaId("placeholder_$i")
-                        .setUri("http://placeholder.com/$i")
-                        .build()
-                    sources.add(ProgressiveMediaSource.Factory(httpDataSourceFactory).createMediaSource(placeholderItem))
-                }
-            }
-            exoPlayer.setMediaSources(sources, currentIndex, startPositionMs)
-        } else {
-            exoPlayer.playlistMetadata = metadata
-            exoPlayer.setMediaSource(finalSource, startPositionMs)
-        }
+        exoPlayer.playlistMetadata = metadata
+        exoPlayer.setMediaSource(finalSource, startPositionMs)
 
         exoPlayer.prepare()
 
@@ -342,6 +381,108 @@ class FluxaPlaybackService : MediaSessionService() {
     }
 
     fun getPlayer() = exoPlayer
+
+    fun cancelPendingPlayback() {
+        pendingPlaybackJob?.cancel()
+        pendingPlaybackJob = null
+        exoPlayer.playWhenReady = false
+        exoPlayer.pause()
+    }
+
+    fun showPopupOverlay() {
+        if (popupView != null) return
+        if (!Settings.canDrawOverlays(this)) {
+            Toast.makeText(this, R.string.popup_overlay_needed, Toast.LENGTH_LONG).show()
+            runCatching {
+                val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(intent)
+            }
+            return
+        }
+        if (exoPlayer.currentMediaItem == null) {
+            Toast.makeText(this, R.string.popup_no_audio, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val aspect = computeAspect(exoPlayer)
+        val (initialW, initialH) = computeInitialSize(resources, aspect)
+        val dm = resources.displayMetrics
+        val statusBar = statusBarHeightPx(this)
+        val margin = (8 * dm.density).toInt()
+        val initialX = (dm.widthPixels - initialW - margin).coerceAtLeast(0)
+        val initialY = (statusBar + margin).coerceAtLeast(0)
+
+        val params = WindowManager.LayoutParams(
+            initialW,
+            initialH,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            x = initialX
+            y = initialY
+            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
+
+        val view = ComposeView(this)
+        view.setViewTreeLifecycleOwner(this)
+        view.setViewTreeSavedStateRegistryOwner(this)
+        view.setContent {
+            PopupMiniPlayer(
+                player = exoPlayer,
+                onClose = { hidePopupOverlay() },
+                aspect = aspect,
+                initialWidthPx = initialW,
+                initialHeightPx = initialH,
+                onPositionChanged = { x, y, w, h ->
+                    updatePopupLayout(x, y, w, h)
+                }
+            )
+        }
+
+        runCatching { getSystemService(WINDOW_SERVICE) as WindowManager }.onSuccess { wm ->
+            wm.addView(view, params)
+            popupView = view
+            popupParams = params
+            surfaceRequiresRebind = true
+        }.onFailure {
+            Log.e("FluxaOverlay", "Overlay addView failed", it)
+        }
+    }
+
+    private fun updatePopupLayout(x: Int, y: Int, w: Int, h: Int) {
+        val view = popupView ?: return
+        val params = popupParams ?: return
+        if (params.x == x && params.y == y && params.width == w && params.height == h) return
+        params.x = x
+        params.y = y
+        params.width = w
+        params.height = h
+        runCatching {
+            (getSystemService(WINDOW_SERVICE) as WindowManager).updateViewLayout(view, params)
+        }
+    }
+
+    fun hidePopupOverlay() {
+        val view = popupView ?: return
+        popupView = null
+        popupParams = null
+        runCatching {
+            (getSystemService(WINDOW_SERVICE) as WindowManager).removeView(view)
+        }
+        exoPlayer.clearVideoSurface()
+    }
+
+    fun consumeSurfaceRebind(): Boolean {
+        val result = surfaceRequiresRebind
+        surfaceRequiresRebind = false
+        return result
+    }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
 
@@ -378,12 +519,14 @@ class FluxaPlaybackService : MediaSessionService() {
 
     override fun onDestroy() {
         saveProgressToDatabase()
+        hidePopupOverlay()
         instance = null
         inactivityJob?.cancel()
         serviceScope.cancel()
         exoPlayer.release()
         mediaSession?.release()
         mediaSession = null
+        lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
         super.onDestroy()
     }
 }

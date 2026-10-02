@@ -19,67 +19,37 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
+import com.makkispacejam.fluxa.ui.theme.LocalFluxaDesign
 
 // Motor de Animación
 fun Modifier.shimmerEffect(): Modifier = composed {
-    var size by remember { mutableStateOf(IntSize.Zero) }
-    val transition = rememberInfiniteTransition(label = "fluxa_shimmer")
-    val startOffsetX by transition.animateFloat(
-        initialValue = -3f * size.width.toFloat(),
-        targetValue = 3f * size.width.toFloat(),
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1500, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmerOffsetX"
-    )
-
     val isDark = androidx.compose.foundation.isSystemInDarkTheme()
     val baseColor = MaterialTheme.colorScheme.surfaceVariant
     val isAmoled = baseColor == Color(0xFF000000)
     val skeletonBase = if (isAmoled) Color(0xFF1A1A1A) else baseColor
-    val shimmerColors = if (isDark) {
-        if (isAmoled) {
-            listOf(
-                skeletonBase,
-                skeletonBase.copy(alpha = 0.85f),
-                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.22f),
-                skeletonBase.copy(alpha = 0.85f),
-                skeletonBase
-            )
-        } else {
-            listOf(
-                baseColor,
-                baseColor.copy(alpha = 0.6f),
-                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f),
-                baseColor.copy(alpha = 0.6f),
-                baseColor
-            )
-        }
+    val skeletonHigh = if (isDark) {
+        lerp(skeletonBase, Color.White, 0.12f)
     } else {
-        listOf(
-            baseColor,
-            baseColor.copy(alpha = 0.4f),
-            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.20f),
-            baseColor.copy(alpha = 0.4f),
-            baseColor
-        )
+        lerp(skeletonBase, Color.Black, 0.05f)
     }
 
-    this.background(
-        brush = Brush.linearGradient(
-            colors = shimmerColors,
-            start = Offset(startOffsetX, 0f),
-            end = Offset(startOffsetX + size.width.toFloat() * 1.5f, size.height.toFloat() * 1.5f)
-        )
-    ).onGloballyPositioned {
-        size = it.size
+    val transition = rememberInfiniteTransition(label = "fluxa_shimmer")
+    val pulse by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1100, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "shimmerPulse"
+    )
+
+    drawBehind {
+        drawRect(color = lerp(skeletonBase, skeletonHigh, pulse))
     }
 }
 
@@ -114,16 +84,17 @@ fun SkeletonAvatar(
 // Simula cargar la tarjeta de video
 @Composable
 fun VideoCardSkeleton() {
+    val design = LocalFluxaDesign.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(20.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(210.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(design.ThumbnailCorner))
                 .shimmerEffect()
         )
         Spacer(modifier = Modifier.height(12.dp))
@@ -142,6 +113,7 @@ fun VideoCardSkeleton() {
 // Simula la playlistCard
 @Composable
 fun PlaylistCardSkeleton() {
+    val design = LocalFluxaDesign.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -153,7 +125,7 @@ fun PlaylistCardSkeleton() {
                     .fillMaxWidth(0.9f)
                     .height(180.dp)
                     .align(Alignment.TopCenter)
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(design.ThumbnailCorner))
                     .background(Color.White.copy(alpha = 0.04f))
             )
             Box(
@@ -161,7 +133,7 @@ fun PlaylistCardSkeleton() {
                     .fillMaxWidth()
                     .height(180.dp)
                     .align(Alignment.BottomCenter)
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(design.ThumbnailCorner))
                     .shimmerEffect()
             )
         }

@@ -37,6 +37,11 @@
     <string name="clear_data_dialog_text">この操作により、すべての登録チャンネル、再生リスト、履歴が完全に削除されます。アプリは再起動されます。</string>
     <string name="continue_btn">続行</string>
     <string name="cancel_btn">キャンセル</string>
+    <string name="open_links">アプリでリンクを開く</string>
+    <string name="open_links_desc">YouTubeのリンクをFluxaで直接開きます</string>
+    <string name="open_links_dialog_title">FluxaでYouTubeのリンクを開く</string>
+    <string name="open_links_dialog_text">FluxaでYouTubeのリンクを開くように設定します。\n\n1. 「設定に移動」をタップして、システム設定でFluxaのページを開きます。\n2. 「対応リンクを開く」を有効にします。\n3. YouTubeのリンクを開き、「Fluxa」を「常に」で選択します。</string>
+    <string name="open_links_go_settings">設定に移動</string>
     <string name="confirm_btn">確認</string>
     <string name="support_project">プロジェクトを支援する！</string>
     <string name="support_project_desc">Fluxaを気に入っていただけたなら、ぜひコーヒーをおごってください。</string>
@@ -140,6 +145,7 @@
     <string name="filter_live">ライブ</string>
     <string name="subscribed">登録済み</string>
     <string name="subscribe">チャンネル登録</string>
+    <string name="subscribers">登録者</string>
     <string name="no_content_uploaded">このクリエイターは%1$sをアップロードしていません。</string>
     <string name="live_status">🔴 ライブ</string>
     <string name="live_badge">ライブ</string>
@@ -169,6 +175,7 @@
     <string name="import_playlist_result">%1$d件追加 · %2$d件既に存在</string>
     <string name="no_videos_playlist">このプレイリストに動画はありません</string>
     <string name="add_videos_first">まずは動画を追加してください</string>
+    <string name="views">回視聴</string>
     <string name="views_format_m">%1$.1fM 回視聴</string>
     <string name="views_format_k">%1$.1fk 回視聴</string>
     <string name="views_format">%1$d 回視聴</string>
@@ -221,6 +228,7 @@
 
     <string name="speed_dialog_title">再生速度</string>
     <string name="speed_normal">標準 (1.0x)</string>
+    <string name="playback_speed">再生速度</string>
     <string name="subtitles_dialog_title">字幕</string>
     <string name="subtitles_off">オフ</string>
     <string name="audio_tracks_dialog_title">音声トラック</string>
@@ -236,11 +244,14 @@
     <string name="editing_queue">待機リストを編集</string>
     <string name="playback_queue">待機リスト</string>
     <string name="repeat">リピート</string>
+    <string name="repeat_all">全曲リピート</string>
+    <string name="repeat_one">1曲リピート</string>
     <string name="queue_empty">待機リストは空です</string>
     <string name="reorder">並べ替え</string>
     <string name="me_gusta">高評価</string>
     <string name="no_me_gusta">低評価</string>
     <string name="more_options">もっと見る</string>
+    <string name="more_options_title">その他のオプション</string>
     <string name="show_more">もっと見る</string>
     <string name="show_less">一部表示</string>
     <string name="show_all">すべて表示</string>
@@ -250,6 +261,9 @@
     <string name="quality_2k">2K (QHD)</string>
     <string name="quality_8k">8K (Ultra HD)</string>
     <string name="normalize_audio">オーディオ正規化</string>
+    <string name="timeline">タイムライン</string>
+    <string name="popup_no_audio">再生中の動画がありません。</string>
+    <string name="popup_overlay_needed">フローティングプレーヤーを使用するには「他のアプリの上に重ねて表示」を有効にしてください。</string>
     <string name="normalize_audio_desc">どの動画も同じ音量に</string>
     <string name="normalize_audio_on">オン</string>
     <string name="normalize_audio_off">オフ</string>
@@ -284,4 +298,19 @@
     <string name="favorites">お気に入り</string>
     <string name="load_more">もっと読み込む</string>
     <string name="resume_playlist">再開する</string>
+    <string name="reload_feed">再読み込み</string>
+    <string name="shorts_gestures_title">ショートの手势</string>
+    <string name="shorts_gesture_tap">タップで一時停止・再生</string>
+    <string name="shorts_gesture_swipe">上にスワイプで次へ、下で前へ</string>
+    <string name="shorts_gesture_hold">長拶しで2倍速</string>
+    <string name="shorts_gesture_double_tap">ダブルタップでいね好</string>
+    <string name="shorts_gesture_controls">下をタップでコントロールの表示・非表示</string>
+    <string name="shorts_gestures_got_it">了解</string>
+    <string name="section_assistance">サポート</string>
+    <string name="shorts_assistance">ショートの手势</string>
+    <string name="gestures_tutorial_desc">定期的にジェスチャーチュートリアルを表示します</string>
+    <string name="gestures_hint_question">分かしますたか？</string>
+    <string name="gestures_hint_question_desc">030日後にみた表示できます。</string>
+    <string name="gestures_hint_repeat">いいえ、頼んで</string>
+    <string name="gestures_hint_got_it">はい、わかった</string>
 </resources>

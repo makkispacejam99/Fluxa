@@ -1,6 +1,7 @@
 package com.makkispacejam.fluxa.ui.components.home.topbar.search
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,6 +13,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -33,7 +35,8 @@ fun SearchOverlay(
     recentSearches: List<String>,
     onRemoveRecentSearch: (String) -> Unit,
     onClearRecentSearches: () -> Unit,
-    focusRequester: FocusRequester
+    focusRequester: FocusRequester,
+    suggestions: List<String> = emptyList()
 ) {
     AnimatedVisibility(
         visible = visible,
@@ -93,24 +96,48 @@ fun SearchOverlay(
                 )
 
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(items = recentSearches, key = { it }) { search ->
-                        RecentSearchItem(
-                            search = search,
-                            onClick = {
-                                onSearchQueryChange(search)
-                                onSearch()
-                            },
-                            onRemove = { onRemoveRecentSearch(search) }
-                        )
-                    }
-
-                    if (recentSearches.isNotEmpty()) {
-                        item {
-                            TextButton(
-                                onClick = onClearRecentSearches,
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)
+                    if (searchQuery.isNotEmpty() && suggestions.isNotEmpty()) {
+                        items(items = suggestions) { suggestion ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        onSearchQueryChange(suggestion)
+                                        onSearch()
+                                    }
+                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                Text(stringResource(R.string.limpiar_historial), color = MaterialTheme.colorScheme.primary)
+                                Icon(
+                                    Icons.Rounded.Search,
+                                    null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                )
+                                Text(suggestion, style = MaterialTheme.typography.bodyLarge)
+                            }
+                        }
+                    } else {
+                        items(items = recentSearches, key = { it }) { search ->
+                            RecentSearchItem(
+                                search = search,
+                                onClick = {
+                                    onSearchQueryChange(search)
+                                    onSearch()
+                                },
+                                onRemove = { onRemoveRecentSearch(search) }
+                            )
+                        }
+
+                        if (recentSearches.isNotEmpty()) {
+                            item {
+                                TextButton(
+                                    onClick = onClearRecentSearches,
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)
+                                ) {
+                                    Text(stringResource(R.string.limpiar_historial), color = MaterialTheme.colorScheme.primary)
+                                }
                             }
                         }
                     }

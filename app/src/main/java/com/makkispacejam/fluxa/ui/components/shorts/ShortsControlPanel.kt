@@ -18,9 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
@@ -28,16 +26,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
-import androidx.compose.ui.res.stringResource
-import com.makkispacejam.fluxa.R
-
-// Panel lateral de shorts
 @Composable
 fun ShortsControlPanel(
     modifier: Modifier = Modifier,
     isLiked: Boolean,
     isDisliked: Boolean,
-    onShuffleClick: () -> Unit,
     onCommentsClick: () -> Unit,
     onLikeClick: () -> Unit,
     onDislikeClick: () -> Unit,
@@ -45,83 +38,122 @@ fun ShortsControlPanel(
     isIncognito: Boolean = false,
     onDisabledClick: () -> Unit = {}
 ) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+    Surface(
+        modifier = modifier.height(48.dp),
+        shape = CircleShape,
+        color = Color.Black.copy(alpha = 0.55f),
+        contentColor = Color.White
     ) {
-        ShortInteractionButton(icon = Icons.Rounded.Casino, label = stringResource(R.string.shuffle), isActivated = false, activeColor = Color.White, onActivateClick = onShuffleClick)
-        ShortInteractionButton(icon = Icons.AutoMirrored.Rounded.Comment, label = stringResource(R.string.comments_title), isActivated = false, activeColor = Color.White, onActivateClick = onCommentsClick)
-        ShortInteractionButton(icon = Icons.Rounded.Favorite, label = stringResource(R.string.me_gusta), isActivated = isLiked, activeColor = MaterialTheme.colorScheme.primaryFixed, enabled = !isIncognito, onActivateClick = onLikeClick, onDisabledClick = onDisabledClick)
-        ShortInteractionButton(icon = Icons.Rounded.ThumbDown, label = stringResource(R.string.no_me_gusta), isActivated = isDisliked, activeColor = MaterialTheme.colorScheme.primaryFixed, enabled = !isIncognito, onActivateClick = onDislikeClick, onDisabledClick = onDisabledClick)
-        ShortInteractionButton(icon = Icons.Rounded.MoreHoriz, label = stringResource(R.string.more_options), isActivated = false, activeColor = Color.White, onActivateClick = onMoreClick)
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 12.dp)
+                .wrapContentWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            PillIconButton(
+                icon = Icons.Rounded.Favorite,
+                isActivated = isLiked,
+                activeColor = MaterialTheme.colorScheme.primaryFixed,
+                enabled = !isIncognito,
+                onClick = onLikeClick,
+                onDisabledClick = onDisabledClick
+            )
+            PillIconButton(
+                icon = Icons.Rounded.ThumbDown,
+                isActivated = isDisliked,
+                activeColor = MaterialTheme.colorScheme.primaryFixed,
+                enabled = !isIncognito,
+                onClick = onDislikeClick,
+                onDisabledClick = onDisabledClick
+            )
+            PillIconButton(
+                icon = Icons.AutoMirrored.Rounded.Comment,
+                isActivated = false,
+                activeColor = Color.White,
+                onClick = onCommentsClick
+            )
+            PillIconButton(
+                icon = Icons.Rounded.MoreHoriz,
+                isActivated = false,
+                activeColor = Color.White,
+                onClick = onMoreClick
+            )
+        }
     }
 }
 
-// Interacción de botones
 @Composable
-fun ShortInteractionButton(
-    icon: ImageVector,
+fun ShufflePill(
+    modifier: Modifier = Modifier,
     label: String,
-    isActivated: Boolean,
-    activeColor: Color,
-    enabled: Boolean = true,
-    onActivateClick: () -> Unit,
-    onDisabledClick: () -> Unit = {}
+    onClick: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val rotation = remember { Animatable(0f) }
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Surface(
-            modifier = Modifier
-                .size(46.dp)
-                .graphicsLayer(rotationZ = rotation.value),
-            shape = CircleShape,
-            color = if (enabled) Color.Black.copy(alpha = 0.30f) else Color.Black.copy(alpha = 0.15f)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        role = Role.Button
-                    ) {
-                        if (!enabled) {
-                            onDisabledClick()
-                        } else if (icon == Icons.Rounded.Casino) {
-                            scope.launch {
-                                rotation.snapTo(0f)
-                                rotation.animateTo(360f, animationSpec = tween(400))
-                                onActivateClick()
-                            }
-                        } else onActivateClick()
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = label,
-                    modifier = Modifier.size(24.dp),
-                    tint = if (!enabled) {
-                        Color.White.copy(alpha = 0.35f)
-                    } else if (isActivated) activeColor else Color.White
-                )
+    Surface(
+        onClick = {
+            scope.launch {
+                rotation.snapTo(0f)
+                rotation.animateTo(360f, animationSpec = tween(450))
+                onClick()
             }
-        }
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = label,
-            color = if (enabled) Color.White else Color.White.copy(alpha = 0.35f),
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontWeight = FontWeight.Bold,
-                shadow = Shadow(
-                    color = Color.Black.copy(alpha = 0.45f),
-                    offset = Offset(0f, 3f),
-                    blurRadius = 10f
-                )
+        },
+        modifier = modifier.height(38.dp),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Autorenew,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(18.dp)
+                    .graphicsLayer(rotationZ = rotation.value)
             )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+fun PillIconButton(
+    icon: ImageVector,
+    isActivated: Boolean,
+    activeColor: Color,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+    onDisabledClick: () -> Unit = {}
+) {
+    Box(
+        modifier = Modifier
+            .size(36.dp)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                role = Role.Button
+            ) {
+                if (!enabled) onDisabledClick() else onClick()
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(22.dp),
+            tint = if (!enabled) {
+                Color.White.copy(alpha = 0.35f)
+            } else if (isActivated) activeColor else Color.White
         )
     }
 }

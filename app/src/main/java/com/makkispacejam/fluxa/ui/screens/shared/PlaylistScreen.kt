@@ -28,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import com.makkispacejam.fluxa.viewmodels.user.InteractionViewModel
 import com.makkispacejam.fluxa.R
 import androidx.compose.ui.unit.dp
+import com.makkispacejam.fluxa.utils.localizedPlaylistName
 import com.makkispacejam.fluxa.data.UserPreferences
 import com.makkispacejam.fluxa.data.local.PlaylistPersistenceManager
 import com.makkispacejam.fluxa.data.newpipe.FluxaStreamItem
@@ -163,7 +164,7 @@ fun PlaylistScreen(
                 Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                     Spacer(modifier = Modifier.height(24.dp))
                     PlaylistHeader(
-                        playlistTitle = playlistTitle,
+                        playlistTitle = context.localizedPlaylistName(playlistTitle),
                         playlistVideos = playlistVideos,
                         isUserPlaylist = isUserPlaylist,
                         isEditMode = isEditMode,
@@ -290,7 +291,7 @@ fun PlaylistScreen(
                 onDismiss = { showPlaylistDialog = false; videoForPlaylist = null },
                 onPlaylistSelected = { playlistName ->
                     videoVM.saveToPlaylist(playlistName, vId, videoForPlaylist!!.title, videoForPlaylist!!.uploaderName, videoForPlaylist!!.thumbnail, resolvedAvatar, videoForPlaylist!!.duration, videoForPlaylist!!.channelId) { success ->
-                        videoVM.notificationBannerText = if (success) context.getString(R.string.saved_to_playlist, playlistName) else alreadyInPlaylistMsg; videoVM.showNotificationBanner = true
+                        videoVM.notificationBannerText = if (success) context.getString(R.string.saved_to_playlist, context.localizedPlaylistName(playlistName)) else alreadyInPlaylistMsg; videoVM.showNotificationBanner = true
                     }; showPlaylistDialog = false; videoForPlaylist = null
                 }
             )

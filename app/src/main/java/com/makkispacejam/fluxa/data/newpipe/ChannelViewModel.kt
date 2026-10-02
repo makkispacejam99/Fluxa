@@ -29,6 +29,7 @@ class ChannelViewModel(application: Application) : AndroidViewModel(application)
     val shortsList = mutableStateListOf<FluxaStreamItem>()
     val selectedPlaylistVideos = mutableStateListOf<FluxaStreamItem>()
     var currentPlaylistUrl by mutableStateOf("")
+    var channelDescription by mutableStateOf("")
 
     // Carga del encabezado del canal
     fun loadChannelHeader(channelName: String) {
@@ -40,6 +41,7 @@ class ChannelViewModel(application: Application) : AndroidViewModel(application)
         channelAvatarUrl = null
         channelBannerUrl = null
         subscriberCount = getApplication<Application>().getString(R.string.loading)
+        channelDescription = ""
         videoList.clear()
         liveList.clear()
         playlistList.clear()
@@ -67,16 +69,18 @@ class ChannelViewModel(application: Application) : AndroidViewModel(application)
                     channelId = response.id
                     channelAvatarUrl = response.avatarUrl.ifEmpty { null }
                     channelBannerUrl = response.bannerUrl.ifEmpty { null }
+                    channelDescription = response.description
 
+                    val subsWord = getApplication<Application>().getString(R.string.subscribers)
                     subscriberCount = if (response.subscriberCount > 0) {
                         when {
                             response.subscriberCount >= 1_000_000 -> "${
                                 String.format(Locale.US, "%.1f", response.subscriberCount / 1_000_000f)
-                            }M suscriptores"
+                            }M $subsWord"
                             response.subscriberCount >= 1_000 -> "${
                                 String.format(Locale.US, "%.1f", response.subscriberCount / 1_000f)
-                            }k suscriptores"
-                            else -> "${response.subscriberCount} suscriptores"
+                            }k $subsWord"
+                            else -> "${response.subscriberCount} $subsWord"
                         }
                     } else {
                         "Contenido Ordenado"

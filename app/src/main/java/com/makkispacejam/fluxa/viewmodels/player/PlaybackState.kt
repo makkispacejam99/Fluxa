@@ -2,6 +2,7 @@ package com.makkispacejam.fluxa.viewmodels.player
 
 import org.schabi.newpipe.extractor.stream.SubtitlesStream
 import org.schabi.newpipe.extractor.stream.AudioStream
+import org.schabi.newpipe.extractor.stream.StreamSegment
 
 data class PlaybackData(
     val currentVideoId: String = "",
@@ -20,11 +21,13 @@ data class PlaybackData(
     val availableResolutions: List<Int> = emptyList(),
     val availableSubtitles: List<SubtitlesStream> = emptyList(),
     val availableAudioTracks: List<AudioStream> = emptyList(),
+    val segments: List<StreamSegment> = emptyList(),
     val currentSubtitleText: String = "",
     val error: String? = null,
     val ageRestricted: Boolean = false,
 
     val playlistQueue: List<QueueItem> = emptyList(),
+    val preShuffleQueue: List<QueueItem> = emptyList(),
     val currentIndex: Int = -1,
     val repeatMode: RepeatMode = RepeatMode.OFF,
     val isShuffled: Boolean = false,

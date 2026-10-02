@@ -10,6 +10,7 @@ data class VideoModel(
     val videoUrl: String,
     val timestamp: Long = 0L,
     val viewCount: Long = 0L,
+    val duration: Long = 0L,
 )
 
 

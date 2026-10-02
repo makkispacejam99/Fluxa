@@ -12,9 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -34,13 +31,11 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.makkispacejam.fluxa.audio.NormalizeAudio
 import com.makkispacejam.fluxa.video.source.ChunkedReconnectDataSource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
-// Reproductor de video de shorts
 @SuppressLint("InflateParams")
 @OptIn(UnstableApi::class)
 @Composable
@@ -53,7 +48,6 @@ fun VideoPlayer(
     onSeekControllerReady: ((seekToPercent: Float) -> Unit) -> Unit = {},
     onLoadingChanged: (Boolean) -> Unit = {}
 ) {
-    val systemUiController = rememberSystemUiController()
     val appContext = LocalContext.current.applicationContext ?: LocalContext.current
 
     val trackSelector = remember {
@@ -149,20 +143,6 @@ fun VideoPlayer(
         if (duration > 0) exoPlayer.seekTo((percent * duration).toLong())
     }
 
-    DisposableEffect(Unit) {
-        systemUiController.setStatusBarColor(
-            color = Color.Transparent,
-            darkIcons = false
-        )
-        onDispose {
-            systemUiController.setStatusBarColor(
-                color = Color.Transparent,
-                darkIcons = true
-            )
-        }
-    }
-
-    // Progreso del video
     LaunchedEffect(exoPlayer) {
         var lastBuffered = 0L
         var stallCount = 0
@@ -195,7 +175,6 @@ fun VideoPlayer(
         }
     }
 
-    // Carga del video
     LaunchedEffect(videoUrl) {
         if (videoUrl.isNotEmpty()) {
             val progressiveMediaSourceFactory =
@@ -236,7 +215,6 @@ fun VideoPlayer(
             .background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
-        // Capa de Modo Ambiente
         if (thumbnailUrl.isNotEmpty()) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
@@ -251,36 +229,12 @@ fun VideoPlayer(
                     .blur(80.dp),
                 contentScale = ContentScale.Crop
             )
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            0.0f to Color.Black.copy(alpha = 0.4f),
-                            0.5f to Color.Black.copy(alpha = 0.7f),
-                            1.0f to Color.Black
-                        )
-                    )
-            )
         }
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .graphicsLayer(alpha = 0.99f)
-                .drawWithContent {
-                    drawContent()
-                    drawRect(
-                        brush = Brush.verticalGradient(
-                            0.0f to Color.Transparent,
-                            0.05f to Color.Black,
-                            0.95f to Color.Black,
-                            1.0f to Color.Transparent
-                        ),
-                        blendMode = BlendMode.DstIn
-                    )
-                },
+                .graphicsLayer(alpha = 0.99f),
             contentAlignment = Alignment.Center
         ) {
             AndroidView(
@@ -308,21 +262,5 @@ fun VideoPlayer(
                 modifier = Modifier.fillMaxSize()
             )
         }
-
-        // Capa de protección para texto
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        0.0f to Color.Black.copy(alpha = 0.65f),
-                        0.18f to Color.Black.copy(alpha = 0.15f),
-                        0.3f to Color.Transparent,
-                        0.7f to Color.Transparent,
-                        0.82f to Color.Black.copy(alpha = 0.4f),
-                        1.0f to Color.Black.copy(alpha = 0.95f)
-                    )
-                )
-        )
     }
 }

@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.makkispacejam.fluxa.ui.components.player.queue
 
 import androidx.compose.foundation.layout.*
@@ -16,6 +18,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -40,8 +43,8 @@ fun QueuePanel(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        tonalElevation = 14.dp,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 6.dp,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ) {
         Column(
@@ -74,34 +77,6 @@ fun QueuePanel(
                         )
                     }
 
-                    if (!isEditMode) {
-                        // Botón de shuffle
-                        IconButton(onClick = { playerViewModel.toggleShuffle() }, modifier = Modifier.size(40.dp)) {
-                            Icon(
-                                imageVector = Icons.Rounded.Shuffle,
-                                contentDescription = stringResource(R.string.shuffle),
-                                tint = if (state.isShuffled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                        
-                        // Botón de repetir
-                        IconButton(onClick = { playerViewModel.toggleRepeatMode() }, modifier = Modifier.size(40.dp)) {
-                            val icon = when (state.repeatMode) {
-                                RepeatMode.OFF -> Icons.Rounded.Repeat
-                                RepeatMode.ONE -> Icons.Rounded.RepeatOne
-                                RepeatMode.ALL -> Icons.Rounded.Repeat
-                            }
-                            val tint = if (state.repeatMode != RepeatMode.OFF) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = stringResource(R.string.repeat),
-                                tint = tint,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                    }
-
                     // Botón de cerrar
                     IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
                         Icon(
@@ -115,6 +90,30 @@ fun QueuePanel(
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f))
+
+            if (!isEditMode) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    QueueTogglePill(
+                        icon = Icons.Rounded.Shuffle,
+                        label = stringResource(R.string.shuffle),
+                        active = state.isShuffled,
+                        onClick = { playerViewModel.toggleShuffle() }
+                    )
+                    QueueTogglePill(
+                        icon = if (state.repeatMode == RepeatMode.ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
+                        label = when (state.repeatMode) {
+                            RepeatMode.OFF -> stringResource(R.string.repeat)
+                            RepeatMode.ONE -> stringResource(R.string.repeat_one)
+                            RepeatMode.ALL -> stringResource(R.string.repeat_all)
+                        },
+                        active = state.repeatMode != RepeatMode.OFF,
+                        onClick = { playerViewModel.toggleRepeatMode() }
+                    )
+                }
+            }
 
             if (queue.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -152,6 +151,40 @@ fun QueuePanel(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun QueueTogglePill(
+    icon: ImageVector,
+    label: String,
+    active: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        color = if (active) MaterialTheme.colorScheme.primaryContainer
+        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (active) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp)
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = if (active) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

@@ -35,6 +35,10 @@ import org.schabi.newpipe.extractor.stream.StreamType
 @SuppressLint("AutoboxingStateCreation")
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
 
+    companion object {
+        private const val UNCOMMITTED_TAP_WINDOW_MS = 2_500L
+    }
+
     var playbackState by mutableStateOf(PlaybackData())
         private set
 
@@ -76,6 +80,86 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     private var loadStartedAtMs = 0L
     private var loadCancelled = false
+    private var isRefreshingStream = false
+    private var playbackCommitted = false
+
+    private fun isUncommittedTap(): Boolean {
+        if (playbackCommitted) return false
+        if (loadStartedAtMs <= 0L) return false
+        return System.currentTimeMillis() - loadStartedAtMs < UNCOMMITTED_TAP_WINDOW_MS
+    }
+
+    private fun abortUncommittedTap() {
+        loadCancelled = true
+        loadStartedAtMs = 0L
+        playbackCommitted = false
+        playbackState = PlaybackData()
+        progressTracker.stop()
+        adaptiveQualityManager.currentStreamInfo = null
+        FluxaPlaybackService.instance?.cancelPendingPlayback()
+        FluxaPlaybackService.instance?.getPlayer()?.stop()
+    }
+
+    @OptIn(UnstableApi::class)
+    fun refreshCurrentStream(targetPosMs: Long? = null, onComplete: ((Boolean) -> Unit)? = null) {
+        val videoId = playbackState.currentVideoId
+        if (videoId.isEmpty() || isRefreshingStream) {
+            onComplete?.invoke(false)
+            return
+        }
+        isRefreshingStream = true
+        viewModelScope.launch {
+            try {
+                val currentPos = targetPosMs ?: withContext(Dispatchers.Main) {
+                    FluxaPlaybackService.instance?.getPlayer()?.currentPosition ?: playbackState.progressMs
+                }.coerceAtLeast(0L)
+
+                val streamInfo = withContext(Dispatchers.IO) {
+                    VideoExtractor.getStreamInfo(videoId)
+                }
+                if (streamInfo != null) {
+                    adaptiveQualityManager.currentStreamInfo = streamInfo
+                    adaptiveQualityManager.streamInfoFetchedAt = System.currentTimeMillis()
+
+                    val prefs = UserPreferences(getApplication())
+                    val targetQuality = NetworkUtils.getTargetVideoQuality(getApplication(), prefs.videoQuality)
+                    val url = VideoExtractor.findBestStream(streamInfo, targetQuality)
+
+                    if (url != null) {
+                        urlCache[videoId] = url
+                        val subs = SubtitleConfigBuilder.buildConfigs(streamInfo.subtitles)
+                        withContext(Dispatchers.Main) {
+                            FluxaPlaybackService.instance?.loadUrl(
+                                url, playbackState.title, playbackState.channel,
+                                playbackState.thumbnailUrl, currentPos, subs,
+                                playImmediately = true, videoId = videoId,
+                                queueSize = playbackState.playlistQueue.size,
+                                currentIndex = playbackState.currentIndex
+                            )
+                            attachPlayerListener()
+                        }
+                        playbackState = playbackState.copy(
+                            videoUrl = url,
+                            isLoading = false,
+                            isPlaying = true,
+                            error = null,
+                            availableResolutions = ResolutionUtils.extractAvailableResolutions(streamInfo),
+                            availableSubtitles = streamInfo.subtitles ?: emptyList(),
+                            availableAudioTracks = streamInfo.audioStreams ?: emptyList(),
+                            segments = streamInfo.streamSegments ?: emptyList()
+                        )
+                        onComplete?.invoke(true)
+                        return@launch
+                    }
+                }
+                onComplete?.invoke(false)
+            } catch (_: Exception) {
+                onComplete?.invoke(false)
+            } finally {
+                isRefreshingStream = false
+            }
+        }
+    }
 
     private val progressTracker = PlaybackProgressTracker(
         scope = viewModelScope,
@@ -133,10 +217,19 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         }
 
         override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
-            playlistManager.skipToNext()
+            if (playbackState.currentVideoId.isNotEmpty()) {
+                refreshCurrentStream { success ->
+                    if (!success) {
+                        playlistManager.skipToNext()
+                    }
+                }
+            } else {
+                playlistManager.skipToNext()
+            }
         }
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
+            if (isPlaying) playbackCommitted = true
             if (!isPlaying && playbackState.currentVideoId.isNotEmpty()) {
                 persistence.saveCurrentProgress()
             }
@@ -165,6 +258,11 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
             service.onSkipNext = { skipToNext() }
             service.onSkipPrevious = { skipToPrevious() }
+            service.onStallRefresh = {
+                if (playbackState.currentVideoId.isNotEmpty()) {
+                    refreshCurrentStream()
+                }
+            }
         }
     }
 
@@ -175,9 +273,19 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     ) {
         loadStartedAtMs = System.currentTimeMillis()
         loadCancelled = false
-        if (fromQueue && playbackState.currentVideoId == videoId &&
+        playbackCommitted = false
+        if (playbackState.currentVideoId == videoId &&
             (playbackState.videoUrl != null || playbackState.isLoading)
-        ) { expandPlayer(); return }
+        ) {
+            playbackCommitted = true
+            val fetchedAt = adaptiveQualityManager.streamInfoFetchedAt
+            val isExpired = fetchedAt > 0L && (System.currentTimeMillis() - fetchedAt > 3 * 60 * 60 * 1000L)
+            if (isExpired) {
+                refreshCurrentStream()
+            }
+            expandPlayer()
+            return
+        }
         withContext(Dispatchers.Main) {
             if (FluxaPlaybackService.instance == null) {
                 val intent = android.content.Intent(getApplication(), FluxaPlaybackService::class.java)
@@ -185,6 +293,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             }
             while (FluxaPlaybackService.instance == null) delay(100)
         }
+        if (loadCancelled) return
         progressTracker.stop()
         urlCache.remove(videoId)
         adaptiveQualityManager.currentStreamInfo = null
@@ -198,7 +307,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 else listOf(QueueItem(videoId, title, channel, thumb)),
             currentIndex = if (fromQueue) playbackState.currentIndex else 0,
             availableResolutions = emptyList(), availableSubtitles = emptyList(),
-            availableAudioTracks = emptyList()
+            availableAudioTracks = emptyList(), segments = emptyList()
         )
 
         if (_currentPlaylistTitle.isNotEmpty() && playbackState.playlistQueue.size > 1) {
@@ -209,6 +318,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
         try {
             val streamInfo = VideoExtractor.getStreamInfo(videoId)
+            if (loadCancelled) return
             adaptiveQualityManager.currentStreamInfo = streamInfo
             adaptiveQualityManager.streamInfoFetchedAt = System.currentTimeMillis()
 
@@ -244,6 +354,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                         availableResolutions = ResolutionUtils.extractAvailableResolutions(streamInfo),
                         availableSubtitles = streamInfo.subtitles ?: emptyList(),
                         availableAudioTracks = streamInfo.audioStreams ?: emptyList(),
+                        segments = streamInfo.streamSegments ?: emptyList(),
                         activeQuality = targetQuality, defaultQuality = targetQuality,
                         adaptiveQualityEnabled = prefs.videoQuality == "Automática"
                     )
@@ -266,10 +377,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     fun expandPlayer() { playbackState = playbackState.copy(isFullyExpanded = true) }
 
     fun minimizePlayer() {
-        if (loadStartedAtMs > 0 && System.currentTimeMillis() - loadStartedAtMs < 1500) {
-            loadStartedAtMs = 0L
-            loadCancelled = true
-            closePlayer()
+        if (isUncommittedTap()) {
+            abortUncommittedTap()
             return
         }
         loadStartedAtMs = 0L
@@ -302,6 +411,11 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     @OptIn(UnstableApi::class)
     fun closePlayer() {
+        if (isUncommittedTap()) {
+            abortUncommittedTap()
+            return
+        }
+        loadStartedAtMs = 0L
         persistence.saveCurrentProgress()
         progressTracker.stop()
         adaptiveQualityManager.currentStreamInfo = null
@@ -316,23 +430,38 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     fun retryLoad() {
         val currentId = playbackState.currentVideoId
         if (currentId.isNotEmpty()) {
-            viewModelScope.launch {
-                loadAndPlayVideo(
-                    currentId,
-                    playbackState.title,
-                    playbackState.channel,
-                    playbackState.thumbnailUrl,
-                    fromQueue = true
-                )
+            refreshCurrentStream { success ->
+                if (!success) {
+                    viewModelScope.launch {
+                        loadAndPlayVideo(
+                            currentId,
+                            playbackState.title,
+                            playbackState.channel,
+                            playbackState.thumbnailUrl,
+                            fromQueue = true
+                        )
+                    }
+                }
             }
         }
     }
+fun seekTo(fraction: Float) = playerControls.seekTo(fraction)
 
-    fun seekTo(fraction: Float) = playerControls.seekTo(fraction)
+    fun seekToAndPlay(fraction: Float) = playerControls.seekToAndPlay(fraction)
+
     fun seekOffset(offsetMs: Long) = playerControls.seekOffset(offsetMs)
     fun updateProgress(currentMs: Long, totalMs: Long, bufferedMs: Long = 0L) =
         playerControls.updateProgress(currentMs, totalMs, bufferedMs)
-    fun togglePlayback() = playerControls.togglePlayback()
+    fun togglePlayback() {
+        val fetchedAt = adaptiveQualityManager.streamInfoFetchedAt
+        val isExpired = fetchedAt > 0L && (System.currentTimeMillis() - fetchedAt > 3 * 60 * 60 * 1000L)
+        val player = FluxaPlaybackService.instance?.getPlayer()
+        if (playbackState.currentVideoId.isNotEmpty() && (isExpired || player?.playbackState == androidx.media3.common.Player.STATE_IDLE)) {
+            refreshCurrentStream()
+        } else {
+            playerControls.togglePlayback()
+        }
+    }
     fun setPlaybackSpeed(speedStr: String) = playerControls.setPlaybackSpeed(speedStr)
     fun setSubtitleTrack(language: String) = playerControls.setSubtitleTrack(language)
     fun setAudioTrack(audioUrl: String) = playerControls.setAudioTrack(audioUrl)
