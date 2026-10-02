@@ -9,20 +9,28 @@ import android.content.Context
 import android.widget.Toast
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -44,11 +52,8 @@ import com.makkispacejam.fluxa.video.shorts.VideoPlayer
 import com.makkispacejam.fluxa.data.UserPreferences
 import com.makkispacejam.fluxa.viewmodels.content.CommentsViewModel
 import com.makkispacejam.fluxa.viewmodels.user.InteractionViewModel
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.zIndex
 import org.schabi.newpipe.extractor.stream.AudioStream
 
-// Elementos de shorts
 @SuppressLint("UnrememberedMutableState", "LocalContextGetResourceValueCall")
 @Composable
 fun ShortItem(
@@ -77,6 +82,7 @@ fun ShortItem(
 ) {
     val commentsViewModel: CommentsViewModel = viewModel()
     val videoInteraction by interactionVM.getInteraction(videoId).collectAsState(initial = null)
+    val isSubscribed by interactionVM.isSubscribed(channelId ?: "").collectAsState(initial = false)
 
     var isVideoPaused by remember { mutableStateOf(false) }
     var showTapFeedback by remember { mutableStateOf(false) }
@@ -86,7 +92,19 @@ fun ShortItem(
     var is2xSpeed by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
-    var hasRewardedProgress by remember(videoId) { mutableStateOf(false) }
+    val bottomGradient = remember {
+        Brush.verticalGradient(
+            0.0f to Color.Transparent,
+            0.42f to Color.Transparent,
+            0.60f to Color.Black.copy(alpha = 0.20f),
+            0.72f to Color.Black.copy(alpha = 0.50f),
+            0.82f to Color.Black.copy(alpha = 0.70f),
+            0.90f to Color.Black.copy(alpha = 0.80f),
+            0.96f to Color.Black.copy(alpha = 0.83f),
+            1.0f to Color.Black.copy(alpha = 0.78f)
+        )
+    }
+    val reloadLabel = stringResource(R.string.reload_feed)
 
     LaunchedEffect(videoInteraction) {
         isLiked = videoInteraction?.isLiked ?: false
@@ -132,24 +150,44 @@ fun ShortItem(
     var bufferedVideoPosition by remember { mutableLongStateOf(0L) }
     var isUserDraggingSlider by remember { mutableStateOf(false) }
     var seekController by remember { mutableStateOf<((Float) -> Unit)?>(null) }
+    var controlsVisible by remember(videoId) { mutableStateOf(true) }
+    var controlsZoneHeight by remember { mutableStateOf(240.dp) }
+    var controlsTick by remember { mutableIntStateOf(0) }
 
     val isVideoReady = isFocused && videoUrl.isNotEmpty()
+
+    val density = LocalDensity.current
+
+    LaunchedEffect(isFocused) {
+        if (isFocused) controlsVisible = true
+    }
+
+    LaunchedEffect(isVideoPaused, isVideoReady, controlsVisible, controlsTick) {
+        if (isVideoPaused || !isVideoReady) {
+            controlsVisible = true
+        } else {
+            delay(2800)
+            if (!isVideoPaused) controlsVisible = false
+        }
+    }
     val progressPercent = remember(currentVideoPosition, totalVideoDuration) {
         if (totalVideoDuration > 0) currentVideoPosition.toFloat() / totalVideoDuration.toFloat() else 0f
     }
 
-    LaunchedEffect(progressPercent) {
-        if ((progressPercent > 0.8f) && !hasRewardedProgress) {
-            hasRewardedProgress = true
-        }
-    }
-
     var hasCompletedVideo by remember { mutableStateOf(false) }
-    LaunchedEffect(progressPercent) {
-        if (progressPercent > 0.9f && !hasCompletedVideo && isFocused) {
-            hasCompletedVideo = true
-            onVideoCompleted()
-        }
+    LaunchedEffect(isFocused, totalVideoDuration) {
+        if (totalVideoDuration <= 0L) return@LaunchedEffect
+        val target = totalVideoDuration * 900L / 1000L
+        snapshotFlow { currentVideoPosition }
+            .collect { pos ->
+                if (pos >= target) {
+                    if (!hasCompletedVideo && isFocused) {
+                        hasCompletedVideo = true
+                        onVideoCompleted()
+                    }
+                    return@collect
+                }
+            }
     }
     LaunchedEffect(isFocused) {
         if (!isFocused) hasCompletedVideo = false
@@ -163,161 +201,226 @@ fun ShortItem(
         onPlaybackStateChanged(isFocused && !isVideoPaused && videoUrl.isNotEmpty())
     }
 
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        if (isVideoReady) {
-            Box(
-                modifier = Modifier.fillMaxWidth().fillMaxHeight().padding(bottom = bottomNavPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                VideoPlayer(
-                    videoUrl = videoUrl,
-                    thumbnailUrl = imageUrl,
-                    isPaused = isVideoPaused,
-                    playbackSpeed = if (is2xSpeed) 2f else 1f,
-                    onProgressUpdate = { current, total, buffered ->
-                        if (!isUserDraggingSlider) {
-                            currentVideoPosition = current
-                            totalVideoDuration = total
-                            bufferedVideoPosition = buffered
-                        }
-                    },
-                    onSeekControllerReady = { seekController = it },
-                    onLoadingChanged = { isVideoLoading = it }
-                )
-            }
-        }
-
-        Box(
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(end = 80.dp)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onPress = {
-                            val job = coroutineScope.launch {
-                                delay(500)
-                                is2xSpeed = true
-                            }
-                            tryAwaitRelease()
-                            job.cancel()
-                            is2xSpeed = false
-                        },
-                        onTap = {
-                            isVideoPaused = !isVideoPaused
-                            showTapFeedback = true
-                        },
-                        onLongPress = {},
-                        onDoubleTap = {
-                            if (!isIncognito && !isLiked) {
-                                interactionVM.toggleLike(videoId, title, channelName)
-                                isLiked = true
-                                isDisliked = false
-                                showHeartAnimation = true
-                            }
-                        }
-                    )
-                }
-        )
-
-        AnimatedVisibility(visible = !isVideoReady, exit = fadeOut()) {
-            AsyncImage(model = imageUrl, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        }
-
-        PlayPauseFeedback(isVisible = showTapFeedback, isPaused = isVideoPaused)
-
-        AnimatedVisibility(
-            visible = isVideoLoading && !isVideoPaused,
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            CircularProgressIndicator(
-                color = Color.White.copy(alpha = 0.7f),
-                strokeWidth = 3.dp,
-                modifier = Modifier.size(48.dp)
-            )
-        }
-
-        LikeHeartOverlay(isVisible = showHeartAnimation, onAnimationFinished = { showHeartAnimation = false })
-
-        SpeedBanner(
-            isVisible = is2xSpeed,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 48.dp)
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        0.0f to Color.Black.copy(alpha = 0.55f),
-                        0.18f to Color.Transparent,
-                        0.7f to Color.Transparent,
-                        1.0f to Color.Black.copy(alpha = 0.95f)
-                    )
-                )
-        )
-
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(start = 16.dp, end = 16.dp, bottom = bottomNavPadding + 32.dp)
-                .fillMaxWidth()
-                .zIndex(1f),
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .statusBarsPadding()
+                .padding(horizontal = 12.dp)
+                .padding(top = 8.dp, bottom = bottomNavPadding + 10.dp)
         ) {
             ShortsInfoBar(
                 channelName = channelName,
                 channelAvatarUrl = channelAvatarUrl,
                 title = title,
                 onChannelClick = onChannelClick,
-                modifier = Modifier.weight(1f).padding(end = 16.dp),
-                isLoadingAvatar = isLoadingAvatar
-            )
-
-            ShortsControlPanel(
-                isLiked = isLiked,
-                isDisliked = isDisliked,
-                onShuffleClick = onShuffleClick,
-                onCommentsClick = {
-                    commentsViewModel.fetchVideoComments(videoId)
-                    showCommentsSheet = true
-                },
-                onLikeClick = {
-                    interactionVM.toggleLike(videoId, title, channelName)
-                    if (!isLiked) {
-                        showHeartAnimation = true
+                isSubscribed = isSubscribed,
+                onSubscribeClick = {
+                    if (!channelId.isNullOrEmpty()) {
+                        interactionVM.toggleSubscription(channelId, channelName, channelAvatarUrl, isSubscribed)
                     }
                 },
-                onDislikeClick = {
-                    interactionVM.toggleDislike(videoId, title, channelName)
-                    onDismissShort(videoId)
-                },
-                onMoreClick = { showMoreOptions = true },
                 isIncognito = isIncognito,
                 onDisabledClick = {
                     guestBannerText = context.getString(R.string.incognito_action_blocked)
                     showGuestBanner = true
-                }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 6.dp),
+                isLoadingAvatar = isLoadingAvatar,
+                textColor = MaterialTheme.colorScheme.onSurface
             )
-        }
 
-        ShortsSlider(
-            value = if (isUserDraggingSlider) (currentVideoPosition.toFloat() / totalVideoDuration.coerceAtLeast(1L).toFloat()) else progressPercent,
-            bufferedValue = bufferedPercent,
-            onValueChange = { newValue -> isUserDraggingSlider = true; currentVideoPosition = (newValue * totalVideoDuration).toLong() },
-            onValueChangeFinished = {
-                isUserDraggingSlider = false
-                seekController?.invoke(currentVideoPosition.toFloat() / totalVideoDuration.coerceAtLeast(1L).toFloat())
-            },
-            bottomNavPadding = bottomNavPadding,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color.Black),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isVideoReady) {
+                    VideoPlayer(
+                        videoUrl = videoUrl,
+                        thumbnailUrl = imageUrl,
+                        isPaused = isVideoPaused,
+                        playbackSpeed = if (is2xSpeed) 2f else 1f,
+                        onProgressUpdate = { current, total, buffered ->
+                            if (!isUserDraggingSlider) {
+                                currentVideoPosition = current
+                                totalVideoDuration = total
+                                bufferedVideoPosition = buffered
+                            }
+                        },
+                        onSeekControllerReady = { seekController = it },
+                        onLoadingChanged = { isVideoLoading = it }
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onPress = {
+                                    val job = coroutineScope.launch {
+                                        delay(500)
+                                        is2xSpeed = true
+                                    }
+                                    tryAwaitRelease()
+                                    job.cancel()
+                                    is2xSpeed = false
+                                },
+                                onTap = {
+                                    isVideoPaused = !isVideoPaused
+                                    controlsVisible = true
+                                    showTapFeedback = true
+                                },
+                                onDoubleTap = {
+                                    if (!isIncognito && !isLiked) {
+                                        interactionVM.toggleLike(videoId, title, channelName)
+                                        isLiked = true
+                                        isDisliked = false
+                                        showHeartAnimation = true
+                                    }
+                                }
+                            )
+                        }
+                )
+
+                androidx.compose.animation.AnimatedVisibility(visible = !isVideoReady, exit = fadeOut()) {
+                    AsyncImage(model = imageUrl, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                }
+
+                PlayPauseFeedback(isVisible = showTapFeedback, isPaused = isVideoPaused)
+
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = isVideoLoading && !isVideoPaused,
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    CircularProgressIndicator(
+                        color = Color.White.copy(alpha = 0.7f),
+                        strokeWidth = 3.dp,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+
+                LikeHeartOverlay(isVisible = showHeartAnimation, onAnimationFinished = { showHeartAnimation = false })
+
+                SpeedBanner(
+                    isVisible = is2xSpeed,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 16.dp)
+                )
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .height(controlsZoneHeight)
+                        .pointerInput(Unit) {
+                            detectTapGestures {
+                                controlsTick++
+                                controlsVisible = if (isVideoPaused) true else !controlsVisible
+                            }
+                        }
+                )
+
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = controlsVisible,
+                    enter = fadeIn(tween(180)),
+                    exit = fadeOut(tween(260)),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                        .onSizeChanged { controlsZoneHeight = with(density) { it.height.toDp() } }
+                        .background(bottomGradient)
+                        .padding(start = 8.dp, end = 8.dp, top = 76.dp, bottom = 6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                    ShufflePill(
+                        label = reloadLabel,
+                        onClick = onShuffleClick,
+                        modifier = Modifier.padding(bottom = 10.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = formatTimecode(currentVideoPosition),
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.width(42.dp)
+                        )
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        ShortsControlPanel(
+                            isLiked = isLiked,
+                            isDisliked = isDisliked,
+                            onCommentsClick = {
+                                commentsViewModel.fetchVideoComments(videoId)
+                                showCommentsSheet = true
+                            },
+                            onLikeClick = {
+                                interactionVM.toggleLike(videoId, title, channelName)
+                                if (!isLiked) {
+                                    showHeartAnimation = true
+                                }
+                            },
+                            onDislikeClick = {
+                                interactionVM.toggleDislike(videoId, title, channelName)
+                                onDismissShort(videoId)
+                            },
+                            onMoreClick = { showMoreOptions = true },
+                            isIncognito = isIncognito,
+                            onDisabledClick = {
+                                guestBannerText = context.getString(R.string.incognito_action_blocked)
+                                showGuestBanner = true
+                            }
+                        )
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        Text(
+                            text = formatTimecode(totalVideoDuration),
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.width(42.dp)
+                        )
+                    }
+
+                    ShortsSlider(
+                        value = if (isUserDraggingSlider) (currentVideoPosition.toFloat() / totalVideoDuration.coerceAtLeast(1L).toFloat()) else progressPercent,
+                        bufferedValue = bufferedPercent,
+                    onValueChange = { newValue ->
+                        isUserDraggingSlider = true
+                        controlsVisible = true
+                        controlsTick++
+                        currentVideoPosition = (newValue * totalVideoDuration).toLong()
+                    },
+                    onValueChangeFinished = {
+                        isUserDraggingSlider = false
+                        seekController?.invoke(currentVideoPosition.toFloat() / totalVideoDuration.coerceAtLeast(1L).toFloat())
+                    },
+                        bottomNavPadding = 0.dp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    }
+                }
+            }
+        }
 
         if (showCommentsSheet) {
             ShortsComments(
@@ -395,4 +498,11 @@ fun ShortItem(
             modifier = Modifier.align(Alignment.TopCenter)
         )
     }
+}
+
+private fun formatTimecode(millis: Long): String {
+    val totalSeconds = (millis / 1000).coerceAtLeast(0L)
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return "%d:%02d".format(minutes, seconds)
 }

@@ -1,56 +1,82 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.makkispacejam.fluxa.video.video.sections
 
 import android.annotation.SuppressLint
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.ui.Alignment
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AddToPhotos
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.ThumbDown
 import androidx.compose.material.icons.rounded.ThumbDownOffAlt
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.carousel.CarouselItemDrawInfo
+import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
+import androidx.compose.material3.carousel.rememberCarouselState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.widget.Toast
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.makkispacejam.fluxa.R
 import com.makkispacejam.fluxa.ui.components.core.ActionButton
-import com.makkispacejam.fluxa.ui.components.core.SkeletonLine
 import com.makkispacejam.fluxa.ui.components.core.SkeletonAvatar
+import com.makkispacejam.fluxa.ui.components.core.SkeletonLine
 import com.makkispacejam.fluxa.ui.components.core.TranslatedText
+import com.makkispacejam.fluxa.ui.components.player.playlist.PlaylistSelectionDialog
+import com.makkispacejam.fluxa.ui.theme.LocalFluxaDesign
+import com.makkispacejam.fluxa.utils.MusicChannelUtils
+import com.makkispacejam.fluxa.utils.localizedPlaylistName
+import com.makkispacejam.fluxa.video.video.ChannelSubscriptionCard
+import com.makkispacejam.fluxa.video.video.controls.formatTime
 import com.makkispacejam.fluxa.viewmodels.content.CommentsViewModel
 import com.makkispacejam.fluxa.viewmodels.content.VideoViewModel
-import com.makkispacejam.fluxa.utils.MusicChannelUtils
-import com.makkispacejam.fluxa.utils.stripHtml
-import coil.compose.AsyncImage
-
-import androidx.compose.runtime.*
-import com.makkispacejam.fluxa.ui.components.player.playlist.PlaylistSelectionDialog
-import com.makkispacejam.fluxa.video.video.ChannelSubscriptionCard
+import org.schabi.newpipe.extractor.stream.StreamSegment
 
 // Sección de botones de acción del reproductor horizontal
 @SuppressLint("LocalContextGetResourceValueCall")
@@ -72,7 +98,9 @@ fun LazyListScope.videoContentSection(
     onVideoClick: (String, String, String, String) -> Unit = { _, _, _, _ -> },
     onChannelClick: (String) -> Unit = {},
     hideRelatedVideos: Boolean = false,
-    isIncognito: Boolean = false
+    isIncognito: Boolean = false,
+    hasTimeline: Boolean = false,
+    onShowTimeline: () -> Unit = {}
 ) {
 
     val isMetadataLoading = videoTitle.isBlank() && videoVM.videoDescriptionState.isBlank()
@@ -82,27 +110,40 @@ fun LazyListScope.videoContentSection(
         if (isMetadataLoading) {
             SkeletonLine(modifier = Modifier.fillMaxWidth(0.85f), height = 24.dp)
         } else {
-            Row(
-                modifier = Modifier.fillMaxWidth().clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() }
-                ) { onExpand() },
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                TranslatedText(
-                    text = videoTitle,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    skipTranslation = MusicChannelUtils.isMusicContent(channelName, videoTitle),
-                    modifier = Modifier.weight(1f)
-                )
-                val rotation by animateFloatAsState(if (isExpanded) 180f else 0f, label = "arrow")
-                Icon(
-                    imageVector = Icons.Rounded.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.rotate(rotation).padding(start = 4.dp)
-                )
+                if (hasTimeline) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        TimelinePill(onClick = onShowTimeline)
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth().clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) { onExpand() },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TranslatedText(
+                        text = videoTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        skipTranslation = MusicChannelUtils.isMusicContent(channelName, videoTitle),
+                        modifier = Modifier.weight(1f)
+                    )
+                    val rotation by animateFloatAsState(if (isExpanded) 180f else 0f, label = "arrow")
+                    Icon(
+                        imageVector = Icons.Rounded.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.rotate(rotation).padding(start = 4.dp)
+                    )
+                }
             }
         }
     }
@@ -125,7 +166,7 @@ fun LazyListScope.videoContentSection(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 VideoDescription(
-                    description = videoVM.videoDescriptionState.stripHtml(),
+                    description = videoVM.videoDescriptionState,
                     isExpanded = isExpanded,
                     onExpandClick = onExpand
                 )
@@ -183,7 +224,7 @@ fun LazyListScope.videoContentSection(
                             channelId = videoVM.channelIdState,
                             onResult = { success ->
                                 videoVM.notificationBannerText = if (success) {
-                                    context.getString(R.string.saved_to_playlist, playlistName)
+                                    context.getString(R.string.saved_to_playlist, context.localizedPlaylistName(playlistName))
                                 } else {
                                     context.getString(R.string.already_in_playlist_msg)
                                 }
@@ -256,59 +297,72 @@ fun LazyListScope.videoContentSection(
                     fontWeight = FontWeight.Bold
                 )
                 
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.padding(top = 12.dp)
-                ) {
-                    items(sortedRelated) { video ->
-                        Column(
-                            modifier = Modifier
-                                .width(160.dp)
-                                .clickable {
-                                    onVideoClick(
-                                        video.title,
-                                        video.id,
-                                        video.channelName,
-                                        video.imageUrl
-                                    )
-                                }
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(90.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(MaterialTheme.colorScheme.outlineVariant)
-                            ) {
-                                AsyncImage(
-                                    model = video.imageUrl,
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
+                val carouselState = rememberCarouselState { sortedRelated.size }
+                val design = LocalFluxaDesign.current
+                HorizontalMultiBrowseCarousel(
+                    state = carouselState,
+                    preferredItemWidth = 160.dp,
+                    itemSpacing = 12.dp,
+                    minSmallItemWidth = 0.dp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp)
+                        .padding(top = 12.dp)
+                ) { index ->
+                    key(index) {
+                val video = sortedRelated[index]
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable {
+                                onVideoClick(
+                                    video.title,
+                                    video.id,
+                                    video.channelName,
+                                    video.imageUrl
                                 )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            TranslatedText(
-                                text = video.title,
-                                maxLines = 2,
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Bold,
-                                overflow = TextOverflow.Ellipsis,
-                                skipTranslation = MusicChannelUtils.isMusicContent(video.channelName, video.title)
-                            )
-                            Text(
-                                text = video.channelName,
-                                maxLines = 1,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                overflow = TextOverflow.Ellipsis
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(90.dp)
+                                .maskClip(RoundedCornerShape(design.ThumbnailCorner))
+                                .background(MaterialTheme.colorScheme.outlineVariant)
+                        ) {
+                            AsyncImage(
+                                model = video.imageUrl,
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
                             )
                         }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        TranslatedText(
+                            text = video.title,
+                            maxLines = 2,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                            overflow = TextOverflow.Ellipsis,
+                            skipTranslation = MusicChannelUtils.isMusicContent(video.channelName, video.title),
+                            modifier = Modifier.carouselTextFade(carouselItemDrawInfo)
+                        )
+                        Text(
+                            text = video.channelName,
+                            maxLines = 1,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.carouselTextFade(carouselItemDrawInfo)
+                        )
+                    }
                     }
                 }
-            }
         }
     }
+}
 
     item {
         Spacer(modifier = Modifier.height(24.dp))
@@ -333,3 +387,108 @@ fun LazyListScope.videoContentSection(
         }
     }
 }
+
+@Composable
+private fun TimelinePill(onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Schedule,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(16.dp)
+            )
+            Text(
+                text = stringResource(R.string.timeline),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+internal fun TimelineSegmentRow(
+    segment: StreamSegment,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) { onClick() }
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val previewUrl = segment.previewUrl
+        Box(
+            modifier = Modifier
+                .width(96.dp)
+                .height(54.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) { onClick() },
+            contentAlignment = Alignment.Center
+        ) {
+            if (!previewUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = previewUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Rounded.PlayArrow,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(10.dp))
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+            Text(
+                text = segment.title.ifBlank { stringResource(R.string.timeline) },
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = formatTime(segment.startTimeSeconds * 1000L),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+private fun Modifier.carouselTextFade(drawInfo: CarouselItemDrawInfo): Modifier =
+    graphicsLayer {
+        val reveal = drawInfo.maxSize * 0.08f
+        alpha =
+            if (reveal > 0f) {
+                ((drawInfo.size - drawInfo.maxSize + reveal) / reveal).coerceIn(0f, 1f)
+            } else {
+                0f
+            }
+    }

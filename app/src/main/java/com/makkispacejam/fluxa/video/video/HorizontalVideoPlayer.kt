@@ -15,6 +15,10 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
 import com.makkispacejam.fluxa.FluxaPlaybackService
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
@@ -46,6 +50,33 @@ fun HorizontalVideoPlayer(
         if (!serviceReady) return@LaunchedEffect
         val player = FluxaPlaybackService.instance?.getPlayer() ?: return@LaunchedEffect
         playerViewRef.value?.player = player
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                val service = FluxaPlaybackService.instance ?: return@LifecycleEventObserver
+                service.hidePopupOverlay()
+                if (!service.consumeSurfaceRebind()) return@LifecycleEventObserver
+                val playerView = playerViewRef.value ?: return@LifecycleEventObserver
+                val player = service.getPlayer()
+                if (playerView.player != player) playerView.player = player
+                when (val vs = playerView.videoSurfaceView) {
+                    is android.view.SurfaceView -> {
+                        player.clearVideoSurface()
+                        player.setVideoSurfaceView(vs)
+                    }
+                    is android.view.TextureView -> {
+                        player.clearVideoTextureView(vs)
+                        player.setVideoTextureView(vs)
+                    }
+                    else -> {}
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     // Progreso

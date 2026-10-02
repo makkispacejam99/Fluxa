@@ -3,6 +3,8 @@ package com.makkispacejam.fluxa.ui.screens.main
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
@@ -84,12 +86,14 @@ fun SettingsScreen(
     var showDonationDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
     var showUpdateDialog by remember { mutableStateOf(false) }
+    var showOpenLinksDialog by remember { mutableStateOf(false) }
 
     var showBanner by remember { mutableStateOf(false) }
     var bannerText by remember { mutableStateOf("") }
 
     var selectedQuality by remember { mutableStateOf(prefs.videoQuality) }
     var audioNormalizerEnabled by remember { mutableStateOf(prefs.audioNormalizerEnabled) }
+    var gesturesTutorialEnabled by remember { mutableStateOf(prefs.shortsGesturesTutorialEnabled) }
     var contentLanguage by remember { mutableStateOf(prefs.contentLanguage) }
     var contentRegion by remember { mutableStateOf(prefs.contentRegion) }
 
@@ -151,102 +155,153 @@ fun SettingsScreen(
 
     Box(modifier = Modifier.fillMaxSize().padding(mainPadding)) {
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(bottom = 20.dp, top = 10.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                stringResource(R.string.settings_title),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.padding(start = 4.dp, bottom = 16.dp, top = 8.dp)
+            )
 
-        LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            item {
-                SettingsGeneralSection(
-                    themeMode = themeMode, amoledMode = amoledMode, onAmoledModeChange = onAmoledModeChange,
-                    incognitoMode = incognitoMode, onIncognitoModeChange = {
-                        onIncognitoModeChange(it)
-                        bannerText = context.getString(if (it) R.string.incognito_toast_on else R.string.incognito_toast_off)
-                        showBanner = true
-                    },
-                    selectedLanguage = selectedLanguage, selectedTranslationLang = selectedTranslationLang,
-                    selectedQuality = selectedQuality, selectedRegion = selectedRegion,
-                    onThemeClick = { showThemeDialog = true }, onLanguageClick = { showLanguageDialog = true },
-                    onTranslationClick = { showTranslationDialog = true }, onQualityClick = { showQualityDialog = true },
-                    onRegionClick = { showRegionDialog = true },
-                    audioNormalizerEnabled = audioNormalizerEnabled,
-                    onAudioNormalizerChange = {
-                        audioNormalizerEnabled = it
-                        prefs.audioNormalizerEnabled = it
-                        NormalizeAudio.setEnabled(it)
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
+                item {
+                    SettingsGeneralSection(
+                        themeMode = themeMode, amoledMode = amoledMode, onAmoledModeChange = onAmoledModeChange,
+                        incognitoMode = incognitoMode, onIncognitoModeChange = {
+                            onIncognitoModeChange(it)
+                            bannerText = context.getString(if (it) R.string.incognito_toast_on else R.string.incognito_toast_off)
+                            showBanner = true
+                        },
+                        selectedLanguage = selectedLanguage, selectedTranslationLang = selectedTranslationLang,
+                        selectedQuality = selectedQuality, selectedRegion = selectedRegion,
+                        onThemeClick = { showThemeDialog = true }, onLanguageClick = { showLanguageDialog = true },
+                        onTranslationClick = { showTranslationDialog = true }, onQualityClick = { showQualityDialog = true },
+                        onRegionClick = { showRegionDialog = true },
+                        audioNormalizerEnabled = audioNormalizerEnabled,
+                        onAudioNormalizerChange = {
+                            audioNormalizerEnabled = it
+                            prefs.audioNormalizerEnabled = it
+                            NormalizeAudio.setEnabled(it)
+                        },
+                        onOpenLinksClick = { showOpenLinksDialog = true }
+                    )
+                }
+                item {
+                    SettingsShortsTutorialSection(
+                        gesturesTutorialEnabled = gesturesTutorialEnabled,
+                        onGesturesTutorialChange = {
+                            gesturesTutorialEnabled = it
+                            prefs.shortsGesturesTutorialEnabled = it
+                            if (it) prefs.shortsGesturesHintShownAt = 0L
+                        }
+                    )
+                }
+                item {
+                    SettingsAccountSection(
+                        onImportCsvClick = { showImportYoutubeCsvDialog = true }, onImportBackupClick = { showImportInstructionsDialog = true },
+                        onExportBackupClick = { showExportInstructionsDialog = true }, onClearDataClick = { showClearDataDialog = true }
+                    )
+                }
+                item {
+                    SettingsInfoSection(
+                        onSupportClick = { showSupportDialog = true }, onDonateClick = { showDonationDialog = true },
+                        onAboutClick = { showAboutDialog = true }
+                    )
+                }
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    FilledTonalButton(
+                        onClick = { showUpdateDialog = true },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(26.dp)
+                    ) {
+                        Text(
+                            stringResource(R.string.check_updates),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        stringResource(R.string.app_version_info, versionName),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (showMiniPlayer) {
+                        Spacer(modifier = Modifier.height(72.dp))
+                    }
+                }
+            }
+
+            if (showThemeDialog) {
+                val options = ThemeMode.entries.associateBy { stringResource(it.titleRes) }
+                OptionDialog(title = stringResource(R.string.select_appearance), options = options.keys.toList(), selectedOption = stringResource(themeMode.titleRes),
+                    onOptionSelected = { selectedTitle -> options[selectedTitle]?.let { onThemeChange(it) }; showThemeDialog = false },
+                    onDismiss = { showThemeDialog = false })
+            }
+            if (showTranslationDialog) TranslationDialog(onDismiss = { showTranslationDialog = false }, translationViewModel = translationViewModel, languageMap = languageMap)
+            if (showQualityDialog) {
+                OptionDialog(title = stringResource(R.string.video_quality),
+                    options = listOf(stringResource(R.string.quality_1080p), stringResource(R.string.quality_720p), stringResource(R.string.quality_480p), stringResource(R.string.quality_360p), stringResource(R.string.quality_data_saving)),
+                    selectedOption = selectedQuality, onOptionSelected = { selectedQuality = it; prefs.videoQuality = it; showQualityDialog = false },
+                    onDismiss = { showQualityDialog = false })
+            }
+            if (showLanguageDialog) {
+                val optionsMap = languageMap.entries.associate { stringResource(it.value) to it.key }
+                OptionDialog(title = stringResource(R.string.select_language), options = optionsMap.keys.toList(), selectedOption = selectedLanguage,
+                    onOptionSelected = { selected -> val langCode = optionsMap[selected] ?: "en"; prefs.contentLanguage = langCode; AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(langCode)); (context as? Activity)?.recreate(); showLanguageDialog = false },
+                    onDismiss = { showLanguageDialog = false })
+            }
+            if (showRegionDialog) {
+                val optionsMap = regionMap.entries.associate { stringResource(it.value) to it.key }
+                OptionDialog(title = stringResource(R.string.select_region), options = optionsMap.keys.toList(), selectedOption = selectedRegion,
+                    onOptionSelected = { selected -> contentRegion = optionsMap[selected] ?: "HN"; prefs.contentRegion = contentRegion; showRegionDialog = false },
+                    onDismiss = { showRegionDialog = false })
+            }
+
+            if (showExportInstructionsDialog) {
+                val dateSuffix = SimpleDateFormat("dd_MM_yyyy", Locale.getDefault()).format(Date())
+                ExportBackupDialog(onDismiss = { showExportInstructionsDialog = false }, onConfirm = { showExportInstructionsDialog = false; exportLauncher.launch("fluxa_backup_$dateSuffix.json") })
+            }
+            if (showImportInstructionsDialog) ImportBackupDialog(onDismiss = { showImportInstructionsDialog = false }, onConfirm = { showImportInstructionsDialog = false; importLauncher.launch(arrayOf("application/json")) })
+            if (showImportYoutubeCsvDialog) ImportYoutubeCsvDialog(onDismiss = { showImportYoutubeCsvDialog = false }, onConfirm = { showImportYoutubeCsvDialog = false; importYoutubeCsvLauncher.launch(arrayOf("text/comma-separated-values", "text/csv")) })
+            if (showClearDataDialog) {
+                ClearDataDialog(onDismiss = { showClearDataDialog = false }, onConfirm = {
+                    scope.launch { backupRestoreManager.clearAllData(); context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply { addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK); context.startActivity(this) } }
+                    showClearDataDialog = false
+                })
+            }
+            if (showDonationDialog) DonationDialog(onDismiss = { showDonationDialog = false }, context = context)
+            if (showOpenLinksDialog) {
+                OpenLinksDialog(
+                    onDismiss = { showOpenLinksDialog = false },
+                    onConfirm = {
+                        showOpenLinksDialog = false
+                        try {
+                            context.startActivity(
+                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))
+                            )
+                        } catch (_: Exception) {}
                     }
                 )
             }
-            item {
-                SettingsAccountSection(
-                    onImportCsvClick = { showImportYoutubeCsvDialog = true }, onImportBackupClick = { showImportInstructionsDialog = true },
-                    onExportBackupClick = { showExportInstructionsDialog = true }, onClearDataClick = { showClearDataDialog = true }
-                )
-            }
-            item {
-                SettingsInfoSection(
-                    onSupportClick = { showSupportDialog = true }, onDonateClick = { showDonationDialog = true },
-                    onAboutClick = { showAboutDialog = true }
-                )
+            if (showSupportDialog) SupportDialog(onDismiss = { showSupportDialog = false }, context = context)
+            if (showAboutDialog) AboutDialog(onDismiss = { showAboutDialog = false }, context = context)
+            if (showUpdateDialog) {
+                UpdateDialog(onDismiss = { showUpdateDialog = false }, onConfirm = {
+                    showUpdateDialog = false
+                    try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/makkispacejam99/Fluxa/releases/latest"))) } catch (_: Exception) {}
+                })
             }
         }
-
-        if (showThemeDialog) {
-            val options = ThemeMode.entries.associateBy { stringResource(it.titleRes) }
-            OptionDialog(title = stringResource(R.string.select_appearance), options = options.keys.toList(), selectedOption = stringResource(themeMode.titleRes),
-                onOptionSelected = { selectedTitle -> options[selectedTitle]?.let { onThemeChange(it) }; showThemeDialog = false },
-                onDismiss = { showThemeDialog = false })
-        }
-        if (showTranslationDialog) TranslationDialog(onDismiss = { showTranslationDialog = false }, translationViewModel = translationViewModel, languageMap = languageMap)
-        if (showQualityDialog) {
-            OptionDialog(title = stringResource(R.string.video_quality),
-                options = listOf(stringResource(R.string.quality_1080p), stringResource(R.string.quality_720p), stringResource(R.string.quality_480p), stringResource(R.string.quality_360p), stringResource(R.string.quality_data_saving)),
-                selectedOption = selectedQuality, onOptionSelected = { selectedQuality = it; prefs.videoQuality = it; showQualityDialog = false },
-                onDismiss = { showQualityDialog = false })
-        }
-        if (showLanguageDialog) {
-            val optionsMap = languageMap.entries.associate { stringResource(it.value) to it.key }
-            OptionDialog(title = stringResource(R.string.select_language), options = optionsMap.keys.toList(), selectedOption = selectedLanguage,
-                onOptionSelected = { selected -> val langCode = optionsMap[selected] ?: "en"; prefs.contentLanguage = langCode; AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(langCode)); (context as? Activity)?.recreate(); showLanguageDialog = false },
-                onDismiss = { showLanguageDialog = false })
-        }
-        if (showRegionDialog) {
-            val optionsMap = regionMap.entries.associate { stringResource(it.value) to it.key }
-            OptionDialog(title = stringResource(R.string.select_region), options = optionsMap.keys.toList(), selectedOption = selectedRegion,
-                onOptionSelected = { selected -> contentRegion = optionsMap[selected] ?: "HN"; prefs.contentRegion = contentRegion; showRegionDialog = false },
-                onDismiss = { showRegionDialog = false })
-        }
-
-        if (showExportInstructionsDialog) {
-            val dateSuffix = SimpleDateFormat("dd_MM_yyyy", Locale.getDefault()).format(Date())
-            ExportBackupDialog(onDismiss = { showExportInstructionsDialog = false }, onConfirm = { showExportInstructionsDialog = false; exportLauncher.launch("fluxa_backup_$dateSuffix.json") })
-        }
-        if (showImportInstructionsDialog) ImportBackupDialog(onDismiss = { showImportInstructionsDialog = false }, onConfirm = { showImportInstructionsDialog = false; importLauncher.launch(arrayOf("application/json")) })
-        if (showImportYoutubeCsvDialog) ImportYoutubeCsvDialog(onDismiss = { showImportYoutubeCsvDialog = false }, onConfirm = { showImportYoutubeCsvDialog = false; importYoutubeCsvLauncher.launch(arrayOf("text/comma-separated-values", "text/csv")) })
-        if (showClearDataDialog) {
-            ClearDataDialog(onDismiss = { showClearDataDialog = false }, onConfirm = {
-                scope.launch { backupRestoreManager.clearAllData(); context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply { addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK); context.startActivity(this) } }
-                showClearDataDialog = false
-            })
-        }
-        if (showDonationDialog) DonationDialog(onDismiss = { showDonationDialog = false }, context = context)
-        if (showSupportDialog) SupportDialog(onDismiss = { showSupportDialog = false }, context = context)
-        if (showAboutDialog) AboutDialog(onDismiss = { showAboutDialog = false }, context = context)
-        if (showUpdateDialog) {
-            UpdateDialog(onDismiss = { showUpdateDialog = false }, onConfirm = {
-                showUpdateDialog = false
-                try { context.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/makkispacejam99/Fluxa/releases/latest"))) } catch (_: Exception) {}
-            })
-        }
-
-        Button(onClick = { showUpdateDialog = true }, modifier = Modifier.fillMaxWidth().height(50.dp).padding(top = 8.dp), shape = RoundedCornerShape(35.dp)) {
-            Text(stringResource(R.string.check_updates), fontWeight = FontWeight.Bold)
-        }
-        Text(stringResource(R.string.app_version_info, versionName), modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp), textAlign = TextAlign.Center, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        
-        if (showMiniPlayer) {
-            Spacer(modifier = Modifier.height(72.dp))
-        }
-    }
 
         NotificationBanner(
             visible = showBanner,

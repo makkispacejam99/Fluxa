@@ -19,6 +19,11 @@
     <string name="import_youtube_csv">Importar canais do YouTube</string>
     <string name="import_youtube_csv_desc">Carregue as suas subscrições usando um ficheiro (.csv) do Google Takeout.</string>
     <string name="import_youtube_csv_dialog">Siga estes passos:\n1. Vá ao Google Takeout.\n2. Desmarque tudo e selecione apenas o YouTube.\n3. Em \"Múltiplos formatos\", certifique-se de que as subscrições estão definidas para CSV.\n4. Crie a exportação e descarregue.\n5. Selecione o ficheiro subscriptions.csv aqui.</string>
+    <string name="open_links">Abrir links no app</string>
+    <string name="open_links_desc">Abre os links do YouTube diretamente no Fluxa</string>
+    <string name="open_links_dialog_title">Abrir links do YouTube no Fluxa</string>
+    <string name="open_links_dialog_text">Configure o Fluxa para abrir links do YouTube.\n\n1. Toque em "Ir para as configurações" para abrir a página do Fluxa nas configurações do sistema.\n2. Ative "Abrir links compatíveis".\n3. Abra qualquer link do YouTube e escolha "Fluxa" com "Sempre".</string>
+    <string name="open_links_go_settings">Ir para as configurações</string>
     <string name="import_backup">Importar Backup</string>
     <string name="import_backup_desc">Carregue suas inscrições e listas</string>
     <string name="export_backup">Exportar Backup</string>
@@ -141,6 +146,7 @@
     <string name="filter_live">Ao vivo</string>
     <string name="subscribed">Inscrito</string>
     <string name="subscribe">Inscrever-se</string>
+    <string name="subscribers">inscritos</string>
     <string name="no_content_uploaded">Este criador não tem %1$s enviados.</string>
     <string name="live_status">🔴 Ao vivo</string>
     <string name="live_badge">AO VIVO</string>
@@ -170,6 +176,7 @@
     <string name="import_playlist_result">%1$d adicionados · %2$d já existiam</string>
     <string name="no_videos_playlist">Não há vídeos nesta playlist</string>
     <string name="add_videos_first">Vá e adicione alguns primeiro</string>
+    <string name="views">visualizações</string>
     <string name="views_format_m">%1$.1fM visualizações</string>
     <string name="views_format_k">%1$.1fk visualizações</string>
     <string name="views_format">%1$d visualizações</string>
@@ -222,6 +229,7 @@
 
     <string name="speed_dialog_title">Velocidade</string>
     <string name="speed_normal">Normal (1.0x)</string>
+    <string name="playback_speed">Velocidade de reprodução</string>
     <string name="subtitles_dialog_title">Legendas</string>
     <string name="subtitles_off">Desativadas</string>
     <string name="audio_tracks_dialog_title">Faixa de áudio</string>
@@ -237,11 +245,14 @@
     <string name="editing_queue">Editando fila</string>
     <string name="playback_queue">Fila de reprodução</string>
     <string name="repeat">Repetir</string>
+    <string name="repeat_all">Repetir tudo</string>
+    <string name="repeat_one">Repetir 1</string>
     <string name="queue_empty">A fila está vazia</string>
     <string name="reorder">Reordenar</string>
     <string name="me_gusta">Gostei</string>
     <string name="no_me_gusta">Não gostei</string>
     <string name="more_options">Mais</string>
+    <string name="more_options_title">Mais opções</string>
     <string name="show_more">Mostrar mais</string>
     <string name="show_less">Mostrar menos</string>
     <string name="show_all">Mostrar todos</string>
@@ -251,6 +262,9 @@
     <string name="quality_2k">2K (QHD)</string>
     <string name="quality_8k">8K (Ultra HD)</string>
     <string name="normalize_audio">Normalizador de áudio</string>
+    <string name="timeline">Linha do tempo</string>
+    <string name="popup_no_audio">Nenhum vídeo em reprodução.</string>
+    <string name="popup_overlay_needed">Ative «Exibir sobre outros apps» para usar o player flutuante.</string>
     <string name="normalize_audio_desc">O mesmo volume em todos os vídeos</string>
     <string name="normalize_audio_on">Ligado</string>
     <string name="normalize_audio_off">Desligado</string>
@@ -285,4 +299,19 @@
     <string name="favorites">Favoritos</string>
     <string name="load_more">Carregar mais</string>
     <string name="resume_playlist">Continuar?</string>
+    <string name="reload_feed">Recarregar</string>
+    <string name="shorts_gestures_title">Gestos dos Shorts</string>
+    <string name="shorts_gesture_tap">Toque para pausar ou continuar</string>
+    <string name="shorts_gesture_swipe">Deslize para cima ou baixo para o próximo</string>
+    <string name="shorts_gesture_hold">Mantenha pressionado para velocidade 2×</string>
+    <string name="shorts_gesture_double_tap">Toque duplo para curtir</string>
+    <string name="shorts_gesture_controls">Toque na parte inferior para mostrar ou ocultar os controles</string>
+    <string name="shorts_gestures_got_it">Entendi</string>
+    <string name="section_assistance">Assistância</string>
+    <string name="shorts_assistance">Gestos nos Shorts</string>
+    <string name="gestures_tutorial_desc">Mostra o tutorial de gestos frequentemente</string>
+    <string name="gestures_hint_question">Ficou claro?</string>
+    <string name="gestures_hint_question_desc">Podemos mostrar de novo em 30 dias.</string>
+    <string name="gestures_hint_repeat">Não, lembra-me</string>
+    <string name="gestures_hint_got_it">Sim, está claro</string>
 </resources>

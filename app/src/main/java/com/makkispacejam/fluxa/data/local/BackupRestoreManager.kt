@@ -8,6 +8,10 @@ import androidx.core.app.NotificationCompat
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
+import com.makkispacejam.fluxa.data.filters.RecentVideosTracker
+import com.makkispacejam.fluxa.data.filters.WatchedArchive
+import com.makkispacejam.fluxa.data.shorts.ShortsCacheManager
+import com.makkispacejam.fluxa.data.shorts.ShortsSeenRegistry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
@@ -85,6 +89,7 @@ class BackupRestoreManager(private val context: Context) {
         fluxaDao.insertPlaylistItems(backupData.playlistItems)
         fluxaDao.insertVideoInteractions(backupData.videoInteractions)
         fluxaDao.insertWatchedVideos(backupData.watchedVideos)
+        WatchedArchive.markWatchedAll(backupData.watchedVideos.map { it.videoId })
     }
 
     // Importación por CSV
@@ -158,6 +163,15 @@ class BackupRestoreManager(private val context: Context) {
 
     // Limpieza de datos
     suspend fun clearAllData() = withContext(Dispatchers.IO) {
+        runCatching {
+            WatchedArchive.preserveBeforeWipe(database.fluxaDao().getAllWatchedVideoIds())
+        }
         database.clearAllTables()
+        runCatching {
+            ShortsSeenRegistry.attach(context)
+            ShortsSeenRegistry.clear()
+        }
+        ShortsCacheManager.clearCache()
+        RecentVideosTracker.clearAll()
     }
 }

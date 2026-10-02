@@ -61,6 +61,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         private set
     var recentSearches by mutableStateOf<List<String>>(emptyList())
         private set
+    var searchSuggestions by mutableStateOf<List<String>>(emptyList())
+        private set
 
     var loadedCount by mutableIntStateOf(0)
         private set
@@ -113,6 +115,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun refreshFeed() {
         repository.clearFeedCache()
         homeFeed = emptyList()
+        isLoadingFeed = false
         isRefreshingFeed = true
         loadHomeFeed()
     }
@@ -125,6 +128,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         addRecentSearch(query)
+        val subsWord = getApplication<Application>().getString(R.string.subscribers)
 
         isLoadingSearch = true
         hasMoreSearch = false
@@ -133,7 +137,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         _currentSearchFilter = filter
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val result = SearchRepository.searchVideos(query, filter = filter)
+                val result = SearchRepository.searchVideos(query, filter = filter, subscriberWord = subsWord)
                 withContext(Main) {
                     searchResults = result.items
                     nextSearchPage = result.nextPage
@@ -150,12 +154,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun loadMoreSearch() {
         if (isLoadingMoreSearch || nextSearchPage == null) return
         val currentQuery = _currentSearchQuery ?: return
+        val subsWord = getApplication<Application>().getString(R.string.subscribers)
         isLoadingMoreSearch = true
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                var result = SearchRepository.loadMoreSearch(currentQuery, nextSearchPage!!, _currentSearchFilter)
+                var result = SearchRepository.loadMoreSearch(currentQuery, nextSearchPage!!, _currentSearchFilter, subscriberWord = subsWord)
                 if (result.nextPage != null) {
-                    val second = SearchRepository.loadMoreSearch(currentQuery, result.nextPage, _currentSearchFilter)
+                    val second = SearchRepository.loadMoreSearch(currentQuery, result.nextPage, _currentSearchFilter, subscriberWord = subsWord)
                     result = SearchPageResult(
                         items = (result.items + second.items).distinctBy { it.videoId },
                         nextPage = second.nextPage
@@ -173,7 +178,22 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun clearSearch() { searchResults = emptyList(); hasMoreSearch = false; nextSearchPage = null }
+    fun clearSearch() { searchResults = emptyList(); hasMoreSearch = false; nextSearchPage = null; searchSuggestions = emptyList() }
+
+    fun updateSearchSuggestions(query: String) {
+        if (query.isBlank()) {
+            searchSuggestions = emptyList()
+            return
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val suggestions = SearchRepository.getSuggestions(query)
+                withContext(Main) {
+                    searchSuggestions = suggestions
+                }
+            } catch (_: Exception) {}
+        }
+    }
 
     private fun addRecentSearch(query: String) {
         val current = recentSearches.toMutableList()

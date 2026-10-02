@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.makkispacejam.fluxa.ui.theme.LocalFluxaDesign
 import coil.compose.AsyncImage
 import com.makkispacejam.fluxa.utils.ThumbnailUtils
 
@@ -37,6 +38,7 @@ fun PlaylistCard(
         ThumbnailUtils.getHighQualityThumbnail(thumbnailUrl)
     }
 
+    val design = LocalFluxaDesign.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -52,7 +54,7 @@ fun PlaylistCard(
                     .align(Alignment.TopCenter)
                     .background(
                         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                        RoundedCornerShape(12.dp)
+                        RoundedCornerShape(design.ThumbnailCorner)
                     )
             )
 
@@ -64,9 +66,9 @@ fun PlaylistCard(
                     .align(Alignment.BottomCenter)
                     .background(
                         MaterialTheme.colorScheme.outlineVariant,
-                        RoundedCornerShape(12.dp)
+                        RoundedCornerShape(design.ThumbnailCorner)
                     )
-                    .clip(RoundedCornerShape(12.dp)),
+                    .clip(RoundedCornerShape(design.ThumbnailCorner)),
                 contentAlignment = Alignment.Center
             ) {
                 if (safePlaylistThumbnail.isNotEmpty()) {
@@ -86,7 +88,7 @@ fun PlaylistCard(
                         .align(Alignment.CenterEnd)
                         .background(
                             Color.Black.copy(alpha = 0.7f),
-                            RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp)
+                            RoundedCornerShape(topEnd = design.ThumbnailCorner, bottomEnd = design.ThumbnailCorner)
                         ),
                     contentAlignment = Alignment.Center
                 ) {

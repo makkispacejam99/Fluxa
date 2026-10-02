@@ -120,6 +120,17 @@ class PlayerControls(
     }
 
     @OptIn(UnstableApi::class)
+    fun seekToAndPlay(fraction: Float) {
+        val player = FluxaPlaybackService.instance?.getPlayer()
+        val state = getState()
+        val duration = player?.duration ?: state.durationMs
+        if (duration > 0) player?.seekTo((fraction * duration).toLong())
+        player?.playWhenReady = true
+        updateState(state.copy(
+            progressMs = (fraction * state.durationMs).toLong(), progress = fraction, isPlaying = true))
+    }
+
+    @OptIn(UnstableApi::class)
     fun seekOffset(offsetMs: Long) {
         val player = FluxaPlaybackService.instance?.getPlayer() ?: return
         val now = System.currentTimeMillis()

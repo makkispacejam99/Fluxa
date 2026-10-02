@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -36,7 +35,7 @@ fun HomeFeedList(
     showMiniPlayer: Boolean = false,
     listState: LazyListState = rememberLazyListState()
 ) {
-    PullToRefreshBox(
+    ExpressivePullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = onRefresh,
         modifier = Modifier.fillMaxSize()
@@ -60,7 +59,7 @@ fun HomeFeedList(
                     VideoCard(
                         title = video.title,
                         channel = video.channelName,
-                        views = video.formattedViews,
+                        views = video.formattedViews(stringResource(R.string.views)),
                         duration = video.formattedDuration,
                         thumbnailUrl = video.thumbnailUrl,
                         uploaderAvatarUrl = avatar ?: "",
@@ -142,7 +141,7 @@ fun SearchResultsList(
                             VideoCard(
                                 title = item.title,
                                 channel = item.channelName,
-                                views = item.formattedViews,
+                                views = item.formattedViews(stringResource(R.string.views)),
                                 duration = if (isLiveItem) "LIVE" else item.formattedDuration,
                                 thumbnailUrl = item.thumbnailUrl,
                                 uploaderAvatarUrl = avatar ?: "",

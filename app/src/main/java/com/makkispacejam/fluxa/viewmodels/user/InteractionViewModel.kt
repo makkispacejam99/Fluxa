@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.makkispacejam.fluxa.data.UserPreferences
+import com.makkispacejam.fluxa.data.filters.WatchedArchive
 import com.makkispacejam.fluxa.data.local.*
 import com.makkispacejam.fluxa.data.newpipe.FluxaStreamItem
 import com.makkispacejam.fluxa.data.VideoExtractor
@@ -273,12 +274,16 @@ class InteractionViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    val watchedVideos: Flow<List<String>> = dao.allWatchedVideoIdsFlow
+    val watchedVideos: Flow<List<String>> =
+        combine(dao.allWatchedVideoIdsFlow, WatchedArchive.watchedIds) { fromDb, fromArchive ->
+            if (fromArchive.isEmpty()) fromDb else (fromDb + fromArchive).distinct()
+        }
 
     fun markAsWatched(videoId: String) {
         if (UserPreferences.incognitoActive) return
         viewModelScope.launch(Dispatchers.IO) {
-            dao.insertWatchedVideo(WatchedVideoEntity(videoId))
+            dao.insertWatchedVideoAndPrune(WatchedVideoEntity(videoId))
+            WatchedArchive.markWatched(videoId)
         }
     }
 

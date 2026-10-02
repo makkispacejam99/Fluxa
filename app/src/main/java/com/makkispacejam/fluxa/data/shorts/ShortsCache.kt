@@ -23,6 +23,7 @@ object ShortsCache {
                     videoUrl = v.videoUrl
                     timestamp = v.timestamp
                     viewCount = v.viewCount
+                    duration = v.duration
                 }
             }
             dao.insertCachedVideos(entities)
@@ -38,6 +39,7 @@ object ShortsCache {
         imageUrl = entity.imageUrl,
         videoUrl = entity.videoUrl,
         timestamp = entity.timestamp,
-        viewCount = entity.viewCount
+        viewCount = entity.viewCount,
+        duration = entity.duration
     )
 }

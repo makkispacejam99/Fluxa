@@ -19,6 +19,11 @@
     <string name="import_youtube_csv">Importer des chaînes de YouTube</string>
     <string name="import_youtube_csv_desc">Chargez vos abonnements à l\'aide d\'un fichier (.csv) Google Takeout.</string>
     <string name="import_youtube_csv_dialog">Suivez ces étapes :\n1. Allez sur Google Takeout.\n2. Désélectionnez tout et sélectionnez uniquement YouTube.\n3. Dans \"Plusieurs formats\", assurez-vous que les abonnements sont définis sur CSV.\n4. Créez l\'exportation et téléchargez.\n5. Sélectionnez le fichier subscriptions.csv ici.</string>
+    <string name="open_links">Ouvrir les liens dans l\'application</string>
+    <string name="open_links_desc">Ouvrir les liens YouTube directement dans Fluxa</string>
+    <string name="open_links_dialog_title">Ouvrir les liens YouTube dans Fluxa</string>
+    <string name="open_links_dialog_text">Configurez Fluxa pour ouvrir les liens YouTube.\n\n1. Touchez "Aller aux paramètres" pour ouvrir la page de Fluxa dans les paramètres système.\n2. Activez "Ouvrir les liens pris en charge".\n3. Ouvrez n\'importe quel lien YouTube et choisissez "Fluxa" avec "Toujours".</string>
+    <string name="open_links_go_settings">Aller aux paramètres</string>
     <string name="import_backup">Importer une sauvegarde</string>
     <string name="import_backup_desc">Chargez vos abonnements et listes</string>
     <string name="export_backup">Exporter une sauvegarde</string>
@@ -141,6 +146,7 @@
     <string name="filter_live">En direct</string>
     <string name="subscribed">Abonné</string>
     <string name="subscribe">S\'abonner</string>
+    <string name="subscribers">abonnés</string>
     <string name="no_content_uploaded">Ce créateur n\'a pas de %1$s mis en ligne.</string>
     <string name="live_status">🔴 En direct</string>
     <string name="live_badge">EN DIRECT</string>
@@ -170,6 +176,7 @@
     <string name="import_playlist_result">%1$d ajoutées · %2$d existaient déjà</string>
     <string name="no_videos_playlist">Aucune vidéo dans cette playlist</string>
     <string name="add_videos_first">Allez-y et ajoutez-en d\'abord</string>
+    <string name="views">vues</string>
     <string name="views_format_m">%1$.1fM vues</string>
     <string name="views_format_k">%1$.1fk vues</string>
     <string name="views_format">%1$d vues</string>
@@ -222,6 +229,7 @@
 
     <string name="speed_dialog_title">Vitesse</string>
     <string name="speed_normal">Normal (1.0x)</string>
+    <string name="playback_speed">Vitesse de lecture</string>
     <string name="subtitles_dialog_title">Sous-titres</string>
     <string name="subtitles_off">Désactivés</string>
     <string name="audio_tracks_dialog_title">Piste audio</string>
@@ -237,11 +245,14 @@
     <string name="editing_queue">Modification de la file</string>
     <string name="playback_queue">File de lecture</string>
     <string name="repeat">Répéter</string>
+    <string name="repeat_all">Répéter tout</string>
+    <string name="repeat_one">Répéter 1</string>
     <string name="queue_empty">La file est vide</string>
     <string name="reorder">Réordonner</string>
     <string name="me_gusta">J\'aime</string>
     <string name="no_me_gusta">Je n\'aime pas</string>
     <string name="more_options">Plus</string>
+    <string name="more_options_title">Plus d\'options</string>
     <string name="show_more">Afficher plus</string>
     <string name="show_less">Afficher moins</string>
     <string name="show_all">Tout afficher</string>
@@ -251,6 +262,9 @@
     <string name="quality_2k">2K (QHD)</string>
     <string name="quality_8k">8K (Ultra HD)</string>
     <string name="normalize_audio">Normalisation audio</string>
+    <string name="timeline">Chronologie</string>
+    <string name="popup_no_audio">Aucune vidéo en cours de lecture.</string>
+    <string name="popup_overlay_needed">Activez « Afficher par-dessus d\'autres applications » pour utiliser le lecteur flottant.</string>
     <string name="normalize_audio_desc">Même volume dans toutes les vidéos</string>
     <string name="normalize_audio_on">Activé</string>
     <string name="normalize_audio_off">Désactivé</string>
@@ -285,4 +299,19 @@
     <string name="favorites">Favoris</string>
     <string name="load_more">Charger plus</string>
     <string name="resume_playlist">Continuer ?</string>
+    <string name="reload_feed">Recharger</string>
+    <string name="shorts_gestures_title">Gestes Shorts</string>
+    <string name="shorts_gesture_tap">Touchez pour mettre en pause ou reprendre</string>
+    <string name="shorts_gesture_swipe">Glissez vers le haut ou le bas pour le suivant</string>
+    <string name="shorts_gesture_hold">Maintenez pour la vitesse 2×</string>
+    <string name="shorts_gesture_double_tap">Double-touche pour aimer</string>
+    <string name="shorts_gesture_controls">Touchez le bas pour afficher ou masquer les commandes</string>
+    <string name="shorts_gestures_got_it">J’ai compris</string>
+    <string name="section_assistance">Assistance</string>
+    <string name="shorts_assistance">Gestes Shorts</string>
+    <string name="gestures_tutorial_desc">Affiche le tutoriel des gestes fréquemment</string>
+    <string name="gestures_hint_question">C’était clair ?</string>
+    <string name="gestures_hint_question_desc">On peut vous le remontrer dans 30 jours.</string>
+    <string name="gestures_hint_repeat">Non, rappelle-le moi</string>
+    <string name="gestures_hint_got_it">Oui, c’est clair</string>
 </resources>

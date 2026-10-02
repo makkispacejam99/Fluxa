@@ -6,9 +6,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,12 +25,12 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.annotation.OptIn
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.media3.common.util.UnstableApi
 import com.makkispacejam.fluxa.video.video.HorizontalVideoPlayer
 import com.makkispacejam.fluxa.video.video.fallbacks.AgeRestrictedPlaceholder
@@ -38,6 +41,7 @@ import com.makkispacejam.fluxa.video.video.notifications.SubtitleDisplay
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.schabi.newpipe.extractor.stream.AudioStream
+import org.schabi.newpipe.extractor.stream.StreamSegment
 import org.schabi.newpipe.extractor.stream.SubtitlesStream
 
 @OptIn(UnstableApi::class)
@@ -69,9 +73,14 @@ fun VideoPlayerArea(
     onAudioTracks: () -> Unit,
     onSpeed: () -> Unit,
     onSettings: () -> Unit,
+    showMoreOptions: Boolean = false,
+    onMoreOptionsClick: () -> Unit = {},
+    onDismissMoreOptions: () -> Unit = {},
     onResizeMode: () -> Unit,
     onPip: () -> Unit = {},
     onAudioNormalize: () -> Unit,
+    hasTimeline: Boolean = false,
+    onTimelineClick: () -> Unit = {},
     resizeMode: Int,
     onSliderChange: (Float) -> Unit,
     onSliderFinished: () -> Unit,
@@ -82,7 +91,9 @@ fun VideoPlayerArea(
     subtitleText: String = "",
     videoTitle: String = "",
     channelName: String = "",
-    bufferedPositionMs: Long = 0L
+    bufferedPositionMs: Long = 0L,
+    segments: List<StreamSegment> = emptyList(),
+    hoverSegmentTitle: String? = null
 ) {
     val animatedScale by animateFloatAsState(
         targetValue = 1f,
@@ -91,6 +102,7 @@ fun VideoPlayerArea(
     )
     var totalDrag by remember { mutableFloatStateOf(0f) }
     var dragStartY by remember { mutableFloatStateOf(0f) }
+    val scope = rememberCoroutineScope()
     val isFullScreenRef = rememberUpdatedState(isFullScreen)
     val isDraggingRef = rememberUpdatedState(isUserDraggingSlider)
     val controlsVisibleRef = rememberUpdatedState(controlsVisible)
@@ -102,7 +114,6 @@ fun VideoPlayerArea(
     var rewindKey by remember { mutableIntStateOf(0) }
     var forwardKey by remember { mutableIntStateOf(0) }
     var is2xSpeed by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(rewindKey) {
         if (rewindKey > 0) {
@@ -125,7 +136,11 @@ fun VideoPlayerArea(
         modifier = Modifier
             .then(
                 if (isFullScreen) Modifier.fillMaxSize()
-                else Modifier.fillMaxWidth().aspectRatio(16 / 9f)
+                else Modifier
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .fillMaxWidth()
+                    .aspectRatio(16 / 9f)
             )
             .background(Color.Black)
             .graphicsLayer { scaleX = animatedScale; scaleY = animatedScale }
@@ -149,16 +164,19 @@ fun VideoPlayerArea(
                     }
                 )
             }
-            .pointerInput(isUserDraggingSlider) {
+            .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = {
-                        if (!isUserDraggingSlider && !controlsVisibleRef.value) {
-                            val job = coroutineScope.launch {
-                                delay(500)
+                        val job = scope.launch {
+                            delay(500)
+                            if (!isUserDraggingSlider && !controlsVisibleRef.value) {
                                 is2xSpeed = true
                                 onSpeedChange(2f)
                             }
-                            tryAwaitRelease()
+                        }
+                        try {
+                            awaitRelease()
+                        } finally {
                             job.cancel()
                             if (is2xSpeed) {
                                 is2xSpeed = false
@@ -166,13 +184,19 @@ fun VideoPlayerArea(
                             }
                         }
                     },
-                    onTap = { if (!isUserDraggingSlider) onControlsToggle() },
-                    onLongPress = {},
+                    onTap = { onControlsToggle() },
                     onDoubleTap = { offset ->
-                        if (!isUserDraggingSlider) {
-                            val w = size.width
-                            if (offset.x < w * 0.35f) { rewindIncrement += 10; rewindKey++; onRewind() }
-                            else if (offset.x > w * 0.65f) { forwardIncrement += 10; forwardKey++; onForward() }
+                        val w = size.width
+                        if (offset.x < w * 0.35f) {
+                            rewindIncrement += 10
+                            rewindKey++
+                            onRewind()
+                        } else if (offset.x > w * 0.65f) {
+                            forwardIncrement += 10
+                            forwardKey++
+                            onForward()
+                        } else {
+                            onControlsToggle()
                         }
                     }
                 )
@@ -225,6 +249,8 @@ fun VideoPlayerArea(
                 totalDurationMs = totalDurationMs,
                 bufferedPositionMs = bufferedPositionMs,
                 isUserDraggingSlider = isUserDraggingSlider,
+                segments = segments,
+                hoverSegmentTitle = hoverSegmentTitle,
                 availableSubtitles = availableSubtitles,
                 availableAudioTracks = availableAudioTracks,
                 videoTitle = videoTitle,
@@ -242,12 +268,19 @@ fun VideoPlayerArea(
                 onAudioTracksClick = onAudioTracks,
                 onSpeedClick = onSpeed,
                 onSettingsClick = onSettings,
+                showMoreOptionsBottomSheet = showMoreOptions,
+                onMoreOptionsClick = onMoreOptionsClick,
+                onDismissMoreOptions = onDismissMoreOptions,
                 onResizeModeClick = onResizeMode,
                 onPipClick = onPip,
                 onAudioNormalizeClick = onAudioNormalize,
                 queueSize = queueSize,
-                isLoading = isLoading
+                isLoading = isLoading,
+                hasTimeline = hasTimeline,
+                onTimelineClick = onTimelineClick
             )
         }
     }
 }
+
+

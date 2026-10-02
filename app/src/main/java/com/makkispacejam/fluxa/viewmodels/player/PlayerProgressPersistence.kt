@@ -4,6 +4,7 @@ import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import com.makkispacejam.fluxa.FluxaPlaybackService
 import com.makkispacejam.fluxa.data.UserPreferences
+import com.makkispacejam.fluxa.data.filters.WatchedArchive
 import com.makkispacejam.fluxa.data.local.WatchedVideoEntity
 import com.makkispacejam.fluxa.data.local.VideoInteractionEntity
 import kotlinx.coroutines.CoroutineScope
@@ -26,9 +27,11 @@ class PlayerProgressPersistence(
             val dur = p.duration
             if (dur > 0 && pos > 0 && pos >= 12_000L) scope.launch(Dispatchers.IO) {
                 val existing = dao.getInteraction(videoId)
-                if (existing != null) dao.updateProgress(videoId, pos, dur, System.currentTimeMillis())
-                else if (state.title.isNotBlank() || state.channel.isNotBlank()) {
-                    dao.insertOrUpdateInteraction(
+                if (existing != null) {
+                    dao.updateProgress(videoId, pos, dur, System.currentTimeMillis())
+                    dao.pruneOldHistory()
+                } else if (state.title.isNotBlank() || state.channel.isNotBlank()) {
+                    dao.registrarHistorialYPrunar(
                         VideoInteractionEntity(videoId).apply {
                             title = state.title; channelName = state.channel
                             viewCount = 1; progressMs = pos; durationMs = dur
@@ -36,7 +39,8 @@ class PlayerProgressPersistence(
                         })
                 }
                 if (pos.toDouble() / dur.toDouble() >= 0.95) {
-                    dao.insertWatchedVideo(WatchedVideoEntity(videoId))
+                    dao.insertWatchedVideoAndPrune(WatchedVideoEntity(videoId))
+                    WatchedArchive.markWatched(videoId)
                 }
             }
         }
@@ -45,7 +49,8 @@ class PlayerProgressPersistence(
     fun markAsWatched(videoId: String) {
         if (UserPreferences.incognitoActive) return
         scope.launch(Dispatchers.IO) {
-            dao.insertWatchedVideo(WatchedVideoEntity(videoId))
+            dao.insertWatchedVideoAndPrune(WatchedVideoEntity(videoId))
+            WatchedArchive.markWatched(videoId)
         }
     }
 }

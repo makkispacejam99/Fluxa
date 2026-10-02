@@ -48,6 +48,10 @@ fun VideoDescription(
     )
     val targetLang = translationViewModel.getTranslationLanguage()
     
+    val fullUrls = remember(description) {
+        Regex("href=\"([^\"]+)\"").findAll(description).map { it.groupValues[1] }.toList()
+    }
+
     val cleanDescription = remember(description) { description.stripHtml() }
     var translatedDescription by remember(cleanDescription, targetLang) { mutableStateOf(cleanDescription) }
 
@@ -60,7 +64,7 @@ fun VideoDescription(
         }
     }
 
-    val displayedText = if (isExpanded) translatedDescription else {
+    val textToDisplay = if (isExpanded) translatedDescription else {
         if (translatedDescription.length > 100) {
             translatedDescription.take(100).substringBeforeLast(" ") + "..."
         } else {
@@ -70,16 +74,17 @@ fun VideoDescription(
 
     Column(modifier = Modifier.padding(bottom = 8.dp)) {
         val annotatedString = buildAnnotatedString {
-            val urls = extractUrls(displayedText)
+            val displayUrls = Regex("https?://\\S+").findAll(textToDisplay).toList()
             var lastIndex = 0
 
-            urls.forEach { range ->
-                val start = range.first
-                val end = range.second
+            displayUrls.forEachIndexed { index, matchResult ->
+                val start = matchResult.range.first
+                val end = matchResult.range.last + 1
 
-                append(displayedText.substring(lastIndex, start))
+                append(textToDisplay.substring(lastIndex, start))
 
-                pushStringAnnotation(tag = "URL", annotation = displayedText.substring(start, end))
+                val realUrl = fullUrls.getOrNull(index) ?: matchResult.value
+                pushStringAnnotation(tag = "URL", annotation = realUrl)
                 withStyle(
                     style = SpanStyle(
                         color = MaterialTheme.colorScheme.primary,
@@ -87,12 +92,12 @@ fun VideoDescription(
                         textDecoration = TextDecoration.Underline
                     )
                 ) {
-                    append(displayedText.substring(start, end))
+                    append(textToDisplay.substring(start, end))
                 }
                 pop()
                 lastIndex = end
             }
-            append(displayedText.substring(lastIndex))
+            append(textToDisplay.substring(lastIndex))
         }
 
         ClickableText(
@@ -124,9 +129,4 @@ fun VideoDescription(
                 .clickable { onExpandClick() }
         )
     }
-}
-
-fun extractUrls(text: String): List<Pair<Int, Int>> {
-    val urlPattern = Regex("https?://\\S+")
-    return urlPattern.findAll(text).map { it.range.first to it.range.last + 1 }.toList()
 }

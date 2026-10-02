@@ -3,6 +3,7 @@ package com.makkispacejam.fluxa.ui.screens.shared
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
@@ -172,7 +173,7 @@ fun PlaylistActionButtons(
 fun PlaylistVideoHorizontalSkeleton() {
     Surface(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface
     ) {
         Row(
@@ -181,7 +182,7 @@ fun PlaylistVideoHorizontalSkeleton() {
         ) {
             Box(
                 modifier = Modifier.size(width = 120.dp, height = 68.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             )
             Column(
@@ -227,7 +228,7 @@ fun PlaylistVideoItemHorizontal(
     Surface(
         onClick = { if (isEditMode) onToggleSelection() else onVideoClick() },
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface
     ) {
         Row(
@@ -246,7 +247,7 @@ fun PlaylistVideoItemHorizontal(
                 AsyncImage(
                     model = video.thumbnail,
                     contentDescription = null,
-                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
+                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(16.dp)),
                     contentScale = ContentScale.Crop
                 )
                 Row(
@@ -256,7 +257,7 @@ fun PlaylistVideoItemHorizontal(
                 ) {
                     if (isWatched) {
                         Box(
-                            modifier = Modifier.background(Color.Black, RoundedCornerShape(4.dp))
+                            modifier = Modifier.background(Color.Black, CircleShape)
                                 .padding(horizontal = 4.dp, vertical = 2.dp)
                         ) {
                             Text(text = stringResource(R.string.watched_badge), style = MaterialTheme.typography.labelSmall, color = Color.White)
@@ -264,7 +265,7 @@ fun PlaylistVideoItemHorizontal(
                     } else Spacer(modifier = Modifier.width(1.dp))
                     if (formattedDuration.isNotEmpty()) {
                         Box(
-                            modifier = Modifier.background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.7f), RoundedCornerShape(4.dp))
+                            modifier = Modifier.background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.7f), CircleShape)
                                 .padding(horizontal = 4.dp, vertical = 2.dp)
                         ) {
                             Text(formattedDuration, style = MaterialTheme.typography.labelSmall, color = Color.White)

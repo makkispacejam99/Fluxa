@@ -213,6 +213,19 @@ object VideoExtractor {
             }
         }
 
+    suspend fun extractPlaylistTitle(playlistUrl: String): String {
+        return try {
+            withContext(Dispatchers.IO) {
+                val service = ServiceList.YouTube
+                val fullUrl = if (playlistUrl.startsWith("http")) playlistUrl else "https://www.youtube.com$playlistUrl"
+                service.getPlaylistExtractor(fullUrl).let { extractor ->
+                    extractor.fetchPage()
+                    extractor.name
+                }
+            }
+        } catch (_: Exception) { "" }
+    }
+
     // parseo de resolución
     private fun parseResolution(resolutionStr: String?): Int {
         if (resolutionStr == null) return 0

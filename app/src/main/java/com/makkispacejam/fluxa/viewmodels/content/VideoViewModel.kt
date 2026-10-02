@@ -15,6 +15,7 @@ import com.makkispacejam.fluxa.ui.components.system.ErrorType
 import com.makkispacejam.fluxa.data.ShortsRepository
 import com.makkispacejam.fluxa.data.avatars.AvatarRepository
 import com.makkispacejam.fluxa.data.metadata.VideoMetadataProvider
+import com.makkispacejam.fluxa.data.shorts.ShortsSeenRegistry
 import com.makkispacejam.fluxa.data.VideoExtractor
 
 import com.makkispacejam.fluxa.models.VideoModel
@@ -25,9 +26,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 
 class VideoViewModel(application: Application) : AndroidViewModel(application) {
+
+    private companion object {
+        const val PAGE_LOAD_MORE = 30
+    }
 
     private var consecutiveFailures = 0
     private val criticalFailureThreshold = 3
@@ -171,22 +175,44 @@ class VideoViewModel(application: Application) : AndroidViewModel(application) {
         isLoading = true
         viewModelScope.launch {
             try {
-                val shorts = repository.getShorts(getApplication(), forceLoadMore = false, forceRefresh = forceRefresh) { cached ->
-                    if (videoList.isEmpty()) {
-                        videoList = cached.take(20)
+                ShortsSeenRegistry.attach(getApplication())
+                val shorts = repository.getShorts(
+                    getApplication(),
+                    forceLoadMore = false,
+                    forceRefresh = forceRefresh
+                ) { preview ->
+                    if (preview.isNotEmpty()) {
+                        val known = videoList.mapTo(HashSet()) { it.id }
+                        val filtered = preview.filter { it.id !in known }
+                        if (filtered.isNotEmpty()) {
+                            videoList = (videoList + filtered).distinctBy { it.id }.take(40)
+                        }
                     }
                 }
                 if (shorts.isNotEmpty()) {
-                    videoList = shorts.take(20)
+                    val current = videoList
+                    videoList = if (current.isEmpty() || currentPageIndex == 0) {
+                        shorts.take(40)
+                    } else {
+                        val known = current.mapTo(HashSet()) { it.id }
+                        (current + shorts.filterNot { it.id in known })
+                            .distinctBy { it.id }
+                            .take(40)
+                    }
+                    shortsExhausted = false
+                    emptyLoadStreak = 0
                     clearErrors()
                 } else {
-                    ErrorType.SERVER_ERROR.handleFeedError("No se encontraron videos.", true)
+                    Log.w("VideoViewModel", "Shorts: la extraccion no devolvio videos")
+                    notificationBannerText =
+                        getApplication<Application>().getString(R.string.error_connect_server)
+                    showNotificationBanner = true
                 }
             } catch (e: Exception) {
                 Log.e("VideoViewModel", "Error extrayendo shorts", e)
                     ErrorType.SERVER_ERROR.handleFeedError(
                         getApplication<Application>().getString(R.string.error_connect_server),
-                    true
+                    false
                 )
             } finally {
                 isLoading = false
@@ -194,25 +220,56 @@ class VideoViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun loadMoreShorts() {
+    fun shuffleShorts() {
         if (isLoading || isNetworkError()) return
 
         isLoading = true
         viewModelScope.launch {
             try {
-                val moreShorts: List<VideoModel> = withTimeoutOrNull(8000) {
-                    repository.getShorts(getApplication(), forceLoadMore = true)
-                } ?: emptyList()
-                
-                if (moreShorts.isEmpty()) return@launch
+                ShortsSeenRegistry.attach(getApplication())
+                val fresh = repository.shuffleShorts(getApplication(), PAGE_LOAD_MORE)
+                if (fresh.isEmpty()) {
+                    fetchYoutubeShorts(forceRefresh = true)
+                    return@launch
+                }
+                val known = videoList.mapTo(HashSet()) { it.id }
+                videoList = (fresh + videoList.filter { it.id !in fresh.map { f -> f.id } && it.id !in known })
+                    .distinctBy { it.id }
+                    .take(40)
+                currentPageIndex = 0
+                shouldUpdatePagerIndex = true
+                shortsExhausted = false
+                emptyLoadStreak = 0
+                clearErrors()
+            } catch (e: Exception) {
+                Log.e("VideoViewModel", "Error mezclando shorts", e)
+            } finally {
+                isLoading = false
+            }
+        }
+    }
 
+    fun loadMoreShorts() {
+        if (isLoading || isNetworkError() || shortsExhausted) return
+
+        isLoading = true
+        viewModelScope.launch {
+            try {
+                val exclude = videoList.mapTo(HashSet()) { it.id }
+                val moreShorts = repository.loadMore(getApplication(), exclude, PAGE_LOAD_MORE)
+
+                if (moreShorts.isEmpty()) {
+                    emptyLoadStreak++
+                    if (emptyLoadStreak >= 2) shortsExhausted = true
+                    return@launch
+                }
+
+                emptyLoadStreak = 0
                 val combined = (videoList + moreShorts).distinctBy { it.id }
-                
-                if ((combined.size > 50) && (currentPageIndex > 25)) {
+
+                if (combined.size > 50 && currentPageIndex > 25) {
                     val dropCount = 20
-                    val newList = combined.drop(dropCount)
-                    
-                    videoList = newList
+                    videoList = combined.drop(dropCount)
                     currentPageIndex -= dropCount
                     shouldUpdatePagerIndex = true
                 } else {
@@ -226,6 +283,11 @@ class VideoViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+
+    var shortsExhausted by mutableStateOf(false)
+        private set
+
+    private var emptyLoadStreak = 0
 
     var shouldUpdatePagerIndex by mutableStateOf(false)
 
@@ -282,13 +344,13 @@ class VideoViewModel(application: Application) : AndroidViewModel(application) {
                 if (metadata != null) {
                     lastLoadedVideoId = videoId
                     videoDescriptionState = metadata.description
-                    videoViewsState = "${HomeFeedItem.formatCount(metadata.viewCount)} vistas"
+                    videoViewsState = "${HomeFeedItem.formatCount(metadata.viewCount)} ${getApplication<Application>().getString(R.string.views)}"
                     cleanChannelNameState = metadata.uploaderName
                     currentVideoThumbnailState = metadata.videoModel.imageUrl
                     channelAvatarState = metadata.uploaderAvatarUrl
                     channelIdState = metadata.videoModel.channelId ?: ""
                     subscriberCountState = if (metadata.subscriberCount >= 0) {
-                        "${HomeFeedItem.formatCount(metadata.subscriberCount)} suscriptores"
+                        "${HomeFeedItem.formatCount(metadata.subscriberCount)} ${getApplication<Application>().getString(R.string.subscribers)}"
                     } else ""
                     relatedVideosState = metadata.relatedVideos
                 }

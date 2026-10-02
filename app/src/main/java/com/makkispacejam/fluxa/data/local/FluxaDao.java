@@ -158,8 +158,7 @@ public interface FluxaDao {
     @Query("DELETE FROM video_interactions WHERE videoId LIKE '%videoplayback%' OR length(videoId) > 20")
     void deleteGarbledVideoIdEntries();
 
-    // Control de historial
-    @Query("DELETE FROM video_interactions WHERE videoId NOT IN (SELECT videoId FROM video_interactions ORDER BY lastWatchedAt DESC LIMIT 100) AND isLiked = 0")
+    @Query("DELETE FROM video_interactions WHERE videoId NOT IN (SELECT videoId FROM video_interactions ORDER BY lastWatchedAt DESC LIMIT 150) AND isLiked = 0")
     void pruneOldHistory();
 
     @Transaction
@@ -168,9 +167,17 @@ public interface FluxaDao {
         pruneOldHistory();
     }
 
-    // Videos ya vistos
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertWatchedVideo(WatchedVideoEntity watchedVideo);
+
+    @Query("DELETE FROM watched_videos WHERE videoId NOT IN (SELECT videoId FROM watched_videos ORDER BY watchedAt DESC LIMIT 300)")
+    void pruneOldWatchedVideos();
+
+    @Transaction
+    default void insertWatchedVideoAndPrune(WatchedVideoEntity watchedVideo) {
+        insertWatchedVideo(watchedVideo);
+        pruneOldWatchedVideos();
+    }
 
     @Query("SELECT EXISTS(SELECT 1 FROM watched_videos WHERE videoId = :videoId)")
     boolean isVideoWatched(String videoId);
@@ -193,7 +200,6 @@ public interface FluxaDao {
     @Query("DELETE FROM watched_videos WHERE videoId = :videoId")
     void removeWatchedVideo(String videoId);
 
-    // Cacheo para shorts
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertCachedVideos(List<CachedVideoEntity> videos);
 
@@ -203,6 +209,6 @@ public interface FluxaDao {
     @Query("SELECT * FROM cached_videos ORDER BY cachedAt DESC LIMIT :limit")
     List<CachedVideoEntity> getRecentCachedVideos(int limit);
 
-    @Query("DELETE FROM cached_videos WHERE cachedAt < :timestamp")
+    @Query("DELETE FROM cached_videos WHERE cachedAt < :timestamp OR videoId NOT IN (SELECT videoId FROM cached_videos ORDER BY cachedAt DESC LIMIT 150)")
     void pruneOldCachedVideos(long timestamp);
 }

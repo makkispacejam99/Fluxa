@@ -21,13 +21,20 @@ import com.makkispacejam.fluxa.R
 import com.makkispacejam.fluxa.ui.components.core.FluxaAvatar
 import com.makkispacejam.fluxa.ui.components.core.SkeletonLine
 import com.makkispacejam.fluxa.ui.components.core.shimmerEffect
+import com.makkispacejam.fluxa.ui.components.core.TranslatedText
+
+import androidx.compose.foundation.clickable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 @Composable
 fun ChannelBanner(
     bannerUrl: String?,
     isLoading: Boolean
 ) {
-    val bannerModifier = Modifier.fillMaxWidth().padding(16.dp).height(120.dp).clip(RoundedCornerShape(12.dp))
+    val bannerModifier = Modifier.fillMaxWidth().padding(16.dp).height(120.dp).clip(RoundedCornerShape(16.dp))
     Box(
         modifier = if (isLoading) bannerModifier.shimmerEffect() else bannerModifier.background(Color(0xFF262626)),
         contentAlignment = Alignment.Center
@@ -47,8 +54,11 @@ fun ChannelInfo(
     isLoading: Boolean,
     onSubscribeClick: () -> Unit,
     isIncognito: Boolean = false,
-    onDisabledClick: () -> Unit = {}
+    onDisabledClick: () -> Unit = {},
+    description: String? = null
 ) {
+    var isExpanded by remember { mutableStateOf(false) }
+
     Column(modifier = Modifier.padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (isLoading) {
@@ -61,6 +71,27 @@ fun ChannelInfo(
                 Text(text = channelName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 if (isLoading) { Spacer(modifier = Modifier.height(6.dp)); SkeletonLine(modifier = Modifier.width(100.dp), height = 12.dp) }
                 else Text(text = subscriberCount, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        if (!description.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Column(modifier = Modifier.clickable { isExpanded = !isExpanded }) {
+                TranslatedText(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = if (isExpanded) Int.MAX_VALUE else 3,
+                    overflow = if (isExpanded) androidx.compose.ui.text.style.TextOverflow.Clip else androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    onClick = { isExpanded = !isExpanded }
+                )
+                Text(
+                    text = if (isExpanded) stringResource(R.string.show_less) else stringResource(R.string.show_more),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                )
             }
         }
         Spacer(modifier = Modifier.height(16.dp))

@@ -27,6 +27,7 @@ import coil.compose.AsyncImage
 import com.makkispacejam.fluxa.ui.components.core.TranslatedText
 import androidx.compose.ui.res.stringResource
 import com.makkispacejam.fluxa.R
+import com.makkispacejam.fluxa.ui.theme.LocalFluxaDesign
 
 // Tarjeta de canal
 @Composable
@@ -40,10 +41,11 @@ fun ChannelSubscriptionCard(
     isIncognito: Boolean = false,
     onDisabledClick: () -> Unit = {}
 ) {
+    val design = LocalFluxaDesign.current
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-        shape = RoundedCornerShape(24.dp)
+        shape = RoundedCornerShape(design.ContainerCorner)
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -52,7 +54,7 @@ fun ChannelSubscriptionCard(
             Row(
                 modifier = Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(design.ThumbnailCorner))
                     .clickable { onChannelClick(channelName) }
                     .padding(4.dp),
                 verticalAlignment = Alignment.CenterVertically

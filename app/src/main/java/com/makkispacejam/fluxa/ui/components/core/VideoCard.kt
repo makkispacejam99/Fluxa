@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
@@ -30,20 +32,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.makkispacejam.fluxa.R
+import com.makkispacejam.fluxa.ui.theme.LocalFluxaDesign
 import com.makkispacejam.fluxa.utils.MusicChannelUtils
 import com.makkispacejam.fluxa.utils.ThumbnailUtils
 
-// Tarjeta de video
 @Composable
 fun VideoCard(
     title: String,
@@ -68,6 +72,11 @@ fun VideoCard(
         ThumbnailUtils.getHighQualityThumbnail(thumbnailUrl)
     }
 
+    val design = LocalFluxaDesign.current
+    val cornerRadius = remember(design.ThumbnailCorner) {
+        if (design.ThumbnailCorner.value > 0f) design.ThumbnailCorner else 20.dp
+    }
+
     val interactionModifier = if (showCheckbox) {
         Modifier
             .fillMaxWidth()
@@ -78,15 +87,16 @@ fun VideoCard(
             .clickable { onVideoClick(title, channel) }
     }
 
-    Column(modifier = interactionModifier.padding(16.dp)) {
-
-        // Thumbnail
+    Column(
+        modifier = interactionModifier
+            .padding(horizontal = 20.dp, vertical = 10.dp)
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(210.dp)
-                .background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
-                .clip(RoundedCornerShape(12.dp)),
+                .aspectRatio(16f / 9f)
+                .clip(RoundedCornerShape(cornerRadius))
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest),
             contentAlignment = Alignment.Center
         ) {
             if (safeThumbnail.isNotEmpty()) {
@@ -97,24 +107,39 @@ fun VideoCard(
                     contentScale = ContentScale.Crop
                 )
             } else {
-                Text(stringResource(R.string.thumbnail_label), color = MaterialTheme.colorScheme.primary)
+                Text(
+                    stringResource(R.string.thumbnail_label),
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
 
-            // Tarjeta de duración y visto
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color.Transparent, Color.Black.copy(alpha = 0.65f))
+                        )
+                    )
+            )
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .padding(8.dp),
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (isWatched) {
                     Surface(
-                        color = Color.Black.copy(alpha = 0.8f),
-                        shape = RoundedCornerShape(4.dp)
+                        color = Color(0xCC000000),
+                        shape = CircleShape
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
@@ -136,45 +161,68 @@ fun VideoCard(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                if (duration.isNotEmpty() && duration != "00:00" && duration != "0:00") {
+                if (isLive) {
                     Surface(
-                        color = Color.Black.copy(alpha = 0.8f),
-                        shape = RoundedCornerShape(4.dp)
+                        color = MaterialTheme.colorScheme.error,
+                        shape = CircleShape
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .background(Color.White, CircleShape)
+                            )
+                            Text(
+                                text = stringResource(R.string.live_badge),
+                                color = Color.White,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                } else if (duration.isNotEmpty() && duration != "00:00" && duration != "0:00") {
+                    Surface(
+                        color = Color(0xCC000000),
+                        shape = CircleShape
                     ) {
                         Text(
                             text = duration,
                             color = Color.White,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                            style = MaterialTheme.typography.labelSmall
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
             }
 
-            // Barra de progreso
             if (progress > 0f) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(3.dp)
+                        .height(4.dp)
                         .align(Alignment.BottomStart)
-                        .background(Color.White.copy(alpha = 0.3f))
+                        .background(Color.White.copy(alpha = 0.25f))
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth(progress.coerceIn(0f, 1f))
                             .fillMaxHeight()
-                            .background(MaterialTheme.colorScheme.primaryFixed)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(MaterialTheme.colorScheme.primary)
                     )
                 }
             }
 
-            // Checkbox para seleccionar que videos eliminar
             if (showCheckbox) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(if (isItemSelected) Color.Black.copy(alpha = 0.3f) else Color.Transparent)
+                        .background(if (isItemSelected) Color.Black.copy(alpha = 0.35f) else Color.Transparent)
                 )
                 Checkbox(
                     checked = isItemSelected,
@@ -190,29 +238,34 @@ fun VideoCard(
             }
         }
 
-        // Metadatos y avatar
         Spacer(modifier = Modifier.height(12.dp))
-        Row(verticalAlignment = Alignment.Top) {
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top
+        ) {
             FluxaAvatar(
                 avatarUrl = uploaderAvatarUrl,
                 modifier = Modifier.clickable { onChannelClick(channel) },
                 size = 40.dp,
-                iconSize = 30.dp,
+                iconSize = 28.dp,
                 placeholderName = channel,
                 isLoading = isLoadingAvatar
             )
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Título, canal y vistas
             Column(modifier = Modifier.weight(1f)) {
                 TranslatedText(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                     skipTranslation = MusicChannelUtils.isMusicContent(channel, title)
                 )
+
+                Spacer(modifier = Modifier.height(2.dp))
 
                 val metaText = remember(views, publishedTime) {
                     val base = views.takeIf { it.isNotEmpty() } ?: ""
@@ -239,21 +292,24 @@ fun VideoCard(
                 Text(
                     text = metaContent,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.secondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.clickable { onChannelClick(channel) }
                 )
             }
 
-            // Botón de opciones
             if (onOptionsClick != null) {
                 IconButton(
                     onClick = onOptionsClick,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier
+                        .size(32.dp)
+                        .padding(start = 2.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.MoreVert,
                         contentDescription = stringResource(R.string.options_title),
-                        tint = MaterialTheme.colorScheme.secondary,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
                 }

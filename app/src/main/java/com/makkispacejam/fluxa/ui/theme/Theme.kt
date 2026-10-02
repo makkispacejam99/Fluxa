@@ -17,6 +17,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.staticCompositionLocalOf
+
+// Configuración global
+object FluxaDesign {
+    val ThumbnailCorner = 16.dp
+    val ContainerCorner = 24.dp
+}
+
+val LocalFluxaDesign = staticCompositionLocalOf { FluxaDesign }
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -78,7 +88,8 @@ fun FluxaTheme(
                 LocalDensity provides Density(
                     density = LocalDensity.current.density,
                     fontScale = LocalDensity.current.fontScale.coerceIn(1.0f, 1.15f)
-                )
+                ),
+                LocalFluxaDesign provides FluxaDesign
             ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),

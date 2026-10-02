@@ -1,3 +1,5 @@
+@file:Suppress("UnusedVariable", "unused")
+
 package com.makkispacejam.fluxa.ui.screens.main
 
 import android.annotation.SuppressLint
@@ -34,7 +36,6 @@ import com.makkispacejam.fluxa.viewmodels.user.InteractionViewModel
 import com.makkispacejam.fluxa.viewmodels.player.PlayerViewModel
 import com.makkispacejam.fluxa.viewmodels.content.VideoViewModel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 // Pantalla de inicio
 @androidx.annotation.OptIn(UnstableApi::class)
@@ -70,7 +71,6 @@ fun HomeScreen(
     val userName = remember { mutableStateOf(prefs.getString("user_name", "Fluxa") ?: "Fluxa") }
 
     var selectedFilter by remember { mutableStateOf("Todo") }
-    var isRefreshing by remember { mutableStateOf(false) }
     var isOverlaySearching by remember { mutableStateOf(false) }
     var isOverlayNotifications by remember { mutableStateOf(false) }
 
@@ -101,6 +101,12 @@ fun HomeScreen(
         if (isOverlaySearching) { delay(100); focusRequester.requestFocus() }
     }
 
+    LaunchedEffect(searchQuery) {
+        if (isOverlaySearching) {
+            homeViewModel.updateSearchSuggestions(searchQuery)
+        }
+    }
+
     Column(modifier = Modifier.fillMaxSize().padding(mainPadding)) {
         if (homeViewModel.errorType == null && !isOverlaySearching && !isOverlayNotifications) {
             HomeTopBar(
@@ -125,7 +131,7 @@ fun HomeScreen(
                     errorMessage = homeViewModel.errorMessage,
                     onRetry = { homeViewModel.refreshFeed() }
                 )
-                homeViewModel.isLoadingFeed && homeViewModel.homeFeed.isEmpty() -> {
+                homeViewModel.isLoadingFeed && homeViewModel.homeFeed.isEmpty() && !homeViewModel.isRefreshingFeed -> {
                     LazyColumn(modifier = Modifier.fillMaxSize()) { items(3) { VideoCardSkeleton() } }
                 }
                 else -> {
@@ -166,14 +172,8 @@ fun HomeScreen(
                             }
                             HomeFeedList(
                                 homeFeed = visibleFeed,
-                                isRefreshing = isRefreshing,
-                                onRefresh = {
-                                    scope.launch {
-                                        isRefreshing = true
-                                        homeViewModel.refreshFeed()
-                                        isRefreshing = false
-                                    }
-                                },
+                                isRefreshing = homeViewModel.isRefreshingFeed,
+                                onRefresh = { homeViewModel.refreshFeed() },
                                 interactionMap = interactionMap,
                                 watchedSet = watchedSet,
                                 getAvatar = { id, url -> homeViewModel.getAvatar(id, url ?: "") },
@@ -233,7 +233,8 @@ fun HomeScreen(
         recentSearches = homeViewModel.recentSearches,
         onRemoveRecentSearch = { homeViewModel.removeRecentSearch(it) },
         onClearRecentSearches = { homeViewModel.clearRecentSearches() },
-        focusRequester = focusRequester
+        focusRequester = focusRequester,
+        suggestions = homeViewModel.searchSuggestions
     )
 
     RecentsOverlay(

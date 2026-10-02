@@ -4,6 +4,7 @@ import android.content.Context;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.room.migration.Migration;
 
 @SuppressWarnings("ALL")
 @Database(
@@ -15,7 +16,7 @@ import androidx.room.RoomDatabase;
         WatchedVideoEntity.class,
         CachedVideoEntity.class
     },
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 public abstract class FluxaDatabase extends RoomDatabase {
@@ -30,6 +31,7 @@ public abstract class FluxaDatabase extends RoomDatabase {
                 if (INSTANCE == null) {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                                     FluxaDatabase.class, "fluxa_database")
+                            .addMigrations(MIGRATION_8_9)
                             .fallbackToDestructiveMigration()
                             .build();
                 }
@@ -37,4 +39,11 @@ public abstract class FluxaDatabase extends RoomDatabase {
         }
         return INSTANCE;
     }
+
+    private static final Migration MIGRATION_8_9 = new Migration(8, 9) {
+        @Override
+        public void migrate(androidx.sqlite.db.SupportSQLiteDatabase db) {
+            db.execSQL("ALTER TABLE cached_videos ADD COLUMN duration INTEGER NOT NULL DEFAULT 0");
+        }
+    };
 }

@@ -1,6 +1,7 @@
 package com.makkispacejam.fluxa.data
 
 import android.content.Context
+import com.makkispacejam.fluxa.R
 import com.makkispacejam.fluxa.data.channels.ChannelDataExtractor
 import com.makkispacejam.fluxa.data.filters.SearchFilters
 import com.makkispacejam.fluxa.data.local.FluxaDatabase
@@ -82,7 +83,7 @@ class HomeRepository {
             val recommendedResult = if (seeds.isNotEmpty()) {
                 getPersonalizedFeed(seeds)
             } else {
-                getGenericFeed()
+                getGenericFeed(context)
             }.filter { it.videoId !in excludeIds && it.channelId !in blockedChannelIds && it.viewCount >= 0 }
 
             finalFeedList.addAll(recommendedResult)
@@ -90,7 +91,7 @@ class HomeRepository {
 
         if (finalFeedList.isEmpty()) {
             try {
-                val desperate = SearchRepository.searchVideos("videos").items
+                val desperate = SearchRepository.searchVideos("videos", subscriberWord = context.getString(R.string.subscribers)).items
                 finalFeedList.addAll(desperate)
             } catch (_: Exception) {}
         }
@@ -182,15 +183,16 @@ class HomeRepository {
     }
 
     // Recomendaciones genéricas
-    private suspend fun getGenericFeed(): List<HomeFeedItem> = withContext(Dispatchers.IO) {
+    private suspend fun getGenericFeed(context: Context): List<HomeFeedItem> = withContext(Dispatchers.IO) {
         val results = Collections.synchronizedList(mutableListOf<HomeFeedItem>())
         val blocks = SearchFilters.getEntertainmentBlocks().shuffled()
-        
+        val subsWord = context.getString(R.string.subscribers)
+
         for (query in blocks.take(3)) {
             try {
                 withTimeout(8000) {
                     val searchTerm = query.substringAfter("(").substringBefore(")").split("|").shuffled().firstOrNull() ?: "trending"
-                    val searchResult = SearchRepository.searchVideos(searchTerm)
+                    val searchResult = SearchRepository.searchVideos(searchTerm, subscriberWord = subsWord)
                     if (searchResult.items.isNotEmpty()) {
                         results.addAll(searchResult.items)
                     }
@@ -201,7 +203,7 @@ class HomeRepository {
         
         if (results.isEmpty()) {
             try {
-                results.addAll(SearchRepository.searchVideos("trending").items)
+                results.addAll(SearchRepository.searchVideos("trending", subscriberWord = subsWord).items)
             } catch (_: Exception) {}
         }
         

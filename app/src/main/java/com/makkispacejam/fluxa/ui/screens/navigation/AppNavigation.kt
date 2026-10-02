@@ -29,6 +29,8 @@ import com.makkispacejam.fluxa.data.newpipe.FluxaStreamItem
 import com.makkispacejam.fluxa.data.VideoExtractor
 import com.makkispacejam.fluxa.models.*
 import com.makkispacejam.fluxa.pendingOpenPlayer
+import com.makkispacejam.fluxa.pendingOpenVideoId
+import com.makkispacejam.fluxa.pendingOpenPlaylistUrl
 import com.makkispacejam.fluxa.ui.animations.FluxaAnimations
 import com.makkispacejam.fluxa.ui.components.layout.MainNavigationShell
 import com.makkispacejam.fluxa.ui.components.player.shared.ScreenOverlay
@@ -104,6 +106,50 @@ fun AppNavigation() {
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    val deepLinkVideoId = pendingOpenVideoId.value
+    LaunchedEffect(deepLinkVideoId) {
+        if (deepLinkVideoId.isEmpty()) return@LaunchedEffect
+        previousDetailView = activeDetailView
+        previousChannelName = detailVideoTitle
+        detailVideoId = deepLinkVideoId
+        detailVideoTitle = ""
+        detailChannel = ""
+        activeDetailView = DetailView.Player
+        playerViewModel.expandPlayer()
+        pendingOpenVideoId.value = ""
+        coroutineScope.launch {
+            val info = runCatching { VideoExtractor.getStreamInfo(deepLinkVideoId) }.getOrNull()
+            val title = info?.name ?: ""
+            val channel = info?.uploaderName ?: ""
+            val thumb = info?.thumbnails?.firstOrNull()?.url ?: ""
+            detailVideoTitle = title
+            detailChannel = channel
+            playerViewModel.loadAndPlayVideo(deepLinkVideoId, title, channel, thumb)
+        }
+    }
+
+    val deepLinkPlaylistUrl = pendingOpenPlaylistUrl.value
+    LaunchedEffect(deepLinkPlaylistUrl) {
+        if (deepLinkPlaylistUrl.isEmpty()) return@LaunchedEffect
+        previousDetailView = activeDetailView
+        previousChannelName = detailVideoTitle
+        activeDetailView = DetailView.Player
+        playerViewModel.expandPlayer()
+        pendingOpenPlaylistUrl.value = ""
+        coroutineScope.launch {
+            val videos = runCatching { VideoExtractor.extractPlaylistVideos(deepLinkPlaylistUrl) }.getOrDefault(emptyList())
+            if (videos.isEmpty()) return@launch
+            val title = runCatching { VideoExtractor.extractPlaylistTitle(deepLinkPlaylistUrl) }.getOrDefault("")
+            playlistTitle = title
+            detailVideoTitle = title
+            val first = videos.first()
+            detailVideoId = VideoExtractor.cleanVideoId(first.url)
+            detailChannel = first.uploaderName
+            playerViewModel.setCurrentPlaylistTitle(title)
+            playerViewModel.playPlaylist(videos, 0, shuffle = false, resetProgress = true)
+        }
     }
 
     val onPlaylistFromCollections: (String) -> Unit = { title ->

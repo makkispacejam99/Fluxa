@@ -15,8 +15,7 @@ data class HomeFeedItem(
     val playlistVideoCount: String = "",
     val subscriberCount: String = ""
 ) {
-    // Formato de views
-    val formattedViews: String get() = formatCount(viewCount) + " vistas"
+    fun formattedViews(viewsWord: String = "views"): String = formatCount(viewCount) + " $viewsWord"
 
     // Formato de duración
     val formattedDuration: String get() {

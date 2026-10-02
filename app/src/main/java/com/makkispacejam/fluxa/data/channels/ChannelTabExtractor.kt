@@ -48,30 +48,17 @@ fun extractStreamsFromTab(
                 if (item.url != null && !item.name.isNullOrBlank()) {
 
                     if (item is StreamInfoItem) {
-                        // 1 -- Verificar disponibilidad
-                        if (item.contentAvailability != ContentAvailability.AVAILABLE) {
+                        // 1 -- Verificación disponibilidad
+                        val availability = item.contentAvailability
+                        if (availability != ContentAvailability.AVAILABLE) {
                             return@mapNotNull null
                         }
 
-                        // 2 -- Filtro de tipo y contenido no reproducible
+                        // 2 -- Filtro de contenido no reproducible
                         val streamType = item.streamType?.name ?: ""
                         if (streamType == "NONE" || streamType.contains("UPCOMING")) {
                             return@mapNotNull null
                         }
-
-                        // 3 -- Filtro por duración
-                        val isLive = try {
-                            item.javaClass.getMethod("getStreamType").invoke(item).toString().contains("LIVE")
-                        } catch (_: Exception) { false }
-                        
-                        val videoDuration = try {
-                            item.javaClass.getMethod("getDuration").invoke(item) as Long
-                        } catch (_: Exception) { 0L }
-                        
-                        if (!isLive && videoDuration <= 0L) {
-                            return@mapNotNull null
-                        }
-
                     }
 
                     val isLive = try {
@@ -174,7 +161,7 @@ fun extractShortsWithFallback(
             .filterIsInstance<StreamInfoItem>()
             .filter { item ->
                 val isSameUploader = item.uploaderName?.trim()?.equals(channelName.trim(), ignoreCase = true) == true
-                val isShortDuration = item.duration <= 61
+                val isShortDuration = item.duration <= 0L || item.duration <= 61
                 val isPublic = item.contentAvailability == ContentAvailability.AVAILABLE
                 
                 val isAgeRestricted = try {
@@ -183,9 +170,8 @@ fun extractShortsWithFallback(
                 
                 val streamType = item.streamType?.name ?: ""
                 val isPlayable = streamType != "NONE" && !streamType.contains("PREMIERE") && !streamType.contains("UPCOMING")
-                val hasDuration = item.duration > 0L
 
-                isSameUploader && isShortDuration && isPublic && !isAgeRestricted && isPlayable && hasDuration
+                isSameUploader && isShortDuration && isPublic && !isAgeRestricted && isPlayable
             }
             .map { item ->
                 FluxaStreamItem(

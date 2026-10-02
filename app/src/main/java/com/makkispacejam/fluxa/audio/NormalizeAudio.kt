@@ -19,9 +19,9 @@ class NormalizeAudioProcessor : BaseAudioProcessor() {
     companion object {
         @Volatile
         var enabled = false
-        private const val TARGET_RMS = 0.19f
+        private const val TARGET_RMS = 0.22f
         private const val MIN_GAIN = 0.4f
-        private const val MAX_GAIN = 3.5f
+        private const val MAX_GAIN = 4.5f
         private const val SILENCE_RMS = 0.004f
     }
 

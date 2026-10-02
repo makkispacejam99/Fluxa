@@ -5,18 +5,15 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AspectRatio
-import androidx.compose.material.icons.rounded.Audiotrack
 import androidx.compose.material.icons.rounded.ClosedCaption
-import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.PictureInPicture
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.Speed
-import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -25,24 +22,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.SubtitlesStream
 
-// Controles superiores del reproductor horizontal
 @Composable
 fun PlayerTopButtons(
     onBackClick: () -> Unit,
-    onResizeModeClick: () -> Unit,
-    onPipClick: () -> Unit,
-    availableSubtitles: List<SubtitlesStream>,
-    availableAudioTracks: List<AudioStream>,
-    onSubtitlesClick: () -> Unit,
-    onAudioTracksClick: () -> Unit,
-    onSpeedClick: () -> Unit,
-    onSettingsClick: () -> Unit,
-    onAudioNormalizeClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onResizeModeClick: () -> Unit = {},
+    onPipClick: () -> Unit = {},
+    availableSubtitles: List<SubtitlesStream> = emptyList(),
+    onSubtitlesClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {},
+    onMoreOptionsClick: () -> Unit = {}
 ) {
+    val bgOpacity = 0.50f
+
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -51,87 +45,92 @@ fun PlayerTopButtons(
         IconButton(
             onClick = onBackClick,
             modifier = Modifier
-                .background(Color.Black.copy(alpha = 0.50f), RoundedCornerShape(12.dp))
-                .size(40.dp),
+                .background(Color.Black.copy(alpha = bgOpacity), CircleShape)
+                .size(42.dp),
             interactionSource = remember { MutableInteractionSource() }
         ) {
             Icon(
-                Icons.Rounded.ExpandMore,
+                Icons.Rounded.KeyboardArrowDown,
                 null,
                 tint = Color.White,
-                modifier = Modifier.size(30.dp)
+                modifier = Modifier.size(28.dp)
             )
         }
 
         Row(
-            modifier = Modifier
-                .background(Color.Black.copy(alpha = 0.50f), RoundedCornerShape(12.dp))
-                .padding(horizontal = 2.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             IconButton(
-                onClick = onResizeModeClick,
-                modifier = Modifier.size(40.dp),
-                interactionSource = remember { MutableInteractionSource() }
-            ) {
-                Icon(Icons.Rounded.AspectRatio, null, tint = Color.White, modifier = Modifier.size(22.dp))
-            }
-
-            IconButton(
-                onClick = onPipClick,
-                modifier = Modifier.size(40.dp),
-            ) {
-                Icon(Icons.Rounded.PictureInPicture, null, tint = Color.White, modifier = Modifier.size(22.dp))
-            }
-
-            if (availableSubtitles.isNotEmpty()) {
-                IconButton(
-                    onClick = onSubtitlesClick,
-                    modifier = Modifier.size(40.dp),
-                    interactionSource = remember { MutableInteractionSource() }
-                ) {
-                    Icon(Icons.Rounded.ClosedCaption, null, tint = Color.White, modifier = Modifier.size(22.dp))
-                }
-            }
-
-            val hasValidAudioTracks = remember(availableAudioTracks) {
-                availableAudioTracks.any { it.audioLocale != null || !it.audioTrackName.isNullOrBlank() }
-            }
-            if (hasValidAudioTracks) {
-                IconButton(
-                    onClick = onAudioTracksClick,
-                    modifier = Modifier.size(40.dp),
-                    interactionSource = remember { MutableInteractionSource() }
-                ) {
-                    Icon(Icons.Rounded.Audiotrack, null, tint = Color.White, modifier = Modifier.size(22.dp))
-                }
-            }
-
-            IconButton(
-                onClick = onSpeedClick,
-                modifier = Modifier.size(40.dp),
-                interactionSource = remember { MutableInteractionSource() }
-            ) {
-                Icon(Icons.Rounded.Speed, null, tint = Color.White, modifier = Modifier.size(22.dp))
-            }
-            IconButton(
-                onClick = onAudioNormalizeClick,
-                modifier = Modifier.size(40.dp),
-                interactionSource = remember { MutableInteractionSource() }
+                onClick = onMoreOptionsClick,
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = bgOpacity), CircleShape)
+                    .size(40.dp)
             ) {
                 Icon(
-                    Icons.Rounded.VolumeUp,
+                    Icons.Rounded.MoreHoriz,
                     null,
                     tint = Color.White,
                     modifier = Modifier.size(22.dp)
                 )
             }
+
+            IconButton(
+                onClick = onPipClick,
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = bgOpacity), CircleShape)
+                    .size(40.dp)
+            ) {
+                Icon(
+                    Icons.Rounded.PictureInPicture,
+                    null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            IconButton(
+                onClick = onResizeModeClick,
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = bgOpacity), CircleShape)
+                    .size(40.dp)
+            ) {
+                Icon(
+                    Icons.Rounded.AspectRatio,
+                    null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            if (availableSubtitles.isNotEmpty()) {
+                IconButton(
+                    onClick = onSubtitlesClick,
+                    modifier = Modifier
+                        .background(Color.Black.copy(alpha = bgOpacity), CircleShape)
+                        .size(40.dp)
+                ) {
+                    Icon(
+                        Icons.Rounded.ClosedCaption,
+                        null,
+                        tint = Color.White,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
+
             IconButton(
                 onClick = onSettingsClick,
-                modifier = Modifier.size(40.dp),
-                interactionSource = remember { MutableInteractionSource() }
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = bgOpacity), CircleShape)
+                    .size(40.dp)
             ) {
-                Icon(Icons.Rounded.Settings, null, tint = Color.White, modifier = Modifier.size(22.dp))
+                Icon(
+                    Icons.Rounded.Settings,
+                    null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
     }

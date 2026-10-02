@@ -62,15 +62,15 @@ fun CommentsPreview(
 
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer,
             onClick = onShowAll
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(vertical = 16.dp)) {
                 when {
                     isLoading -> {
                         Box(
-                            modifier = Modifier.fillMaxWidth().height(60.dp),
+                            modifier = Modifier.fillMaxWidth().height(60.dp).padding(horizontal = 16.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             CircularProgressIndicator(
@@ -83,7 +83,8 @@ fun CommentsPreview(
                         Text(
                             text = stringResource(R.string.comments_disabled_or_unavailable),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            modifier = Modifier.padding(horizontal = 16.dp)
                         )
                     }
                     else -> {
@@ -91,7 +92,7 @@ fun CommentsPreview(
                             val snippet = thread.snippet?.topLevelComment?.snippet
                             if (snippet != null) {
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                                     verticalAlignment = Alignment.Top
                                 ) {
@@ -134,19 +135,22 @@ fun CommentsPreview(
                                         }
                                         Spacer(modifier = Modifier.height(2.dp))
                                         val commentText = snippet.textDisplay.ifEmpty { "" }.stripHtml()
-                                        val urls = extractUrls(commentText)
-                                        if (urls.isNotEmpty()) {
+                                        val urlMatches = Regex("https?://\\S+").findAll(commentText).toList()
+                                        if (urlMatches.isNotEmpty()) {
                                             val context = LocalContext.current
+                                            val primaryColor = MaterialTheme.colorScheme.primary
                                             val annotatedString = buildAnnotatedString {
                                                 var lastIndex = 0
-                                                urls.forEach { range ->
-                                                    append(commentText.substring(lastIndex, range.first))
-                                                    pushStringAnnotation(tag = "URL", annotation = commentText.substring(range.first, range.second))
-                                                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
-                                                        append(commentText.substring(range.first, range.second))
+                                                urlMatches.forEach { match ->
+                                                    val start = match.range.first
+                                                    val end = match.range.last + 1
+                                                    append(commentText.substring(lastIndex, start))
+                                                    pushStringAnnotation(tag = "URL", annotation = commentText.substring(start, end))
+                                                    withStyle(SpanStyle(color = primaryColor, textDecoration = TextDecoration.Underline)) {
+                                                        append(commentText.substring(start, end))
                                                     }
                                                     pop()
-                                                    lastIndex = range.second
+                                                    lastIndex = end
                                                 }
                                                 append(commentText.substring(lastIndex))
                                             }
@@ -173,8 +177,8 @@ fun CommentsPreview(
                                 }
                                 if (index < topComments.size - 1) {
                                     HorizontalDivider(
-                                        modifier = Modifier.padding(vertical = 10.dp),
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f)
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
                                     )
                                 }
                             }

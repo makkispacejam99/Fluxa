@@ -24,7 +24,7 @@ fun QueueFloatingButton(
 ) {
     Surface(
         onClick = onClick,
-        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f),
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.97f),
         shape = RoundedCornerShape(24.dp),
         tonalElevation = 4.dp,
         shadowElevation = 8.dp,

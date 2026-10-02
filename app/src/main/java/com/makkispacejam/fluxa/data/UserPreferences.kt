@@ -76,4 +76,14 @@ class UserPreferences(context: Context) {
         get() = prefs.getBoolean("incognito_mode", false)
         @SuppressLint("UseKtx")
         set(value) = prefs.edit().putBoolean("incognito_mode", value).apply()
+
+    var shortsGesturesHintShownAt: Long
+        get() = prefs.getLong("shorts_gestures_hint_shown_at", 0L)
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putLong("shorts_gestures_hint_shown_at", value).apply()
+
+    var shortsGesturesTutorialEnabled: Boolean
+        get() = prefs.getBoolean("shorts_gestures_tutorial_enabled", true)
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putBoolean("shorts_gestures_tutorial_enabled", value).apply()
 }

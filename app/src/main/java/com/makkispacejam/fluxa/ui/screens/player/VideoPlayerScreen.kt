@@ -35,18 +35,19 @@ import com.makkispacejam.fluxa.viewmodels.player.PlayerViewModel
 import com.makkispacejam.fluxa.MainActivity
 import com.makkispacejam.fluxa.ui.components.player.notifications.PlayerNotificationBanner
 import com.makkispacejam.fluxa.ui.components.player.queue.QueueFloatingButton
+import com.makkispacejam.fluxa.ui.components.dialogs.TimelineDialog
 import com.makkispacejam.fluxa.ui.components.system.AudioNormalizerDialog
 import com.makkispacejam.fluxa.video.video.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
 import androidx.compose.ui.res.stringResource
 import com.makkispacejam.fluxa.R
 import com.makkispacejam.fluxa.video.video.sections.VideoPlayerArea
 import com.makkispacejam.fluxa.video.video.sections.videoContentSection
+import androidx.compose.material3.ExperimentalMaterial3Api
 
 // Reproductor de video horizontal
-@OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun VideoPlayerScreen(
     videoId: String,
@@ -93,7 +94,13 @@ fun VideoPlayerScreen(
     var showSubtitlesDialog by remember { mutableStateOf(false) }
     var showAudioTracksDialog by remember { mutableStateOf(false) }
     var showAudioNormalizerDialog by remember { mutableStateOf(false) }
+    var showMoreOptions by remember { mutableStateOf(false) }
+    var showTimelineDialog by remember { mutableStateOf(false) }
     var selectedQuality by remember { mutableStateOf(prefs.videoQuality) }
+
+    val isAnyDialogOpen = showFullComments || showQueuePanel || showQualityDialog ||
+            showSpeedDialog || showSubtitlesDialog || showAudioTracksDialog ||
+            showAudioNormalizerDialog || showMoreOptions || showTimelineDialog
 
     var audioNormalized by remember { mutableStateOf(prefs.audioNormalizerEnabled) }
 
@@ -110,7 +117,12 @@ fun VideoPlayerScreen(
     var selectedAudioTrackDisplay by remember { mutableStateOf(defaultAudio) }
     var isUserDraggingSlider by remember { mutableStateOf(false) }
     var draggingProgressMs by remember { mutableLongStateOf(0L) }
+    var controlsInteractionTick by remember { mutableIntStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
+
+    val hoverSegmentTitle = if (isUserDraggingSlider) {
+        playbackState.segments.lastOrNull { it.startTimeSeconds * 1000L <= draggingProgressMs }?.title
+    } else null
 
     val targetHeight = remember(selectedQuality) {
         if (selectedQuality == "Seleccionar calidad por defecto") {
@@ -148,8 +160,8 @@ fun VideoPlayerScreen(
         }
     }
 
-    LaunchedEffect(controlsVisible, playbackState.isPlaying, isUserDraggingSlider) {
-        if (controlsVisible && playbackState.isPlaying && !isUserDraggingSlider) {
+    LaunchedEffect(controlsVisible, playbackState.isPlaying, isUserDraggingSlider, controlsInteractionTick, isAnyDialogOpen) {
+        if (controlsVisible && playbackState.isPlaying && !isUserDraggingSlider && !isAnyDialogOpen) {
             delay(2500)
             controlsVisible = false
         }
@@ -168,6 +180,8 @@ fun VideoPlayerScreen(
             showSubtitlesDialog = false
             showAudioTracksDialog = false
             showAudioNormalizerDialog = false
+            showMoreOptions = false
+            showTimelineDialog = false
             controlsVisible = false
         } else {
             controlsVisible = true
@@ -240,55 +254,107 @@ fun VideoPlayerScreen(
                         onSeekControllerReady = { },
                         onControlsToggle = { controlsVisible = !controlsVisible },
                         onPlayPause = {
+                            controlsInteractionTick++
                             playerViewModel.togglePlayback()
                             controlsVisible = true
                         },
-                        onRewind = { playerViewModel.seekOffset(-10000L) },
-                        onForward = { playerViewModel.seekOffset(10000L) },
-                        onNext = { playerViewModel.skipToNext() },
-                        onPrevious = { playerViewModel.skipToPrevious() },
+                        onRewind = {
+                            controlsInteractionTick++
+                            playerViewModel.seekOffset(-10000L)
+                        },
+                        onForward = {
+                            controlsInteractionTick++
+                            playerViewModel.seekOffset(10000L)
+                        },
+                        onNext = {
+                            controlsInteractionTick++
+                            playerViewModel.skipToNext()
+                        },
+                        onPrevious = {
+                            controlsInteractionTick++
+                            playerViewModel.skipToPrevious()
+                        },
                         onBack = { handleBack() },
-                        onFullScreen = { isFullScreen = !isFullScreen },
-                        onSubtitles = { showSubtitlesDialog = true },
-                        onAudioTracks = { showAudioTracksDialog = true },
-                        onSpeed = { showSpeedDialog = true },
-                        onSettings = { showQualityDialog = true },
-                        onResizeMode = { playerViewModel.toggleResizeMode() },
+                        onFullScreen = {
+                            controlsInteractionTick++
+                            isFullScreen = !isFullScreen
+                        },
+                        onSubtitles = {
+                            controlsInteractionTick++
+                            showSubtitlesDialog = true
+                        },
+                        onAudioTracks = {
+                            controlsInteractionTick++
+                            showAudioTracksDialog = true
+                        },
+                        onSpeed = {
+                            controlsInteractionTick++
+                            showSpeedDialog = true
+                        },
+                        onSettings = {
+                            controlsInteractionTick++
+                            showQualityDialog = true
+                        },
+                        showMoreOptions = showMoreOptions,
+                        onMoreOptionsClick = {
+                            controlsInteractionTick++
+                            showMoreOptions = true
+                        },
+                        onDismissMoreOptions = {
+                            showMoreOptions = false
+                        },
+                        onResizeMode = {
+                            controlsInteractionTick++
+                            playerViewModel.toggleResizeMode()
+                        },
                         onRetry = { playerViewModel.retryLoad() },
                         onSpeedChange = { speed ->
                             playerViewModel.setPlaybackSpeed(if (speed >= 2f) "2.0x" else "Normal")
                         },
                         onPip = {
-                            val aspectRatio = Rational(16, 9)
-                            activity.enterPictureInPictureMode(
-                                PictureInPictureParams.Builder()
-                                    .setAspectRatio(aspectRatio)
-                                    .build()
-                            )
+                            if (canUseNativePip(activity)) {
+                                val aspectRatio = Rational(16, 9)
+                                activity.enterPictureInPictureMode(
+                                    PictureInPictureParams.Builder()
+                                        .setAspectRatio(aspectRatio)
+                                        .build()
+                                )
+                            } else {
+                                val wasFullScreen = isFullScreen
+                                if (isFullScreen) {
+                                    isFullScreen = false
+                                }
+                                coroutineScope.launch {
+                                    if (wasFullScreen) {
+                                        delay(300)
+                                    }
+                                    openPopupPlayer(context)
+                                    activity.moveTaskToBack(true)
+                                }
+                            }
                         },
                         onAudioNormalize = { showAudioNormalizerDialog = true },
                         resizeMode = playerViewModel.resizeMode,
+                        segments = playbackState.segments,
+                        hoverSegmentTitle = hoverSegmentTitle,
                         onSliderChange = { newValue ->
                             isUserDraggingSlider = true
                             draggingProgressMs = (newValue * playbackState.durationMs).toLong()
                         },
                         onSliderFinished = {
                             val targetFraction =
-                                draggingProgressMs.toFloat() / playbackState.durationMs.coerceAtLeast(
-                                    1L
-                                ).toFloat()
+                                draggingProgressMs.toFloat() / playbackState.durationMs.coerceAtLeast(1L).toFloat()
                             playerViewModel.seekTo(targetFraction)
-                            coroutineScope.launch {
-                                delay(1000)
-                                isUserDraggingSlider = false
-                            }
+                            isUserDraggingSlider = false
                         },
                         isLoading = playbackState.isLoading,
                         queueSize = playbackState.playlistQueue.size,
                         subtitleText = playbackState.currentSubtitleText,
                         videoTitle = currentTitle,
                         channelName = currentChannel,
-                        bufferedPositionMs = playbackState.bufferedMs
+                        bufferedPositionMs = playbackState.bufferedMs,
+                        hasTimeline = playbackState.segments.isNotEmpty(),
+                        onTimelineClick = { showTimelineDialog = true }
                     )
                 }
 
@@ -327,7 +393,9 @@ fun VideoPlayerScreen(
                             },
                             onChannelClick = onChannelClick,
                             hideRelatedVideos = playerViewModel.playbackState.resetProgress,
-                            isIncognito = com.makkispacejam.fluxa.data.UserPreferences.incognitoActive
+                            isIncognito = com.makkispacejam.fluxa.data.UserPreferences.incognitoActive,
+                            hasTimeline = playbackState.segments.isNotEmpty(),
+                            onShowTimeline = { showTimelineDialog = true }
                         )
                     }
                 }
@@ -406,6 +474,18 @@ fun VideoPlayerScreen(
         onDismissAudioTracks = { showAudioTracksDialog = false }
     )
 
+    if (showTimelineDialog) {
+        TimelineDialog(
+            segments = playbackState.segments,
+            onSegmentClick = { ms ->
+                playerViewModel.seekToAndPlay(
+                    ms.toFloat() / playbackState.durationMs.coerceAtLeast(1L).toFloat()
+                )
+            },
+            onDismiss = { showTimelineDialog = false }
+        )
+    }
+
     if (showAudioNormalizerDialog) {
         AudioNormalizerDialog(
             isEnabled = audioNormalized,
@@ -418,3 +498,4 @@ fun VideoPlayerScreen(
         )
     }
 }
+

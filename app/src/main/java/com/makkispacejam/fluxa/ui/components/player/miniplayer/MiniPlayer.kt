@@ -48,7 +48,7 @@ fun MiniPlayer(
             .height(76.dp)
             .padding(horizontal = 12.dp, vertical = 8.dp)
             .clickable { onPlayerClick() },
-        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f),
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.97f),
         shape = RoundedCornerShape(40.dp),
         tonalElevation = 4.dp,
         shadowElevation = 8.dp

@@ -24,6 +24,7 @@ import com.makkispacejam.fluxa.ui.components.dialogs.VideoOptionsMenu
 import com.makkispacejam.fluxa.ui.components.player.playlist.PlaylistSelectionDialog
 import com.makkispacejam.fluxa.ui.components.system.NotificationBanner
 import com.makkispacejam.fluxa.utils.ThumbnailUtils
+import com.makkispacejam.fluxa.utils.localizedPlaylistName
 import com.makkispacejam.fluxa.viewmodels.user.InteractionViewModel
 import com.makkispacejam.fluxa.viewmodels.content.VideoViewModel
 
@@ -69,7 +70,8 @@ fun ChannelProfileScreen(
                     avatarUrl = channelViewModel.channelAvatarUrl, isSubscribed = isSubscribed, isLoading = isHeaderLoading,
                     onSubscribeClick = { channelViewModel.channelId?.let { id -> interactionVM.toggleSubscription(id, channelName, channelViewModel.channelAvatarUrl, isSubscribed) } },
                     isIncognito = UserPreferences.incognitoActive,
-                    onDisabledClick = { videoVM.notificationBannerText = context.getString(R.string.incognito_action_blocked); videoVM.showNotificationBanner = true })
+                    onDisabledClick = { videoVM.notificationBannerText = context.getString(R.string.incognito_action_blocked); videoVM.showNotificationBanner = true },
+                    description = channelViewModel.channelDescription)
             }
             item { ChannelFilterChips(selectedFilter = selectedFilter, filters = filters, filterLabels = filterLabels, onFilterSelected = { selectedFilter = it }) }
 
@@ -167,7 +169,7 @@ fun ChannelProfileScreen(
             PlaylistSelectionDialog(userPlaylists = userPlaylists, onDismiss = { showPlaylistDialog = false; videoForPlaylist = null },
                 onPlaylistSelected = { playlistName ->
                     videoVM.saveToPlaylist(playlistName, videoId, videoForPlaylist!!.title, channelName, videoForPlaylist!!.url, channelViewModel.channelAvatarUrl ?: "", videoForPlaylist!!.duration, videoForPlaylist!!.channelId) { success ->
-                        videoVM.notificationBannerText = if (success) savedToPlaylistTemplate.format(playlistName) else alreadyInPlaylistMsg; videoVM.showNotificationBanner = true
+                        videoVM.notificationBannerText = if (success) savedToPlaylistTemplate.format(context.localizedPlaylistName(playlistName)) else alreadyInPlaylistMsg; videoVM.showNotificationBanner = true
                     }; showPlaylistDialog = false; videoForPlaylist = null
                 })
         }

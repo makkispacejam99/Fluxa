@@ -9,6 +9,7 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
+import com.makkispacejam.fluxa.data.filters.WatchedArchive
 import com.makkispacejam.fluxa.data.local.FluxaDatabase
 import com.makkispacejam.fluxa.data.UserPreferences
 import com.makkispacejam.fluxa.data.newpipe.YouTubeDownloader
@@ -56,14 +57,13 @@ class FluxaApplication : Application(), ImageLoaderFactory {
                 ContentCountry(prefs.contentRegion)
             )
 
-            // Acepta el consentimiento de cookies de YouTube (UE/EEE) para que las peticiones
-            // lleven SOCS=CAISAiAD en vez de CAE= y no nos devuelva la pared de consentimiento.
             YoutubeParsingHelper.setConsentAccepted(true)
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
         VideoProgressCache.init(this)
+        WatchedArchive.attach(this)
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val db = FluxaDatabase.getDatabase(this@FluxaApplication)

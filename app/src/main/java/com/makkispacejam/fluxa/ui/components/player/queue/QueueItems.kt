@@ -120,7 +120,7 @@ fun QueueItemRow(
             contentDescription = null,
             modifier = Modifier
                 .size(width = 90.dp, height = 50.dp)
-                .clip(RoundedCornerShape(7.dp)),
+                .clip(RoundedCornerShape(16.dp)),
             contentScale = ContentScale.Crop
         )
 

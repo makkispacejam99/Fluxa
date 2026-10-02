@@ -11,8 +11,8 @@
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 69,
-      "versionName": "v1.0.2-NIGHTLY",
+      "versionCode": 75,
+      "versionName": "v2.0.0-Nightly",
       "outputFile": "app-debug.apk"
     }
   ],
