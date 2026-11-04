@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.ui.components.home.topbar.recents
 
 import androidx.compose.foundation.clickable

@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.ui.components.player.shorts
 
 import androidx.compose.animation.AnimatedVisibility

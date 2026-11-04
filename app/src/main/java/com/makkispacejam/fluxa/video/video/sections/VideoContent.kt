@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.makkispacejam.fluxa.video.video.sections
@@ -77,6 +79,15 @@ import com.makkispacejam.fluxa.video.video.controls.formatTime
 import com.makkispacejam.fluxa.viewmodels.content.CommentsViewModel
 import com.makkispacejam.fluxa.viewmodels.content.VideoViewModel
 import org.schabi.newpipe.extractor.stream.StreamSegment
+
+// Formato de conteo de likes
+private fun formatLikeCount(count: Long): String = when {
+    count >= 1_000_000 ->
+        "${String.format(java.util.Locale.US, "%.1f", count / 1_000_000f).removeSuffix(".0")}M"
+    count >= 1_000 ->
+        "${String.format(java.util.Locale.US, "%.1f", count / 1_000f).removeSuffix(".0")}K"
+    else -> count.toString()
+}
 
 // Sección de botones de acción del reproductor horizontal
 @SuppressLint("LocalContextGetResourceValueCall")
@@ -185,17 +196,20 @@ fun LazyListScope.videoContentSection(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             //Botón Like
+            val likeCount = videoVM.videoLikeCountState
             ActionButton(
-                text = stringResource(R.string.me_gusta),
+                text = if (likeCount >= 0L) formatLikeCount(likeCount + if (isLiked) 1L else 0L) else null,
                 icon = if (isLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                 isActive = isLiked,
                 enabled = !isIncognito,
+                loading = videoVM.videoStatsLoadingState,
                 onClick = onLike,
                 onDisabledClick = onDisabledAction
             )
             //Botón Dislike
+            val dislikeCount = videoVM.videoDislikeCountState
             ActionButton(
-                text = null,
+                text = if (dislikeCount >= 0L) formatLikeCount(dislikeCount + if (isDisliked) 1L else 0L) else null,
                 icon = if (isDisliked) Icons.Rounded.ThumbDown else Icons.Rounded.ThumbDownOffAlt,
                 isActive = isDisliked,
                 enabled = !isIncognito,

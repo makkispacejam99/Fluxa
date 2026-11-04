@@ -1,3 +1,5 @@
+@file:Suppress("SuppressedCancellationException")
+
 package com.makkispacejam.fluxa.data.avatars
 
 import androidx.compose.runtime.mutableStateMapOf

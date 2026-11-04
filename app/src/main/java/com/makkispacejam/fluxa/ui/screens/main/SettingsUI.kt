@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.ui.screens.main
 
 import androidx.compose.foundation.layout.Column
@@ -18,6 +20,7 @@ import com.makkispacejam.fluxa.ThemeMode
 import com.makkispacejam.fluxa.ui.components.settings.components.SettingItem
 import com.makkispacejam.fluxa.ui.components.settings.components.SettingItemPosition
 import com.makkispacejam.fluxa.ui.components.settings.components.SettingItemWithSwitch
+import com.makkispacejam.fluxa.ui.components.settings.dialogs.formatBreakIntervalText
 
 @Composable
 fun SettingsGeneralSection(
@@ -33,6 +36,7 @@ fun SettingsGeneralSection(
     onThemeClick: () -> Unit,
     onLanguageClick: () -> Unit,
     onTranslationClick: () -> Unit,
+    onSubtitleStyleClick: () -> Unit,
     onQualityClick: () -> Unit,
     onRegionClick: () -> Unit,
     audioNormalizerEnabled: Boolean,
@@ -99,6 +103,13 @@ fun SettingsGeneralSection(
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
                 SettingItem(
+                    title = stringResource(R.string.subtitle_settings),
+                    subtitle = stringResource(R.string.subtitle_settings_summary),
+                    onClick = onSubtitleStyleClick,
+                    position = SettingItemPosition.Middle
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+                SettingItem(
                     title = stringResource(R.string.video_quality),
                     subtitle = selectedQuality,
                     onClick = onQualityClick,
@@ -148,6 +159,96 @@ fun SettingsShortsTutorialSection(
                     checked = gesturesTutorialEnabled,
                     onCheckedChange = onGesturesTutorialChange,
                     position = SettingItemPosition.Single
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsAccessibilitySection(
+    shortsControlsAlwaysVisible: Boolean,
+    onShortsControlsAlwaysVisibleChange: (Boolean) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
+        Text(
+            text = stringResource(R.string.section_accessibility),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 12.dp, bottom = 8.dp)
+        )
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column {
+                SettingItemWithSwitch(
+                    title = stringResource(R.string.shorts_controls_always_visible),
+                    subtitle = stringResource(R.string.shorts_controls_always_visible_desc),
+                    checked = shortsControlsAlwaysVisible,
+                    onCheckedChange = onShortsControlsAlwaysVisibleChange,
+                    position = SettingItemPosition.Single
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsWellbeingSection(
+    breakReminderEnabled: Boolean,
+    onBreakReminderChange: (Boolean) -> Unit,
+    breakIntervalMinutes: Int,
+    onBreakIntervalClick: () -> Unit,
+    bedtimeReminderEnabled: Boolean,
+    onBedtimeReminderChange: (Boolean) -> Unit,
+    bedtimeLabel: String,
+    onBedtimeClick: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
+        Text(
+            text = stringResource(R.string.section_wellbeing),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 12.dp, bottom = 8.dp)
+        )
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column {
+                SettingItemWithSwitch(
+                    title = stringResource(R.string.break_reminder),
+                    subtitle = stringResource(R.string.break_reminder_desc),
+                    checked = breakReminderEnabled,
+                    onCheckedChange = onBreakReminderChange,
+                    position = SettingItemPosition.First
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+                SettingItem(
+                    title = stringResource(R.string.break_reminder_interval_label),
+                    subtitle = formatBreakIntervalText(breakIntervalMinutes),
+                    onClick = onBreakIntervalClick,
+                    position = SettingItemPosition.Middle
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+                SettingItemWithSwitch(
+                    title = stringResource(R.string.bedtime_reminder),
+                    subtitle = stringResource(R.string.bedtime_reminder_desc),
+                    checked = bedtimeReminderEnabled,
+                    onCheckedChange = onBedtimeReminderChange,
+                    position = SettingItemPosition.Middle
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+                SettingItem(
+                    title = stringResource(R.string.bedtime_reminder_time),
+                    subtitle = if (bedtimeReminderEnabled) bedtimeLabel else stringResource(R.string.bedtime_reminder_off),
+                    onClick = onBedtimeClick,
+                    position = SettingItemPosition.Last
                 )
             }
         }
@@ -209,6 +310,8 @@ fun SettingsAccountSection(
 
 @Composable
 fun SettingsInfoSection(
+    updateNoticeEnabled: Boolean,
+    onUpdateNoticeChange: (Boolean) -> Unit,
     onSupportClick: () -> Unit,
     onDonateClick: () -> Unit,
     onAboutClick: () -> Unit
@@ -227,11 +330,19 @@ fun SettingsInfoSection(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column {
+                SettingItemWithSwitch(
+                    title = stringResource(R.string.update_notice_setting),
+                    subtitle = stringResource(R.string.update_notice_setting_desc),
+                    checked = updateNoticeEnabled,
+                    onCheckedChange = onUpdateNoticeChange,
+                    position = SettingItemPosition.First
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
                 SettingItem(
                     title = stringResource(R.string.support),
                     subtitle = stringResource(R.string.support_desc),
                     onClick = onSupportClick,
-                    position = SettingItemPosition.First
+                    position = SettingItemPosition.Middle
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
                 SettingItem(

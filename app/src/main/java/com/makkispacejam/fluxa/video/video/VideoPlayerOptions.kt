@@ -1,4 +1,4 @@
-@file:Suppress("DEPRECATION")
+@file:Suppress("FunctionName", "DEPRECATION")
 
 package com.makkispacejam.fluxa.video.video
 
@@ -37,7 +37,7 @@ fun VideoPlayerDialogs(
     availableSubtitles: List<SubtitlesStream>,
     availableAudioTracks: List<AudioStream>,
     selectedSpeed: String,
-    selectedSubtitle: String,
+    selectedSubtitleTag: String,
     selectedAudioTrack: String,
     onQualitySelected: (Int) -> Unit,
     onSpeedSelected: (String) -> Unit,
@@ -89,21 +89,24 @@ fun VideoPlayerDialogs(
 
     if (showSubtitlesDialog) {
         val offText = stringResource(R.string.subtitles_off)
-        val subtitleOptions = mutableListOf(offText)
         val tagToNameMap = availableSubtitles.associate { sub ->
             val tag = sub.languageTag ?: "und"
             val name = Locale.forLanguageTag(tag).getDisplayName(LocalLocale.current.platformLocale).replaceFirstChar { it.uppercase() }
             tag to name
         }
-        
+
+        val subtitleOptions = mutableListOf(offText)
         subtitleOptions.addAll(tagToNameMap.values)
-        
+
+        val selectedDisplay = if (selectedSubtitleTag.isEmpty()) offText
+            else tagToNameMap[selectedSubtitleTag] ?: offText
+
         PlayerSettingsDialog(
             title = stringResource(R.string.subtitles_dialog_title),
             options = subtitleOptions,
-            selectedOption = selectedSubtitle,
+            selectedOption = selectedDisplay,
             onOptionSelected = { displayName ->
-                val tag = if (displayName == offText) "" else tagToNameMap.entries.find { it.value == displayName }?.key ?: displayName
+                val tag = if (displayName == offText) "" else tagToNameMap.entries.firstOrNull { it.value == displayName }?.key ?: ""
                 onSubtitleSelected(tag)
             },
             onDismiss = onDismissSubtitles

@@ -1,3 +1,5 @@
+@file:Suppress("SuppressedCancellationException")
+
 package com.makkispacejam.fluxa
 
 import android.app.Application
@@ -14,14 +16,17 @@ import com.makkispacejam.fluxa.data.local.FluxaDatabase
 import com.makkispacejam.fluxa.data.UserPreferences
 import com.makkispacejam.fluxa.data.newpipe.YouTubeDownloader
 import com.makkispacejam.fluxa.video.video.VideoProgressCache
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.localization.ContentCountry
 import org.schabi.newpipe.extractor.localization.Localization
 import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
+import kotlin.time.Duration.Companion.milliseconds
 
 class FluxaApplication : Application(), ImageLoaderFactory {
 
@@ -71,9 +76,12 @@ class FluxaApplication : Application(), ImageLoaderFactory {
                 db.fluxaDao().deleteGarbledVideoIdEntries()
                 while (true) {
                     val ok = YouTubeDownloader.fetchVisitorData()
-                    delay(if (ok) 6 * 60 * 60 * 1000L else 5 * 60 * 1000L)
+                    delay((if (ok) 6 * 60 * 60 * 1000L else 5 * 60 * 1000L).milliseconds)
                 }
             } catch (e: Throwable) {
+                if (e is CancellationException) {
+                    ensureActive()
+                }
                 e.printStackTrace()
             }
         }

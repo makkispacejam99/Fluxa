@@ -86,4 +86,84 @@ class UserPreferences(context: Context) {
         get() = prefs.getBoolean("shorts_gestures_tutorial_enabled", true)
         @SuppressLint("UseKtx")
         set(value) = prefs.edit().putBoolean("shorts_gestures_tutorial_enabled", value).apply()
+
+    var subtitleFont: String
+        get() = prefs.getString("subtitle_font", "default") ?: "default"
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putString("subtitle_font", value).apply()
+
+    var subtitleTextSize: Int
+        get() = prefs.getInt("subtitle_text_size", 16)
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putInt("subtitle_text_size", value).apply()
+
+    var subtitlesEnabled: Boolean
+        get() = prefs.getBoolean("subtitles_enabled", false)
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putBoolean("subtitles_enabled", value).apply()
+
+    var shortsControlsAlwaysVisible: Boolean
+        get() = prefs.getBoolean("shorts_controls_always_visible", false)
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putBoolean("shorts_controls_always_visible", value).apply()
+
+    var breakReminderEnabled: Boolean
+        get() = prefs.getBoolean("break_reminder_enabled", false)
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putBoolean("break_reminder_enabled", value).apply()
+
+    var breakReminderIntervalMinutes: Int
+        get() = prefs.getInt("break_reminder_interval_minutes", 45)
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putInt("break_reminder_interval_minutes", value).apply()
+
+    var breakReminderAccumulatedMs: Long
+        get() = prefs.getLong("break_reminder_accumulated_ms", 0L)
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putLong("break_reminder_accumulated_ms", value).apply()
+
+    var breakReminderSnoozeUntil: Long
+        get() = prefs.getLong("break_reminder_snooze_until", 0L)
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putLong("break_reminder_snooze_until", value).apply()
+
+    var bedtimeReminderEnabled: Boolean
+        get() = prefs.getBoolean("bedtime_reminder_enabled", false)
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putBoolean("bedtime_reminder_enabled", value).apply()
+
+    var bedtimeReminderHour: Int
+        get() = prefs.getInt("bedtime_reminder_hour", 23)
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putInt("bedtime_reminder_hour", value).apply()
+
+    var bedtimeReminderMinute: Int
+        get() = prefs.getInt("bedtime_reminder_minute", 0)
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putInt("bedtime_reminder_minute", value).apply()
+
+    var bedtimeReminderLastShownDate: String
+        get() = prefs.getString("bedtime_reminder_last_shown_date", "") ?: ""
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putString("bedtime_reminder_last_shown_date", value).apply()
+
+    var bedtimeReminderSnoozeUntil: Long
+        get() = prefs.getLong("bedtime_reminder_snooze_until", 0L)
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putLong("bedtime_reminder_snooze_until", value).apply()
+
+    var updateNoticeEnabled: Boolean
+        get() = prefs.getBoolean("update_notice_enabled", true)
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putBoolean("update_notice_enabled", value).apply()
+
+    var lastUpdateCheckMs: Long
+        get() = prefs.getLong("last_update_check_ms", 0L)
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putLong("last_update_check_ms", value).apply()
+
+    var lastNotifiedUpdateVersion: String
+        get() = prefs.getString("last_notified_update_version", "") ?: ""
+        @SuppressLint("UseKtx")
+        set(value) = prefs.edit().putString("last_notified_update_version", value).apply()
 }

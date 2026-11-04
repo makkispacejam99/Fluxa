@@ -2,23 +2,32 @@ package com.makkispacejam.fluxa.utils
 
 import androidx.media3.common.text.CueGroup
 
-// Formato de subtítulos
 object SubtitleUtils {
-    fun filterSubtitleText(cueGroup: CueGroup): String {
-        val fullText = cueGroup.cues
+    private val tagRegex = Regex("\\[.*?]")
+    private val spaceRegex = Regex("[ \\t\\u00A0]+")
+
+    fun filterSubtitleText(cueGroup: CueGroup, previousLine: String): String {
+        val raw = cueGroup.cues
             .mapNotNull { it.text?.toString() }
-            .joinToString(" ")
-            .replace(Regex("\\[.*?]"), "")
-            .replace(Regex("\\s+"), " ")
-            .trim()
+            .lastOrNull { it.isNotBlank() }
+            ?: return ""
 
-        if (fullText.isEmpty()) return ""
+        val lines = raw
+            .split('\n')
+            .map { it.replace(tagRegex, "").replace(spaceRegex, " ").trim() }
+            .filter { it.isNotEmpty() }
 
-        val words = fullText.split(Regex("\\s+")).filter { it.isNotBlank() }
-        return if (words.size > 8) {
-            words.takeLast(8).joinToString(" ")
+        if (lines.isEmpty()) return ""
+
+        val visible = if (lines.size > 1 &&
+            previousLine.isNotEmpty() &&
+            lines.first().equals(previousLine, ignoreCase = true)
+        ) {
+            lines.drop(1)
         } else {
-            fullText
+            lines
         }
+
+        return visible.joinToString("\n")
     }
 }

@@ -1,0 +1,25 @@
+{
+  "runOnSave.onlyRunOnManualSave": true,
+  "runOnSave.statusMessageTimeout": 5000,
+  "errorLens.excludeByMessage": [
+    "should start with a lowercase letter",
+    "suppresses 'CancellationException'"
+  ],
+  "runOnSave.commands": [
+    {
+      "globMatch": "**/res/values*/*.xml",
+      "command": "gradlew.bat :app:processDebugResources :app:generateDebugRFile --offline -q",
+      "runIn": "backend",
+      "workingDirectoryAsCWD": true,
+      "async": false,
+      "runningStatusMessage": "Regenerando R...",
+      "finishStatusMessage": "R actualizado"
+    },
+    {
+      "globMatch": "**/res/values*/*.xml",
+      "command": "jetbrains.kotlin.reloadWorkspace",
+      "runIn": "vscode",
+      "async": false
+    }
+  ]
+}

@@ -1,3 +1,5 @@
+@file:Suppress("SuppressedCancellationException")
+
 package com.makkispacejam.fluxa.data
 
 import com.google.mlkit.common.model.DownloadConditions
@@ -73,21 +75,12 @@ class TranslationManager {
         
         val sourceLang = detectedLang ?: TranslateLanguage.ENGLISH
 
-        val urlPattern = Regex("https?://\\S+")
-        val links = mutableListOf<String>()
-
-        val placeholderText = urlPattern.replace(text) { matchResult ->
-            val link = matchResult.value
-            links.add(link)
-            " <TKN_${links.size - 1}> "
-        }
-
         return try {
-            performTranslation(placeholderText, sourceLang, targetLang, links)
+            performTranslation(text, sourceLang, targetLang)
         } catch (_: Exception) {
             if (sourceLang != TranslateLanguage.ENGLISH) {
                 try {
-                    performTranslation(placeholderText, TranslateLanguage.ENGLISH, targetLang, links)
+                    performTranslation(text, TranslateLanguage.ENGLISH, targetLang)
                 } catch (_: Exception) {
                     text
                 }
@@ -101,8 +94,7 @@ class TranslationManager {
     private suspend fun performTranslation(
         text: String,
         sourceLang: String,
-        targetLang: String,
-        links: List<String>
+        targetLang: String
     ): String {
         if (sourceLang == targetLang) return text
         
@@ -114,15 +106,34 @@ class TranslationManager {
         
         return translator.use { translator ->
             translator.downloadModelIfNeeded().await()
-            var result = translator.translate(text).await() ?: text
 
-            links.forEachIndexed { index, link ->
+            val normalizedText = text.replace("\r\n", "\n").replace('\r', '\n')
+            val translatedLines = normalizedText.split('\n').map { line ->
+                if (line.isBlank()) {
+                    line
+                } else {
+                    val links = mutableListOf<String>()
+                    val placeholderText = Regex("https?://\\S+").replace(line) { matchResult ->
+                        links.add(matchResult.value)
+                        " <TKN_${links.size - 1}> "
+                    }
 
-                val recoveryRegex = Regex("<\\s*TKN\\s*_\\s*$index\\s*>", RegexOption.IGNORE_CASE)
-                result = recoveryRegex.replace(result, link)
+                    var translatedLine = translator.translate(placeholderText).await() ?: placeholderText
+
+                    links.forEachIndexed { index, link ->
+                        val recoveryRegex = Regex("<\\s*TKN\\s*_\\s*$index\\s*>", RegexOption.IGNORE_CASE)
+                        translatedLine = recoveryRegex.replace(translatedLine, link)
+                    }
+
+                    translatedLine
+                }
             }
 
-            result.replace(Regex(" +"), " ").trim()
+            translatedLines
+                .joinToString("\n")
+                .replace(Regex(" +"), " ")
+                .replace(Regex(" *\n+ *")) { it.value.replace(" ", "") }
+                .trim()
         }
     }
 }

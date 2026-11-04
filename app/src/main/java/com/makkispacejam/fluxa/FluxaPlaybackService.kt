@@ -1,4 +1,4 @@
-@file:Suppress("DEPRECATION")
+@file:Suppress("SuppressedCancellationException", "DEPRECATION")
 
 package com.makkispacejam.fluxa
 

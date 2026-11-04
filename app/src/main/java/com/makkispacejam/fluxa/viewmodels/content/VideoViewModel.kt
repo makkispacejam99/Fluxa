@@ -1,3 +1,5 @@
+@file:Suppress("SuppressedCancellationException")
+
 package com.makkispacejam.fluxa.viewmodels.content
 
 import android.app.Application
@@ -26,6 +28,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.schabi.newpipe.extractor.stream.AudioStream
+
+data class ShortStreamData(
+    val audioTracks: List<AudioStream>,
+    val likeCount: Long,
+    val dislikeCount: Long
+)
 
 class VideoViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -80,6 +89,12 @@ class VideoViewModel(application: Application) : AndroidViewModel(application) {
     var videoDescriptionState by mutableStateOf("")
         private set
     var videoViewsState by mutableStateOf("")
+        private set
+    var videoLikeCountState by mutableStateOf(-1L)
+        private set
+    var videoDislikeCountState by mutableStateOf(-1L)
+        private set
+    var videoStatsLoadingState by mutableStateOf(false)
         private set
     var cleanChannelNameState by mutableStateOf("")
         private set
@@ -315,12 +330,16 @@ class VideoViewModel(application: Application) : AndroidViewModel(application) {
             null
         }
 
-    suspend fun getAudioTracksForVideo(videoId: String): List<org.schabi.newpipe.extractor.stream.AudioStream> = withContext(Dispatchers.IO) {
+    suspend fun getStreamDataForVideo(videoId: String): ShortStreamData = withContext(Dispatchers.IO) {
         try {
             val info = VideoExtractor.getStreamInfo(videoId)
-            info?.audioStreams ?: emptyList()
+            ShortStreamData(
+                audioTracks = info?.audioStreams ?: emptyList(),
+                likeCount = info?.likeCount ?: -1L,
+                dislikeCount = try { info?.dislikeCount ?: -1L } catch (_: Exception) { -1L }
+            )
         } catch (_: Exception) {
-            emptyList()
+            ShortStreamData(emptyList(), -1L, -1L)
         }
     }
 
@@ -331,6 +350,9 @@ class VideoViewModel(application: Application) : AndroidViewModel(application) {
 
         videoDescriptionState = ""
         videoViewsState = ""
+        videoLikeCountState = -1L
+        videoDislikeCountState = -1L
+        videoStatsLoadingState = true
         subscriberCountState = ""
         channelAvatarState = null
         cleanChannelNameState = ""
@@ -345,6 +367,8 @@ class VideoViewModel(application: Application) : AndroidViewModel(application) {
                     lastLoadedVideoId = videoId
                     videoDescriptionState = metadata.description
                     videoViewsState = "${HomeFeedItem.formatCount(metadata.viewCount)} ${getApplication<Application>().getString(R.string.views)}"
+                    videoLikeCountState = metadata.likeCount
+                    videoDislikeCountState = metadata.dislikeCount
                     cleanChannelNameState = metadata.uploaderName
                     currentVideoThumbnailState = metadata.videoModel.imageUrl
                     channelAvatarState = metadata.uploaderAvatarUrl
@@ -357,6 +381,8 @@ class VideoViewModel(application: Application) : AndroidViewModel(application) {
             } catch (e: Exception) {
                 Log.e("VideoViewModel", "Error cargando metadata for $videoId", e)
                 videoDescriptionState = getApplication<Application>().getString(R.string.error_detail_load)
+            } finally {
+                videoStatsLoadingState = false
             }
         }
     }

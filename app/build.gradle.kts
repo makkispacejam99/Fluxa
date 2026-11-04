@@ -10,19 +10,32 @@ android {
     //noinspection GradleDependency
     compileSdk = 37
 
+    // Keystore
+    signingConfigs {
+        create("release") {
+            if (project.hasProperty("RELEASE_STORE_FILE")) {
+                storeFile = file(project.property("RELEASE_STORE_FILE") as String)
+                storePassword = project.property("RELEASE_STORE_PASSWORD") as String
+                keyAlias = project.property("RELEASE_KEY_ALIAS") as String
+                keyPassword = project.property("RELEASE_KEY_PASSWORD") as String
+            }
+        }
+    }
+
     defaultConfig {
         applicationId = "com.makkispacejam.fluxa"
         minSdk = 31
         //noinspection EditedTargetSdkVersion,OldTargetApi
         targetSdk = 38
-        versionCode = 80
-        versionName = "v2.0.0-Stable"
+        versionCode = 85
+        versionName = "v2.1.0-Stable"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -107,7 +120,6 @@ dependencies {
     implementation(libs.mlkit.language.id)
     implementation(libs.kotlinx.coroutines.play.services)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

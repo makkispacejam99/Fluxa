@@ -23,6 +23,7 @@ data class PlaybackData(
     val availableAudioTracks: List<AudioStream> = emptyList(),
     val segments: List<StreamSegment> = emptyList(),
     val currentSubtitleText: String = "",
+    val selectedSubtitleLang: String = "",
     val error: String? = null,
     val ageRestricted: Boolean = false,
 

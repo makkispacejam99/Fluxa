@@ -1,4 +1,4 @@
-@file:Suppress("DEPRECATION", "AssignedValueIsNeverRead")
+@file:Suppress("FunctionName", "DEPRECATION", "AssignedValueIsNeverRead")
 
 package com.makkispacejam.fluxa.ui.screens.player
 
@@ -109,11 +109,9 @@ fun VideoPlayerScreen(
     }
     
     val defaultSpeed = stringResource(R.string.speed_normal)
-    val defaultSubtitles = stringResource(R.string.subtitles_off)
     val defaultAudio = stringResource(R.string.audio_default)
 
     var selectedSpeed by remember { mutableStateOf(defaultSpeed) }
-    var selectedSubtitleDisplay by remember { mutableStateOf(defaultSubtitles) }
     var selectedAudioTrackDisplay by remember { mutableStateOf(defaultAudio) }
     var isUserDraggingSlider by remember { mutableStateOf(false) }
     var draggingProgressMs by remember { mutableLongStateOf(0L) }
@@ -154,7 +152,6 @@ fun VideoPlayerScreen(
         if (currentVideoId.isNotEmpty()) {
             videoLoadError = false
             isExpanded = false
-            selectedSubtitleDisplay = defaultSubtitles
             videoVM.loadDetailedMetadata(currentVideoId)
             commentsViewModel.fetchVideoComments(currentVideoId)
         }
@@ -439,7 +436,7 @@ fun VideoPlayerScreen(
         availableSubtitles = playbackState.availableSubtitles,
         availableAudioTracks = playbackState.availableAudioTracks,
         selectedSpeed = selectedSpeed,
-        selectedSubtitle = selectedSubtitleDisplay,
+        selectedSubtitleTag = playbackState.selectedSubtitleLang,
         selectedAudioTrack = selectedAudioTrackDisplay,
         onQualitySelected = { 
             if (selectedQuality != "${it}p") {
@@ -452,9 +449,6 @@ fun VideoPlayerScreen(
             playerViewModel.setPlaybackSpeed(it)
         },
         onSubtitleSelected = { tag ->
-            val displayName = if (tag.isEmpty()) defaultSubtitles
-            else java.util.Locale.forLanguageTag(tag).getDisplayName(java.util.Locale.getDefault()).replaceFirstChar { it.uppercase() }
-            selectedSubtitleDisplay = displayName
             playerViewModel.setSubtitleTrack(tag)
         },
         onAudioTrackSelected = { url ->

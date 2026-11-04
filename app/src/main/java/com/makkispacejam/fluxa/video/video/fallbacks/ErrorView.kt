@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.video.video.fallbacks
 
 import androidx.compose.foundation.layout.Arrangement

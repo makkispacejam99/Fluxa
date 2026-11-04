@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName", "SuppressedCancellationException")
+
 package com.makkispacejam.fluxa.ui.screens.main
 
 import android.annotation.SuppressLint
@@ -28,15 +30,20 @@ import com.makkispacejam.fluxa.ThemeMode
 import com.makkispacejam.fluxa.audio.NormalizeAudio
 import com.makkispacejam.fluxa.data.UserPreferences
 import com.makkispacejam.fluxa.data.local.BackupRestoreManager
+import com.makkispacejam.fluxa.data.updates.UpdateCheckResult
+import com.makkispacejam.fluxa.data.updates.UpdateChecker
 import com.makkispacejam.fluxa.ui.components.dialogs.OptionDialog
 import com.makkispacejam.fluxa.ui.components.settings.dialogs.*
 import com.makkispacejam.fluxa.ui.components.system.NotificationBanner
+import com.makkispacejam.fluxa.ui.components.system.UpdateNoticeController
+import com.makkispacejam.fluxa.ui.components.system.formatWellbeingTime
 import com.makkispacejam.fluxa.viewmodels.user.TranslationViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@JvmOverloads
 @SuppressLint("UseKtx", "NonObservableLocale", "LocalContextGetResourceValueCall")
 @Composable
 fun SettingsScreen(
@@ -77,6 +84,7 @@ fun SettingsScreen(
     var showQualityDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showTranslationDialog by remember { mutableStateOf(false) }
+    var showSubtitleStyleDialog by remember { mutableStateOf(false) }
     var showRegionDialog by remember { mutableStateOf(false) }
     var showExportInstructionsDialog by remember { mutableStateOf(false) }
     var showImportInstructionsDialog by remember { mutableStateOf(false) }
@@ -85,7 +93,6 @@ fun SettingsScreen(
     var showSupportDialog by remember { mutableStateOf(false) }
     var showDonationDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
-    var showUpdateDialog by remember { mutableStateOf(false) }
     var showOpenLinksDialog by remember { mutableStateOf(false) }
 
     var showBanner by remember { mutableStateOf(false) }
@@ -94,13 +101,26 @@ fun SettingsScreen(
     var selectedQuality by remember { mutableStateOf(prefs.videoQuality) }
     var audioNormalizerEnabled by remember { mutableStateOf(prefs.audioNormalizerEnabled) }
     var gesturesTutorialEnabled by remember { mutableStateOf(prefs.shortsGesturesTutorialEnabled) }
+    var shortsControlsAlwaysVisible by remember { mutableStateOf(prefs.shortsControlsAlwaysVisible) }
     var contentLanguage by remember { mutableStateOf(prefs.contentLanguage) }
     var contentRegion by remember { mutableStateOf(prefs.contentRegion) }
+    var breakReminderEnabled by remember { mutableStateOf(prefs.breakReminderEnabled) }
+    var breakReminderInterval by remember { mutableIntStateOf(prefs.breakReminderIntervalMinutes) }
+    var bedtimeReminderEnabled by remember { mutableStateOf(prefs.bedtimeReminderEnabled) }
+    var bedtimeHour by remember { mutableIntStateOf(prefs.bedtimeReminderHour) }
+    var bedtimeMinute by remember { mutableIntStateOf(prefs.bedtimeReminderMinute) }
+    var updateNoticeEnabled by remember { mutableStateOf(prefs.updateNoticeEnabled) }
+    var isCheckingUpdate by remember { mutableStateOf(false) }
+    var showBreakIntervalDialog by remember { mutableStateOf(false) }
+    var showBedtimePicker by remember { mutableStateOf(false) }
 
     val selectedLanguage = stringResource(languageMap[contentLanguage] ?: R.string.lang_english)
     val translationLangCode = translationViewModel.getTranslationLanguage()
     val selectedTranslationLang = if (translationLangCode != null) stringResource(languageMap[translationLangCode] ?: R.string.none) else stringResource(R.string.none)
     val selectedRegion = stringResource(regionMap[contentRegion] ?: R.string.region_hn)
+    val bedtimeLabel = remember(bedtimeHour, bedtimeMinute) {
+        formatWellbeingTime(context, bedtimeHour, bedtimeMinute)
+    }
 
     val backupExportedMsg = stringResource(R.string.backup_exported)
     val backupExportErrorMsg = stringResource(R.string.backup_export_error)
@@ -110,6 +130,9 @@ fun SettingsScreen(
     val importCancelledMsg = stringResource(R.string.import_cancelled)
     val importSubsSuccessMsg = stringResource(R.string.import_subs_success)
     val invalidFileFormatMsg = stringResource(R.string.invalid_file_format)
+    val updateCheckingMsg = stringResource(R.string.update_checking)
+    val updateUpToDateMsg = stringResource(R.string.update_up_to_date)
+    val updateCheckFailedMsg = stringResource(R.string.update_check_failed)
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         scope.launch {
@@ -180,6 +203,7 @@ fun SettingsScreen(
                         selectedQuality = selectedQuality, selectedRegion = selectedRegion,
                         onThemeClick = { showThemeDialog = true }, onLanguageClick = { showLanguageDialog = true },
                         onTranslationClick = { showTranslationDialog = true }, onQualityClick = { showQualityDialog = true },
+                        onSubtitleStyleClick = { showSubtitleStyleDialog = true },
                         onRegionClick = { showRegionDialog = true },
                         audioNormalizerEnabled = audioNormalizerEnabled,
                         onAudioNormalizerChange = {
@@ -201,6 +225,37 @@ fun SettingsScreen(
                     )
                 }
                 item {
+                    SettingsAccessibilitySection(
+                        shortsControlsAlwaysVisible = shortsControlsAlwaysVisible,
+                        onShortsControlsAlwaysVisibleChange = {
+                            shortsControlsAlwaysVisible = it
+                            prefs.shortsControlsAlwaysVisible = it
+                        }
+                    )
+                }
+                item {
+                    SettingsWellbeingSection(
+                        breakReminderEnabled = breakReminderEnabled,
+                        onBreakReminderChange = {
+                            breakReminderEnabled = it
+                            prefs.breakReminderEnabled = it
+                            prefs.breakReminderAccumulatedMs = 0L
+                            prefs.breakReminderSnoozeUntil = 0L
+                        },
+                        breakIntervalMinutes = breakReminderInterval,
+                        onBreakIntervalClick = { showBreakIntervalDialog = true },
+                        bedtimeReminderEnabled = bedtimeReminderEnabled,
+                        onBedtimeReminderChange = {
+                            bedtimeReminderEnabled = it
+                            prefs.bedtimeReminderEnabled = it
+                            prefs.bedtimeReminderSnoozeUntil = 0L
+                            if (it) prefs.bedtimeReminderLastShownDate = ""
+                        },
+                        bedtimeLabel = bedtimeLabel,
+                        onBedtimeClick = { showBedtimePicker = true }
+                    )
+                }
+                item {
                     SettingsAccountSection(
                         onImportCsvClick = { showImportYoutubeCsvDialog = true }, onImportBackupClick = { showImportInstructionsDialog = true },
                         onExportBackupClick = { showExportInstructionsDialog = true }, onClearDataClick = { showClearDataDialog = true }
@@ -208,6 +263,11 @@ fun SettingsScreen(
                 }
                 item {
                     SettingsInfoSection(
+                        updateNoticeEnabled = updateNoticeEnabled,
+                        onUpdateNoticeChange = {
+                            updateNoticeEnabled = it
+                            prefs.updateNoticeEnabled = it
+                        },
                         onSupportClick = { showSupportDialog = true }, onDonateClick = { showDonationDialog = true },
                         onAboutClick = { showAboutDialog = true }
                     )
@@ -215,7 +275,25 @@ fun SettingsScreen(
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                     FilledTonalButton(
-                        onClick = { showUpdateDialog = true },
+                        onClick = {
+                            if (!isCheckingUpdate) {
+                                isCheckingUpdate = true
+                                scope.launch {
+                                    val loadingJob = launch {
+                                        snackbarHostState.showSnackbar(updateCheckingMsg, duration = SnackbarDuration.Indefinite)
+                                    }
+                                    val result = UpdateChecker.check(context)
+                                    loadingJob.cancel()
+                                    isCheckingUpdate = false
+                                    prefs.lastUpdateCheckMs = System.currentTimeMillis()
+                                    when (result) {
+                                        is UpdateCheckResult.Available -> UpdateNoticeController.show(result.info)
+                                        UpdateCheckResult.UpToDate -> snackbarHostState.showSnackbar(updateUpToDateMsg, duration = SnackbarDuration.Short)
+                                        UpdateCheckResult.Failed -> snackbarHostState.showSnackbar(updateCheckFailedMsg, duration = SnackbarDuration.Short)
+                                    }
+                                }
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
@@ -248,6 +326,12 @@ fun SettingsScreen(
                     onDismiss = { showThemeDialog = false })
             }
             if (showTranslationDialog) TranslationDialog(onDismiss = { showTranslationDialog = false }, translationViewModel = translationViewModel, languageMap = languageMap)
+            if (showSubtitleStyleDialog) SubtitleStyleDialog(
+                currentFont = prefs.subtitleFont,
+                currentSize = prefs.subtitleTextSize,
+                onConfirm = { font, size -> prefs.subtitleFont = font; prefs.subtitleTextSize = size },
+                onDismiss = { showSubtitleStyleDialog = false }
+            )
             if (showQualityDialog) {
                 OptionDialog(title = stringResource(R.string.video_quality),
                     options = listOf(stringResource(R.string.quality_1080p), stringResource(R.string.quality_720p), stringResource(R.string.quality_480p), stringResource(R.string.quality_360p), stringResource(R.string.quality_data_saving)),
@@ -265,6 +349,49 @@ fun SettingsScreen(
                 OptionDialog(title = stringResource(R.string.select_region), options = optionsMap.keys.toList(), selectedOption = selectedRegion,
                     onOptionSelected = { selected -> contentRegion = optionsMap[selected] ?: "HN"; prefs.contentRegion = contentRegion; showRegionDialog = false },
                     onDismiss = { showRegionDialog = false })
+            }
+            if (showBreakIntervalDialog) {
+                BreakIntervalDialog(
+                    initialMinutes = breakReminderInterval,
+                    onConfirm = { minutes ->
+                        breakReminderInterval = minutes
+                        prefs.breakReminderIntervalMinutes = minutes
+                        prefs.breakReminderAccumulatedMs = 0L
+                        prefs.breakReminderSnoozeUntil = 0L
+                        showBreakIntervalDialog = false
+                    },
+                    onDismiss = { showBreakIntervalDialog = false }
+                )
+            }
+            if (showBedtimePicker) {
+                val timePickerState = rememberTimePickerState(
+                    initialHour = bedtimeHour,
+                    initialMinute = bedtimeMinute,
+                    is24Hour = android.text.format.DateFormat.is24HourFormat(context)
+                )
+                AlertDialog(
+                    onDismissRequest = { showBedtimePicker = false },
+                    title = { Text(stringResource(R.string.bedtime_reminder)) },
+                    text = { TimePicker(state = timePickerState) },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            bedtimeHour = timePickerState.hour
+                            bedtimeMinute = timePickerState.minute
+                            prefs.bedtimeReminderHour = timePickerState.hour
+                            prefs.bedtimeReminderMinute = timePickerState.minute
+                            prefs.bedtimeReminderSnoozeUntil = 0L
+                            prefs.bedtimeReminderLastShownDate = ""
+                            showBedtimePicker = false
+                        }) {
+                            Text(stringResource(R.string.accept_btn))
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showBedtimePicker = false }) {
+                            Text(stringResource(R.string.cancel_btn))
+                        }
+                    }
+                )
             }
 
             if (showExportInstructionsDialog) {
@@ -295,12 +422,6 @@ fun SettingsScreen(
             }
             if (showSupportDialog) SupportDialog(onDismiss = { showSupportDialog = false }, context = context)
             if (showAboutDialog) AboutDialog(onDismiss = { showAboutDialog = false }, context = context)
-            if (showUpdateDialog) {
-                UpdateDialog(onDismiss = { showUpdateDialog = false }, onConfirm = {
-                    showUpdateDialog = false
-                    try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/makkispacejam99/Fluxa/releases/latest"))) } catch (_: Exception) {}
-                })
-            }
         }
 
         NotificationBanner(

@@ -84,6 +84,14 @@
     <string name="content_translation" tools:ignore="MissingTranslation">Content Translation</string>
     <string name="content_translation_desc" tools:ignore="MissingTranslation">Translate video titles and descriptions</string>
     <string name="select_translation_lang" tools:ignore="MissingTranslation">Select Translation</string>
+    <string name="subtitle_settings" tools:ignore="MissingTranslation">Subtitle Style</string>
+    <string name="subtitle_settings_desc" tools:ignore="MissingTranslation">Change the font and size of the subtitles shown on the video</string>
+    <string name="subtitle_settings_summary" tools:ignore="MissingTranslation">Font and size</string>
+    <string name="subtitle_font_label" tools:ignore="MissingTranslation">Font</string>
+    <string name="subtitle_size_label" tools:ignore="MissingTranslation">Size</string>
+    <string name="subtitle_preview_label" tools:ignore="MissingTranslation">Preview</string>
+    <string name="subtitle_font_default" tools:ignore="MissingTranslation">Default</string>
+    <string name="subtitle_preview_text" tools:ignore="MissingTranslation">This is how your subtitles will look</string>
     <string name="none" tools:ignore="MissingTranslation">None</string>
     <string name="download" tools:ignore="MissingTranslation">Download</string>
     <string name="delete" tools:ignore="MissingTranslation">Delete</string>
@@ -176,6 +184,16 @@
     <string name="import_playlist_empty">The playlist is empty or unavailable.</string>
     <string name="import_playlist_no_url">Please enter a valid URL.</string>
     <string name="import_playlist_result">%1$d added · %2$d already existed</string>
+    <string name="sync_playlist">Sync playlist</string>
+    <string name="sync_playlist_title">Syncing %1$s</string>
+    <string name="sync_playlist_loading">Preparing sync…</string>
+    <string name="sync_playlist_progress">Scanning source %1$d of %2$d</string>
+    <string name="sync_playlist_result">%1$d new · %2$d already in playlist</string>
+    <string name="sync_playlist_result_failed">%1$d new · %2$d already in playlist · %3$d sources failed</string>
+    <string name="sync_playlist_up_to_date">Playlist is up to date.</string>
+    <string name="sync_playlist_no_sources">No saved playlist links. Import a playlist first.</string>
+    <string name="sync_playlist_error">Could not sync the playlist. Please try again.</string>
+    <string name="sync_playlist_done">Done</string>
     <string name="no_videos_playlist">No videos in this playlist</string>
     <string name="add_videos_first">Go and add some first</string>
     <string name="views">views</string>
@@ -291,9 +309,15 @@
     <string name="recents_no_subscriptions">You\'re not subscribed to any channel. Subscribe to one first.</string>
     <string name="update_available_title">New update available</string>
     <string name="update_available_text">A new version of Fluxa is available.\n\nCurrent: %1$s\nNew: %2$s\n\nWould you like to update?</string>
-    <string name="update_check_title">Check for updates</string>
-    <string name="update_check_text">You will be redirected to the official Fluxa GitHub page.\n\n1) Download the latest APK\n2) Install it\n3) Enjoy!\n\nTip: Check the version code on your phone to make sure you have the latest version.</string>
     <string name="update_checking">Checking for updates…</string>
+    <string name="update_up_to_date">You are on the latest version</string>
+    <string name="update_check_failed">Could not check for updates</string>
+    <string name="update_notice_title">New version available!</string>
+    <string name="update_notice_message">Fluxa %1$s is now on GitHub with the latest improvements and fixes. Do you want to update now?</string>
+    <string name="update_notice_primary">Update now</string>
+    <string name="update_notice_secondary">Later</string>
+    <string name="update_notice_setting">Update notice</string>
+    <string name="update_notice_setting_desc">Shows a notice when a newer Fluxa version is available on GitHub.</string>
     <string name="update_no_updates">No updates available</string>
     <string name="update_downloading">Downloading update…</string>
     <string name="update_install_prompt">Download complete. Install the update?</string>
@@ -323,4 +347,29 @@
     <string name="gestures_hint_question_desc">We can show it again in 30 days.</string>
     <string name="gestures_hint_repeat">No, remind me</string>
     <string name="gestures_hint_got_it">Yes, it is clear</string>
+    <string name="section_accessibility">Accessibility</string>
+    <string name="shorts_controls_always_visible">Controls always visible in Shorts</string>
+    <string name="shorts_controls_always_visible_desc">Always show the bottom controls on the Shorts screen or keep the new interface.</string>
+    <string name="section_wellbeing">Wellbeing</string>
+    <string name="break_reminder">Break reminder</string>
+    <string name="break_reminder_desc">Pause to rest your eyes after a while of watching videos.</string>
+    <string name="break_reminder_interval">Every %1$d min</string>
+    <string name="break_reminder_interval_hours">Every %1$d h</string>
+    <string name="break_reminder_interval_hours_minutes">Every %1$d h %2$d min</string>
+    <string name="break_reminder_interval_label">Interval</string>
+    <string name="break_reminder_interval_min">Minimum 5 minutes</string>
+    <string name="break_interval_hours_value">%1$d h</string>
+    <string name="break_interval_minutes_value">%1$d min</string>
+    <string name="break_reminder_title">Time for a break</string>
+    <string name="break_reminder_message">You have been watching for a while. Take a moment to rest your eyes.</string>
+    <string name="remind_later_10">Remind me in 10 min</string>
+    <string name="not_now">Not now</string>
+    <string name="bedtime_reminder">Bedtime reminder</string>
+    <string name="bedtime_reminder_desc">Get a gentle reminder to stop watching at night.</string>
+    <string name="bedtime_reminder_time">Bedtime</string>
+    <string name="bedtime_reminder_off">Off</string>
+    <string name="bedtime_title">Time to rest</string>
+    <string name="bedtime_message">It\'s %1$s. A good moment to stop watching videos and rest.</string>
+    <string name="bedtime_snooze">5 more minutes</string>
+    <string name="bedtime_dismiss">Got it</string>
 </resources>

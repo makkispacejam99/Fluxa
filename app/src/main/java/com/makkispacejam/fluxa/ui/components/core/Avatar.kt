@@ -1,4 +1,4 @@
-@file:Suppress("UNUSED_VALUE")
+@file:Suppress("FunctionName", "UNUSED_VALUE")
 
 package com.makkispacejam.fluxa.ui.components.core
 

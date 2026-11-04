@@ -1,3 +1,5 @@
+@file:Suppress("SuppressedCancellationException")
+
 package com.makkispacejam.fluxa.data.shorts
 
 import com.makkispacejam.fluxa.data.local.CachedVideoEntity

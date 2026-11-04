@@ -1,3 +1,5 @@
+@file:Suppress("SuppressedCancellationException")
+
 package com.makkispacejam.fluxa.viewmodels.content
 
 import android.annotation.SuppressLint

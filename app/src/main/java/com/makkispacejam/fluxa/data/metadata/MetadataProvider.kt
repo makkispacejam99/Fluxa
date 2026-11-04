@@ -1,3 +1,5 @@
+@file:Suppress("SuppressedCancellationException")
+
 package com.makkispacejam.fluxa.data.metadata
 
 import com.makkispacejam.fluxa.data.VideoExtractor
@@ -16,6 +18,8 @@ data class VideoInfo(
     val uploaderName: String,
     val uploaderAvatarUrl: String? = null,
     val subscriberCount: Long = -1L,
+    val likeCount: Long = -1L,
+    val dislikeCount: Long = -1L,
     val relatedVideos: List<VideoModel> = emptyList()
 )
 
@@ -33,6 +37,8 @@ class VideoMetadataProvider {
             val rawViews = streamInfo.viewCount
             val rawDescription = streamInfo.description?.content ?: "Sin descripción disponible."
             val rawSubs = streamInfo.uploaderSubscriberCount
+            val rawLikes = streamInfo.likeCount
+            val rawDislikes = try { streamInfo.dislikeCount } catch (_: Exception) { -1L }
 
             val uploaderAvatar = streamInfo.uploaderAvatars
                 .firstOrNull()?.url
@@ -76,6 +82,8 @@ class VideoMetadataProvider {
                 uploaderName = cleanedChannelName,
                 uploaderAvatarUrl = uploaderAvatar,
                 subscriberCount = rawSubs,
+                likeCount = rawLikes,
+                dislikeCount = rawDislikes,
                 relatedVideos = related
             )
         } catch (e: Exception) {
