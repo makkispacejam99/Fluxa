@@ -1,4 +1,5 @@
-@file:Suppress("unused")
+@file:Suppress("FunctionName", "unused")
+
 package com.makkispacejam.fluxa.ui.components.core
 
 import androidx.compose.foundation.clickable

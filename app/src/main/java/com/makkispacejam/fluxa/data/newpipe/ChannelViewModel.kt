@@ -1,3 +1,5 @@
+@file:Suppress("SuppressedCancellationException")
+
 package com.makkispacejam.fluxa.data.newpipe
 
 import android.app.Application

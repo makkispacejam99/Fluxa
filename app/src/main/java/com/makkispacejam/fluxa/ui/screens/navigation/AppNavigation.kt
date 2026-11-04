@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.ui.screens.navigation
 
 import android.app.Activity
@@ -35,12 +37,16 @@ import com.makkispacejam.fluxa.ui.animations.FluxaAnimations
 import com.makkispacejam.fluxa.ui.components.layout.MainNavigationShell
 import com.makkispacejam.fluxa.ui.components.player.shared.ScreenOverlay
 import com.makkispacejam.fluxa.ui.components.system.SystemAppearanceEffect
+import com.makkispacejam.fluxa.ui.components.system.UpdateNoticeHost
+import com.makkispacejam.fluxa.ui.components.system.WellbeingReminderHost
 import com.makkispacejam.fluxa.ui.screens.main.FluxaWelcome
 import com.makkispacejam.fluxa.ui.screens.main.FluxaIntro
 import com.makkispacejam.fluxa.ui.screens.main.FluxaSubs
 import com.makkispacejam.fluxa.ui.theme.FluxaTheme
 import com.makkispacejam.fluxa.viewmodels.player.PlayerViewModel
 import com.makkispacejam.fluxa.viewmodels.content.VideoViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlin.collections.getOrNull
 
@@ -120,7 +126,11 @@ fun AppNavigation() {
         playerViewModel.expandPlayer()
         pendingOpenVideoId.value = ""
         coroutineScope.launch {
-            val info = runCatching { VideoExtractor.getStreamInfo(deepLinkVideoId) }.getOrNull()
+            val info = runCatching { VideoExtractor.getStreamInfo(deepLinkVideoId) }.onFailure {
+                if (it is CancellationException) {
+                    ensureActive()
+                }
+            }.getOrNull()
             val title = info?.name ?: ""
             val channel = info?.uploaderName ?: ""
             val thumb = info?.thumbnails?.firstOrNull()?.url ?: ""
@@ -139,9 +149,17 @@ fun AppNavigation() {
         playerViewModel.expandPlayer()
         pendingOpenPlaylistUrl.value = ""
         coroutineScope.launch {
-            val videos = runCatching { VideoExtractor.extractPlaylistVideos(deepLinkPlaylistUrl) }.getOrDefault(emptyList())
+            val videos = runCatching { VideoExtractor.extractPlaylistVideos(deepLinkPlaylistUrl) }.onFailure {
+                if (it is CancellationException) {
+                    ensureActive()
+                }
+            }.getOrDefault(emptyList())
             if (videos.isEmpty()) return@launch
-            val title = runCatching { VideoExtractor.extractPlaylistTitle(deepLinkPlaylistUrl) }.getOrDefault("")
+            val title = runCatching { VideoExtractor.extractPlaylistTitle(deepLinkPlaylistUrl) }.onFailure {
+                if (it is CancellationException) {
+                    ensureActive()
+                }
+            }.getOrDefault("")
             playlistTitle = title
             detailVideoTitle = title
             val first = videos.first()
@@ -365,6 +383,17 @@ fun AppNavigation() {
                         }
                         previousDetailView = DetailView.None
                     }
+                )
+
+                WellbeingReminderHost(
+                    playerFullscreen = playbackState.isFullyExpanded,
+                    playerPlaying = playbackState.isPlaying,
+                    onPausePlayback = { playerViewModel.pause() }
+                )
+                UpdateNoticeHost(
+                    playerFullscreen = playbackState.isFullyExpanded,
+                    playerPlaying = playbackState.isPlaying,
+                    onPausePlayback = { playerViewModel.pause() }
                 )
             }
         }

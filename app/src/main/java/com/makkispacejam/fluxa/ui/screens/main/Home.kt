@@ -1,4 +1,4 @@
-@file:Suppress("UnusedVariable", "unused")
+@file:Suppress("FunctionName", "UnusedVariable", "unused")
 
 package com.makkispacejam.fluxa.ui.screens.main
 

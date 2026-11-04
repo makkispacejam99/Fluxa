@@ -1,3 +1,5 @@
+@file:Suppress("SuppressedCancellationException")
+
 package com.makkispacejam.fluxa.data
 
 import android.content.Context

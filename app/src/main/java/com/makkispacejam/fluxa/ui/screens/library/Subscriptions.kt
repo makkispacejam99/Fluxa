@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.ui.screens.library
 
 import androidx.compose.foundation.background

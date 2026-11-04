@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.video.video.feedback
 
 import androidx.compose.animation.core.FastOutSlowInEasing

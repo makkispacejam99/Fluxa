@@ -1,3 +1,5 @@
+@file:Suppress("SuppressedCancellationException")
+
 package com.makkispacejam.fluxa.utils
 
 import androidx.annotation.OptIn

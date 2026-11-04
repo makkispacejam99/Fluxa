@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.ui.components.library.skeleton
 
 import androidx.compose.foundation.layout.*

@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName", "SuppressedCancellationException", "UsePropertyAccessSyntax")
+
 package com.makkispacejam.fluxa.ui.screens.shared
 
 import android.annotation.SuppressLint
@@ -36,14 +38,15 @@ import com.makkispacejam.fluxa.data.VideoExtractor
 import com.makkispacejam.fluxa.ui.components.dialogs.VideoOptionsMenu
 import com.makkispacejam.fluxa.ui.components.player.playlist.PlaylistSelectionDialog
 import com.makkispacejam.fluxa.ui.components.player.playlist.ImportPlaylistDialog
+import com.makkispacejam.fluxa.ui.components.player.playlist.SyncPlaylistDialog
 import com.makkispacejam.fluxa.ui.components.system.NotificationBanner
 import com.makkispacejam.fluxa.viewmodels.content.VideoViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @SuppressLint("LocalContextGetResourceValueCall")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistScreen(
     playlistTitle: String,
@@ -124,6 +127,7 @@ fun PlaylistScreen(
     }
 
     var showImportDialog by remember { mutableStateOf(false) }
+    var showSyncDialog by remember { mutableStateOf(false) }
 
     val shouldResetProgress = remember(playlistTitle, userPlaylists) {
         val isPreserveProgressPlaylist = playlistTitle == "Historial" || playlistTitle == "Ver más tarde"
@@ -139,7 +143,7 @@ fun PlaylistScreen(
 
     var showEmptyState by remember { mutableStateOf(false) }
     LaunchedEffect(playlistVideos.isEmpty(), isLoading) {
-        if (playlistVideos.isEmpty() && !isLoading) { delay(500); showEmptyState = true }
+        if (playlistVideos.isEmpty() && !isLoading) { delay(500.milliseconds); showEmptyState = true }
         else showEmptyState = false
     }
 
@@ -173,6 +177,8 @@ fun PlaylistScreen(
                             if (!isEditMode) selectedVideos = emptySet()
                         },
                         onImportClick = { showImportDialog = true },
+                        onSyncClick = { showSyncDialog = true },
+                        showSyncButton = isUserPlaylist && !UserPreferences.incognitoActive,
                         showEditButton = isLocal && !UserPreferences.incognitoActive,
                         showShareButton = !isLocal && playlistUrl.isNotEmpty(),
                         onShareClick = {
@@ -302,6 +308,14 @@ fun PlaylistScreen(
                 playlistName = playlistTitle,
                 onDismiss = { showImportDialog = false },
                 onImport = { url -> interactionVM.importFromYouTubePlaylist(playlistTitle, url) }
+            )
+        }
+
+        if (showSyncDialog) {
+            SyncPlaylistDialog(
+                playlistName = context.localizedPlaylistName(playlistTitle),
+                onDismiss = { showSyncDialog = false },
+                onSync = { onProgress -> interactionVM.syncPlaylist(playlistTitle, onProgress) }
             )
         }
 

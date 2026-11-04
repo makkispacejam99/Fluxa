@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.ui.components.player.playlist
 
 import androidx.compose.foundation.clickable

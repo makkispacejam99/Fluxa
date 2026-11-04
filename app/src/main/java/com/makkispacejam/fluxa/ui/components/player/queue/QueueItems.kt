@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.ui.components.player.queue
 
 import androidx.compose.animation.core.animateDpAsState

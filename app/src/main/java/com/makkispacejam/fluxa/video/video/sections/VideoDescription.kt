@@ -1,4 +1,4 @@
-@file:Suppress("DEPRECATION")
+@file:Suppress("FunctionName", "DEPRECATION")
 
 package com.makkispacejam.fluxa.video.video.sections
 
@@ -28,6 +28,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.makkispacejam.fluxa.viewmodels.user.TranslationViewModel
 import android.app.Application
+import com.makkispacejam.fluxa.utils.restoreLineBreaks
 import com.makkispacejam.fluxa.utils.stripHtml
 import androidx.compose.ui.res.stringResource
 import com.makkispacejam.fluxa.R
@@ -52,7 +53,7 @@ fun VideoDescription(
         Regex("href=\"([^\"]+)\"").findAll(description).map { it.groupValues[1] }.toList()
     }
 
-    val cleanDescription = remember(description) { description.stripHtml() }
+    val cleanDescription = remember(description) { description.stripHtml().restoreLineBreaks() }
     var translatedDescription by remember(cleanDescription, targetLang) { mutableStateOf(cleanDescription) }
 
     LaunchedEffect(cleanDescription, targetLang) {
@@ -66,38 +67,75 @@ fun VideoDescription(
 
     val textToDisplay = if (isExpanded) translatedDescription else {
         if (translatedDescription.length > 100) {
-            translatedDescription.take(100).substringBeforeLast(" ") + "..."
+            val preview = buildString {
+                for (line in translatedDescription.lineSequence()) {
+                    if (length + line.length > 100) break
+                    append(line).append('\n')
+                }
+            }.trimEnd()
+            if (preview.isEmpty() || preview.length >= translatedDescription.length) {
+                translatedDescription.take(100).substringBeforeLast(" ").trimEnd()
+            } else {
+                "$preview..."
+            }
         } else {
             translatedDescription
         }
     }
 
+    val displayLines = textToDisplay.split('\n')
+    val chapterLinePattern = Regex("^\\s*\\d{1,2}:\\d{2}(?::\\d{2})?(?=\\s|$)")
+    val primary = MaterialTheme.colorScheme.primary
+
     Column(modifier = Modifier.padding(bottom = 8.dp)) {
         val annotatedString = buildAnnotatedString {
-            val displayUrls = Regex("https?://\\S+").findAll(textToDisplay).toList()
-            var lastIndex = 0
+            val urlRegex = Regex("https?://\\S+")
+            var urlIndex = 0
 
-            displayUrls.forEachIndexed { index, matchResult ->
-                val start = matchResult.range.first
-                val end = matchResult.range.last + 1
+            displayLines.forEachIndexed { lineIndex, line ->
+                val isChapter = chapterLinePattern.containsMatchIn(line)
 
-                append(textToDisplay.substring(lastIndex, start))
-
-                val realUrl = fullUrls.getOrNull(index) ?: matchResult.value
-                pushStringAnnotation(tag = "URL", annotation = realUrl)
-                withStyle(
-                    style = SpanStyle(
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
-                        textDecoration = TextDecoration.Underline
-                    )
-                ) {
-                    append(textToDisplay.substring(start, end))
+                fun appendSegment(segment: String) {
+                    if (isChapter) {
+                        withStyle(
+                            style = SpanStyle(
+                                color = primary,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        ) {
+                            append(segment)
+                        }
+                    } else {
+                        append(segment)
+                    }
                 }
-                pop()
-                lastIndex = end
+
+                var lastIndex = 0
+                urlRegex.findAll(line).forEach { matchResult ->
+                    val start = matchResult.range.first
+                    val end = matchResult.range.last + 1
+
+                    appendSegment(line.substring(lastIndex, start))
+
+                    val realUrl = fullUrls.getOrNull(urlIndex) ?: matchResult.value
+                    urlIndex++
+                    pushStringAnnotation(tag = "URL", annotation = realUrl)
+                    withStyle(
+                        style = SpanStyle(
+                            color = primary,
+                            fontWeight = FontWeight.Bold,
+                            textDecoration = TextDecoration.Underline
+                        )
+                    ) {
+                        append(line.substring(start, end))
+                    }
+                    pop()
+                    lastIndex = end
+                }
+                appendSegment(line.substring(lastIndex))
+
+                if (lineIndex < displayLines.size - 1) append('\n')
             }
-            append(textToDisplay.substring(lastIndex))
         }
 
         ClickableText(

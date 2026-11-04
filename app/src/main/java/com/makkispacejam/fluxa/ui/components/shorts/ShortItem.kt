@@ -1,4 +1,4 @@
-@file:Suppress("DEPRECATION")
+@file:Suppress("FunctionName", "DEPRECATION", "UsePropertyAccessSyntax")
 
 package com.makkispacejam.fluxa.ui.components.shorts
 
@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -53,8 +54,12 @@ import com.makkispacejam.fluxa.data.UserPreferences
 import com.makkispacejam.fluxa.viewmodels.content.CommentsViewModel
 import com.makkispacejam.fluxa.viewmodels.user.InteractionViewModel
 import org.schabi.newpipe.extractor.stream.AudioStream
+import kotlin.time.Duration.Companion.milliseconds
 
-@SuppressLint("UnrememberedMutableState", "LocalContextGetResourceValueCall")
+@JvmOverloads
+@SuppressLint("UnrememberedMutableState", "LocalContextGetResourceValueCall",
+    "AutoboxingStateCreation"
+)
 @Composable
 fun ShortItem(
     modifier: Modifier = Modifier,
@@ -114,6 +119,8 @@ fun ShortItem(
     val context = LocalContext.current
     val prefs = remember { UserPreferences(context) }
     var audioNormalized by remember { mutableStateOf(prefs.audioNormalizerEnabled) }
+    var shortsControlsAlwaysVisible by remember { mutableStateOf(prefs.shortsControlsAlwaysVisible) }
+    var statsLoaded by remember(videoId) { mutableStateOf(false) }
     var showHeartAnimation by remember { mutableStateOf(false) }
     var showCommentsSheet by remember { mutableStateOf(false) }
     var showQualityDialog by remember { mutableStateOf(false) }
@@ -122,6 +129,9 @@ fun ShortItem(
     var showAudioNormalizerDialog by remember { mutableStateOf(false) }
     var availableAudioTracks by remember { mutableStateOf<List<AudioStream>>(emptyList()) }
     var selectedAudioTrackDisplay by remember { mutableStateOf("") }
+    var likeCount by remember(videoId) { mutableStateOf(-1L) }
+    var dislikeCount by remember(videoId) { mutableStateOf(-1L) }
+    var statsLoading by remember(videoId) { mutableStateOf(false) }
 
     var showGuestBanner by remember { mutableStateOf(false) }
     var guestBannerText by remember { mutableStateOf("") }
@@ -132,7 +142,7 @@ fun ShortItem(
 
     LaunchedEffect(showTapFeedback) {
         if (showTapFeedback) {
-            delay(1200)
+            delay(1200.milliseconds)
             showTapFeedback = false
         }
     }
@@ -140,8 +150,18 @@ fun ShortItem(
     LaunchedEffect(isFocused) {
         if (isFocused) {
             interactionVM.incrementViewCount(videoId, title, channelName)
-            val tracks = videoViewModel.getAudioTracksForVideo(videoId)
-            availableAudioTracks = tracks
+            if (!statsLoaded) {
+                statsLoading = true
+                try {
+                    val data = videoViewModel.getStreamDataForVideo(videoId)
+                    availableAudioTracks = data.audioTracks
+                    likeCount = data.likeCount
+                    dislikeCount = data.dislikeCount
+                    statsLoaded = true
+                } finally {
+                    statsLoading = false
+                }
+            }
         }
     }
 
@@ -153,6 +173,7 @@ fun ShortItem(
     var controlsVisible by remember(videoId) { mutableStateOf(true) }
     var controlsZoneHeight by remember { mutableStateOf(240.dp) }
     var controlsTick by remember { mutableIntStateOf(0) }
+    var showRemainingTime by remember { mutableStateOf(false) }
 
     val isVideoReady = isFocused && videoUrl.isNotEmpty()
 
@@ -162,11 +183,15 @@ fun ShortItem(
         if (isFocused) controlsVisible = true
     }
 
-    LaunchedEffect(isVideoPaused, isVideoReady, controlsVisible, controlsTick) {
+    LaunchedEffect(isVideoPaused, isVideoReady, controlsVisible, controlsTick, shortsControlsAlwaysVisible) {
+        if (shortsControlsAlwaysVisible) {
+            controlsVisible = true
+            return@LaunchedEffect
+        }
         if (isVideoPaused || !isVideoReady) {
             controlsVisible = true
         } else {
-            delay(2800)
+            delay(2800.milliseconds)
             if (!isVideoPaused) controlsVisible = false
         }
     }
@@ -265,7 +290,7 @@ fun ShortItem(
                             detectTapGestures(
                                 onPress = {
                                     val job = coroutineScope.launch {
-                                        delay(500)
+                                        delay(500.milliseconds)
                                         is2xSpeed = true
                                     }
                                     tryAwaitRelease()
@@ -320,19 +345,23 @@ fun ShortItem(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .height(controlsZoneHeight)
+                        .height(controlsZoneHeight + 28.dp)
                         .pointerInput(Unit) {
                             detectTapGestures {
-                                controlsTick++
-                                controlsVisible = if (isVideoPaused) true else !controlsVisible
+                                if (shortsControlsAlwaysVisible) {
+                                    controlsVisible = true
+                                } else {
+                                    controlsTick++
+                                    controlsVisible = isVideoPaused || !controlsVisible
+                                }
                             }
                         }
                 )
 
                 androidx.compose.animation.AnimatedVisibility(
                     visible = controlsVisible,
-                    enter = fadeIn(tween(180)),
-                    exit = fadeOut(tween(260)),
+                    enter = fadeIn(tween(120)),
+                    exit = fadeOut(tween(150)),
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
@@ -342,32 +371,19 @@ fun ShortItem(
                             .fillMaxWidth()
                         .onSizeChanged { controlsZoneHeight = with(density) { it.height.toDp() } }
                         .background(bottomGradient)
-                        .padding(start = 8.dp, end = 8.dp, top = 76.dp, bottom = 6.dp),
+                        .padding(start = 8.dp, end = 8.dp, top = 40.dp, bottom = 6.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                    ShufflePill(
-                        label = reloadLabel,
-                        onClick = onShuffleClick,
-                        modifier = Modifier.padding(bottom = 10.dp)
-                    )
-
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = formatTimecode(currentVideoPosition),
-                            color = Color.White,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.width(42.dp)
-                        )
-
-                        Spacer(modifier = Modifier.weight(1f))
-
                         ShortsControlPanel(
                             isLiked = isLiked,
                             isDisliked = isDisliked,
+                            likeCount = likeCount,
+                            dislikeCount = dislikeCount,
+                            isStatsLoading = statsLoading,
                             onCommentsClick = {
                                 commentsViewModel.fetchVideoComments(videoId)
                                 showCommentsSheet = true
@@ -392,31 +408,60 @@ fun ShortItem(
 
                         Spacer(modifier = Modifier.weight(1f))
 
-                        Text(
-                            text = formatTimecode(totalVideoDuration),
-                            color = Color.White,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.width(42.dp)
+                        ShufflePill(
+                            label = reloadLabel,
+                            onClick = onShuffleClick
                         )
                     }
 
-                    ShortsSlider(
-                        value = if (isUserDraggingSlider) (currentVideoPosition.toFloat() / totalVideoDuration.coerceAtLeast(1L).toFloat()) else progressPercent,
-                        bufferedValue = bufferedPercent,
-                    onValueChange = { newValue ->
-                        isUserDraggingSlider = true
-                        controlsVisible = true
-                        controlsTick++
-                        currentVideoPosition = (newValue * totalVideoDuration).toLong()
-                    },
-                    onValueChangeFinished = {
-                        isUserDraggingSlider = false
-                        seekController?.invoke(currentVideoPosition.toFloat() / totalVideoDuration.coerceAtLeast(1L).toFloat())
-                    },
-                        bottomNavPadding = 0.dp,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            ShortsSlider(
+                                value = if (isUserDraggingSlider) (currentVideoPosition.toFloat() / totalVideoDuration.coerceAtLeast(1L).toFloat()) else progressPercent,
+                                bufferedValue = bufferedPercent,
+                                onValueChange = { newValue ->
+                                    isUserDraggingSlider = true
+                                    controlsVisible = true
+                                    controlsTick++
+                                    currentVideoPosition = (newValue * totalVideoDuration).toLong()
+                                },
+                                onValueChangeFinished = {
+                                    isUserDraggingSlider = false
+                                    seekController?.invoke(currentVideoPosition.toFloat() / totalVideoDuration.coerceAtLeast(1L).toFloat())
+                                },
+                                bottomNavPadding = 0.dp,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .height(48.dp)
+                                .pointerInput(Unit) {
+                                    detectTapGestures(onTap = { showRemainingTime = !showRemainingTime })
+                                }
+                                .padding(end = 16.dp),
+                            contentAlignment = Alignment.CenterEnd
+                        ) {
+                            Text(
+                                text = if (showRemainingTime)
+                                    "-" + formatTimecode((totalVideoDuration - currentVideoPosition).coerceAtLeast(0L))
+                                else formatTimecode(currentVideoPosition),
+                                color = Color.White,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                softWrap = false,
+                                textAlign = TextAlign.End,
+                                modifier = Modifier.width(56.dp)
+                            )
+                        }
+                    }
                     }
                 }
             }

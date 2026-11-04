@@ -1,3 +1,5 @@
+@file:Suppress("SuppressedCancellationException")
+
 package com.makkispacejam.fluxa.viewmodels.player
 
 import androidx.annotation.OptIn
@@ -36,6 +38,14 @@ class PlayerControls(
     }
 
     @OptIn(UnstableApi::class)
+    fun pause() {
+        FluxaPlaybackService.instance?.getPlayer()?.let { player ->
+            player.playWhenReady = false
+            updateState(getState().copy(isPlaying = false))
+        }
+    }
+
+    @OptIn(UnstableApi::class)
     fun setPlaybackSpeed(speedStr: String) {
         val speed = when (speedStr) {
             "0.25x" -> 0.25f; "0.5x" -> 0.5f; "0.75x" -> 0.75f
@@ -54,12 +64,31 @@ class PlayerControls(
                 .build()
             return
         }
-        val allGroups = player.currentTracks.groups
-        val textGroups = allGroups.filter { it.type == C.TRACK_TYPE_TEXT }
+        applySubtitleLanguage(player, language)
+    }
+
+    @OptIn(UnstableApi::class)
+    fun reapplySubtitleIfNeeded(language: String) {
+        if (language.isEmpty()) return
+        val player = FluxaPlaybackService.instance?.getPlayer() ?: return
+        val textGroups = player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_TEXT }
+        val hasMatch = textGroups.any { group ->
+            (0 until group.length).any { i -> matchesLanguage(group.getTrackFormat(i).language, language) }
+        }
+        if (!hasMatch) return
+        val isSelected = textGroups.any { group ->
+            group.isSelected && (0 until group.length).any { i -> matchesLanguage(group.getTrackFormat(i).language, language) }
+        }
+        if (isSelected) return
+        applySubtitleLanguage(player, language)
+    }
+
+    @OptIn(UnstableApi::class)
+    private fun applySubtitleLanguage(player: androidx.media3.common.Player, language: String) {
+        val textGroups = player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_TEXT }
         for (group in textGroups) {
             for (i in 0 until group.length) {
-                val lang = group.getTrackFormat(i).language
-                if (lang == language || lang?.startsWith(language.take(2)) == true) {
+                if (matchesLanguage(group.getTrackFormat(i).language, language)) {
                     player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
                         .clearOverrides()
                         .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false)
@@ -77,6 +106,9 @@ class PlayerControls(
             .setPreferredTextLanguage(language)
             .build()
     }
+
+    private fun matchesLanguage(trackLang: String?, language: String): Boolean =
+        trackLang == language || trackLang?.startsWith(language.take(2)) == true
 
     @OptIn(UnstableApi::class)
     fun setAudioTrack(audioUrl: String) {

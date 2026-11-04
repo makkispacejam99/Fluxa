@@ -1,3 +1,5 @@
+@file:Suppress("SuppressedCancellationException")
+
 package com.makkispacejam.fluxa.viewmodels.user
 
 import android.app.Application
@@ -11,6 +13,9 @@ import com.makkispacejam.fluxa.data.newpipe.FluxaStreamItem
 import com.makkispacejam.fluxa.data.VideoExtractor
 import com.makkispacejam.fluxa.ui.components.player.playlist.ImportError
 import com.makkispacejam.fluxa.ui.components.player.playlist.ImportResult
+import com.makkispacejam.fluxa.ui.components.player.playlist.SyncError
+import com.makkispacejam.fluxa.ui.components.player.playlist.SyncProgress
+import com.makkispacejam.fluxa.ui.components.player.playlist.SyncResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -38,11 +43,7 @@ class InteractionViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch(Dispatchers.IO) {
             if (currentStatus) {
 
-                if (dao.isChannelBlocked(channelId)) {
-                    dao.deleteSubscription(SubscriptionEntity(channelId, channelName, avatarUrl))
-                } else {
-                    dao.deleteSubscription(SubscriptionEntity(channelId, channelName, avatarUrl))
-                }
+                dao.deleteSubscription(SubscriptionEntity(channelId, channelName, avatarUrl))
             } else {
                 dao.insertSubscription(SubscriptionEntity(channelId, channelName, avatarUrl))
             }
@@ -315,15 +316,13 @@ class InteractionViewModel(application: Application) : AndroidViewModel(applicat
             return@withContext ImportResult.Error(ImportError.EMPTY)
         }
 
+        PlaylistSyncStore.addSource(getApplication(), playlistName, playlistUrl)
+
         var added = 0
         var skipped = 0
 
         for (video in remoteVideos) {
-            val videoId = when {
-                video.url.contains("v=") -> video.url.substringAfter("v=").substringBefore("&")
-                video.url.contains("/shorts/") -> video.url.substringAfter("/shorts/").substringBefore("?")
-                else -> video.url.substringAfterLast("/")
-            }
+            val videoId = VideoExtractor.cleanVideoId(video.url)
             if (videoId.isBlank()) {
                 skipped++
                 continue
@@ -350,5 +349,73 @@ class InteractionViewModel(application: Application) : AndroidViewModel(applicat
         }
 
         return@withContext ImportResult.Success(added, skipped)
+    }
+
+    suspend fun syncPlaylist(
+        playlistName: String,
+        onProgress: (SyncProgress) -> Unit
+    ): SyncResult = withContext(Dispatchers.IO) {
+        if (UserPreferences.incognitoActive) return@withContext SyncResult.Success(0, 0, 0)
+
+        val playlists = dao.getUserPlaylists().firstOrNull() ?: emptyList()
+        val userPlaylist = playlists.find { it.name == playlistName }
+        val sysPlaylist = dao.getSystemPlaylistByName(playlistName)
+        val playlistId = userPlaylist?.id ?: sysPlaylist?.id
+
+        if (playlistId == null || playlistId == -1L) {
+            return@withContext SyncResult.Error(SyncError.PLAYLIST_MISSING)
+        }
+
+        val sources = PlaylistSyncStore.getSources(getApplication(), playlistName)
+        if (sources.isEmpty()) {
+            return@withContext SyncResult.Error(SyncError.NO_SOURCES)
+        }
+
+        var added = 0
+        var skipped = 0
+        var failedSources = 0
+        val total = sources.size
+
+        for ((index, source) in sources.withIndex()) {
+            withContext(Dispatchers.Main) { onProgress(SyncProgress(index, total)) }
+
+            val remoteVideos = try {
+                VideoExtractor.extractPlaylistVideos(source)
+            } catch (_: Exception) {
+                failedSources++
+                continue
+            }
+
+            if (remoteVideos.isEmpty()) {
+                failedSources++
+                continue
+            }
+
+            for (video in remoteVideos) {
+                val videoId = VideoExtractor.cleanVideoId(video.url)
+                if (videoId.isBlank() || dao.isVideoInPlaylist(playlistId, videoId)) {
+                    skipped++
+                    continue
+                }
+
+                dao.insertPlaylistItem(
+                    PlaylistItemEntity(
+                        playlistId,
+                        videoId,
+                        video.title,
+                        video.uploaderName,
+                        video.channelId,
+                        video.thumbnail,
+                        video.uploaderAvatar,
+                        video.duration
+                    )
+                )
+                added++
+            }
+
+            withContext(Dispatchers.Main) { onProgress(SyncProgress(index + 1, total)) }
+        }
+
+        SyncResult.Success(added, skipped, failedSources)
     }
 }

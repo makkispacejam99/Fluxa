@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.ui.components.settings.dialogs
 
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,16 +10,13 @@ import androidx.compose.ui.unit.dp
 import com.makkispacejam.fluxa.R
 
 @Composable
-fun UpdateDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
+fun OpenLinksDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface,
-        title = { Text(stringResource(R.string.update_check_title)) },
-        text = { Text(stringResource(R.string.update_check_text)) },
+        title = { Text(stringResource(R.string.open_links_dialog_title)) },
+        text = { Text(stringResource(R.string.open_links_dialog_text)) },
         confirmButton = {
-            Button(onClick = onConfirm, shape = RoundedCornerShape(24.dp)) {
-                Text(stringResource(R.string.accept_btn))
-            }
+            Button(onClick = onConfirm, shape = RoundedCornerShape(24.dp)) { Text(stringResource(R.string.open_links_go_settings)) }
         },
         dismissButton = {
             OutlinedButton(onClick = onDismiss, shape = RoundedCornerShape(24.dp)) { Text(stringResource(R.string.cancel_btn)) }

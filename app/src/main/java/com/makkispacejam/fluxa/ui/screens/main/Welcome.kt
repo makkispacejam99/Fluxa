@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.ui.screens.main
 
 import androidx.compose.foundation.layout.Arrangement

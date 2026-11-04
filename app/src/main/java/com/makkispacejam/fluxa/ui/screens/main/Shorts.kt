@@ -1,4 +1,4 @@
-@file:Suppress("DEPRECATION")
+@file:Suppress("FunctionName", "SuppressedCancellationException", "DEPRECATION")
 
 package com.makkispacejam.fluxa.ui.screens.main
 
@@ -60,9 +60,9 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
 import com.makkispacejam.fluxa.R
 import kotlin.math.abs
+import kotlin.time.Duration.Companion.milliseconds
 
 @androidx.annotation.OptIn(UnstableApi::class)
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShortsScreen(
     innerPadding: PaddingValues,
@@ -164,16 +164,16 @@ fun ShortsScreen(
         while (attempts < 4 && isActive) {
             if (videoViewModel.shortsExhausted) return@LaunchedEffect
             if (videoViewModel.isLoading) {
-                delay(600)
+                delay(600.milliseconds)
                 continue
             }
             if (!NetworkUtils.isInternetAvailable(context)) {
-                delay(2000)
+                delay(2000.milliseconds)
                 attempts++
                 continue
             }
             videoViewModel.loadMoreShorts()
-            delay(2500)
+            delay(2500.milliseconds)
             attempts++
         }
     }
@@ -192,7 +192,7 @@ fun ShortsScreen(
                 playbackStates.clear()
                 videoViewModel.fetchYoutubeShorts(forceRefresh = true)
                 while (videoViewModel.isLoading) {
-                    delay(50)
+                    delay(50.milliseconds)
                 }
                 videoViewModel.currentPageIndex = 0
                 pagerState.scrollToPage(0)
@@ -208,7 +208,7 @@ fun ShortsScreen(
                 playbackStates.clear()
                 videoViewModel.shuffleShorts()
                 while (videoViewModel.isLoading) {
-                    delay(50)
+                    delay(50.milliseconds)
                 }
                 pagerState.scrollToPage(0)
                 isRefreshing = false
@@ -234,7 +234,7 @@ fun ShortsScreen(
     val onBlockChannelShort: (String) -> Unit = { channelId ->
         videoViewModel.removeChannelVideos(channelId)
         scope.launch {
-            delay(200)
+            delay(200.milliseconds)
             onRefreshFeed()
         }
     }
@@ -412,7 +412,7 @@ fun ShortsScreen(
 
             LaunchedEffect(videoViewModel.showCooldownBanner) {
                 if (videoViewModel.showCooldownBanner) {
-                    delay(4000)
+                    delay(4000.milliseconds)
                     videoViewModel.showCooldownBanner = false
                 }
             }

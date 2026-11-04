@@ -1,3 +1,5 @@
+@file:Suppress("SuppressedCancellationException")
+
 package com.makkispacejam.fluxa.data
 
 import com.makkispacejam.fluxa.models.home.HomeFeedItem

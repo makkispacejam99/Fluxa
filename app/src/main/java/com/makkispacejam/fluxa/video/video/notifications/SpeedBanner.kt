@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.video.video.notifications
 
 import androidx.compose.animation.AnimatedVisibility

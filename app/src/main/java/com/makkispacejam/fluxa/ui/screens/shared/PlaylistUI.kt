@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.ui.screens.shared
 
 import androidx.compose.foundation.background
@@ -34,6 +36,8 @@ fun PlaylistHeader(
     isEditMode: Boolean,
     onToggleEditMode: () -> Unit,
     onImportClick: () -> Unit,
+    onSyncClick: () -> Unit = {},
+    showSyncButton: Boolean = false,
     showEditButton: Boolean = isUserPlaylist,
     showShareButton: Boolean = false,
     onShareClick: () -> Unit = {}
@@ -60,6 +64,15 @@ fun PlaylistHeader(
                             Icon(
                                 imageVector = Icons.Rounded.IosShare,
                                 contentDescription = stringResource(R.string.share_short),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                    if (isUserPlaylist && showSyncButton) {
+                        IconButton(onClick = onSyncClick) {
+                            Icon(
+                                imageVector = Icons.Rounded.Sync,
+                                contentDescription = stringResource(R.string.sync_playlist),
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }

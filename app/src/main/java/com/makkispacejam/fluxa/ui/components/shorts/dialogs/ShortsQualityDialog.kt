@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.ui.components.shorts.dialogs
 
 import androidx.compose.runtime.Composable

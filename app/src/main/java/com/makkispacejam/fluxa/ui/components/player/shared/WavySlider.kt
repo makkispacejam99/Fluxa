@@ -1,4 +1,4 @@
-@file:Suppress("AssignedValueIsNeverRead")
+@file:Suppress("FunctionName", "AssignedValueIsNeverRead")
 
 package com.makkispacejam.fluxa.ui.components.player.shared
 

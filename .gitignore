@@ -38,6 +38,8 @@ signing.properties
 .env
 .env.*
 google-services.json
+gradle.properties
+app/fluxa-key
 
 # Android Studio
 captures/

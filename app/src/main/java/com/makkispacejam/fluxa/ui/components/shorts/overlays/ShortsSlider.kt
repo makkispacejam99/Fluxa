@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.ui.components.shorts.overlays
 
 import androidx.compose.foundation.layout.Box

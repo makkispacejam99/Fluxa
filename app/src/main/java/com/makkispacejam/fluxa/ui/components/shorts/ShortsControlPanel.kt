@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.ui.components.shorts
 
 import androidx.compose.animation.core.Animatable
@@ -24,13 +26,24 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.makkispacejam.fluxa.ui.components.core.SkeletonBar
 import kotlinx.coroutines.launch
+
+private fun formatShortCount(count: Long): String = when {
+    count >= 1_000_000_000 -> "${count / 1_000_000_000}B"
+    count >= 1_000_000 -> "${count / 1_000_000}M"
+    count >= 1_000 -> "${count / 1_000}K"
+    else -> count.toString()
+}
 
 @Composable
 fun ShortsControlPanel(
     modifier: Modifier = Modifier,
     isLiked: Boolean,
     isDisliked: Boolean,
+    likeCount: Long = -1L,
+    dislikeCount: Long = -1L,
+    isStatsLoading: Boolean = false,
     onCommentsClick: () -> Unit,
     onLikeClick: () -> Unit,
     onDislikeClick: () -> Unit,
@@ -41,30 +54,24 @@ fun ShortsControlPanel(
     Surface(
         modifier = modifier.height(48.dp),
         shape = CircleShape,
-        color = Color.Black.copy(alpha = 0.55f),
+        color = Color.Black.copy(alpha = 0.70f),
         contentColor = Color.White
     ) {
         Row(
             modifier = Modifier
                 .padding(horizontal = 12.dp)
                 .wrapContentWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(24.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             PillIconButton(
                 icon = Icons.Rounded.Favorite,
                 isActivated = isLiked,
                 activeColor = MaterialTheme.colorScheme.primaryFixed,
+                label = if (likeCount >= 0L) formatShortCount(likeCount + if (isLiked) 1L else 0L) else null,
+                loading = isStatsLoading && likeCount < 0L,
                 enabled = !isIncognito,
                 onClick = onLikeClick,
-                onDisabledClick = onDisabledClick
-            )
-            PillIconButton(
-                icon = Icons.Rounded.ThumbDown,
-                isActivated = isDisliked,
-                activeColor = MaterialTheme.colorScheme.primaryFixed,
-                enabled = !isIncognito,
-                onClick = onDislikeClick,
                 onDisabledClick = onDisabledClick
             )
             PillIconButton(
@@ -72,6 +79,15 @@ fun ShortsControlPanel(
                 isActivated = false,
                 activeColor = Color.White,
                 onClick = onCommentsClick
+            )
+            PillIconButton(
+                icon = Icons.Rounded.ThumbDown,
+                isActivated = isDisliked,
+                activeColor = MaterialTheme.colorScheme.primaryFixed,
+                label = if (dislikeCount >= 0L) formatShortCount(dislikeCount + if (isDisliked) 1L else 0L) else null,
+                enabled = !isIncognito,
+                onClick = onDislikeClick,
+                onDisabledClick = onDisabledClick
             )
             PillIconButton(
                 icon = Icons.Rounded.MoreHoriz,
@@ -100,7 +116,7 @@ fun ShufflePill(
                 onClick()
             }
         },
-        modifier = modifier.height(38.dp),
+        modifier = modifier.height(48.dp),
         shape = CircleShape,
         color = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary
@@ -131,13 +147,19 @@ fun PillIconButton(
     icon: ImageVector,
     isActivated: Boolean,
     activeColor: Color,
+    label: String? = null,
+    loading: Boolean = false,
     enabled: Boolean = true,
     onClick: () -> Unit,
     onDisabledClick: () -> Unit = {}
 ) {
-    Box(
+    val tint = if (!enabled) {
+        Color.White.copy(alpha = 0.35f)
+    } else if (isActivated) activeColor else Color.White
+
+    Row(
         modifier = Modifier
-            .size(36.dp)
+            .defaultMinSize(minWidth = 36.dp, minHeight = 36.dp)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -145,15 +167,26 @@ fun PillIconButton(
             ) {
                 if (!enabled) onDisabledClick() else onClick()
             },
-        contentAlignment = Alignment.Center
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(22.dp),
-            tint = if (!enabled) {
-                Color.White.copy(alpha = 0.35f)
-            } else if (isActivated) activeColor else Color.White
+            tint = tint
         )
+        if (loading) {
+            SkeletonBar(width = 18.dp, height = 10.dp, color = Color.White)
+        } else if (label != null) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = tint,
+                maxLines = 1,
+                softWrap = false
+            )
+        }
     }
 }

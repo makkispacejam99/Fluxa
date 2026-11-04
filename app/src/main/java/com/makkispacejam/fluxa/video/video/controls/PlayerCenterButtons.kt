@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.video.video.controls
 
 import androidx.compose.animation.AnimatedContent

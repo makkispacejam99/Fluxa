@@ -1,4 +1,4 @@
-@file:Suppress("DEPRECATION")
+@file:Suppress("FunctionName", "DEPRECATION")
 
 package com.makkispacejam.fluxa.ui.theme
 

@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package com.makkispacejam.fluxa.ui.screens.shared
 
 import androidx.compose.foundation.BorderStroke
